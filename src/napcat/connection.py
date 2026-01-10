@@ -46,7 +46,7 @@ class Connection:
         fut = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
         try:
-            await self.ws.send(orjson.dumps(data).decode())
+            await self.ws.send(orjson.dumps(data))
             async with asyncio.timeout(timeout):
                 return await fut
         finally:
