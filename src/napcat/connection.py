@@ -41,12 +41,10 @@ class Connection:
     async def send(self, data: dict, timeout: float = 10.0) -> dict:
         if not self._task or self._task.done():
             raise ConnectionError("Connection closed")
-
         echo = f"seq-{next(self._counter)}"
         data = data | {"echo": echo}
         fut = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
-
         try:
             await self.ws.send(json.dumps(data))
             async with asyncio.timeout(timeout):
@@ -74,7 +72,6 @@ class Connection:
                     data = json.loads(msg)
                 except json.JSONDecodeError:
                     continue
-
                 if echo := data.get("echo"):
                     if fut := self._futures.get(echo):
                         if not fut.done():
@@ -87,17 +84,12 @@ class Connection:
             await self._cleanup()
 
     async def _cleanup(self):
-        # 1. 炸掉所有等待的 RPC
         for f in self._futures.values():
             if not f.done():
                 f.set_exception(ConnectionError("Conn closed"))
         self._futures.clear()
-
-        # 2. 炸掉所有等待的事件流
         self._broadcast(_STOP)
         self._queues.clear()
-
-        # 3. 标记彻底死亡
         self._closed.set()
         logger.info(f"Conn {self.self_id} closed.")
 
