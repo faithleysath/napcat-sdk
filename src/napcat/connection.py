@@ -102,6 +102,7 @@ class Connection:
             if q.full():
                 try:
                     q.get_nowait()
+                    logger.debug("Warning: Event queue dropped oldest message")
                 except asyncio.QueueEmpty:
                     pass
             try:

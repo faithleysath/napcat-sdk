@@ -18,12 +18,12 @@ class ReverseWebSocketServer:
         self.port = port
         self.token = token
         self._server = None
-        self._new_clients: Queue[NapCatClient] = Queue()
+        self._new_clients: Queue[NapCatClient | None] = Queue()
 
     async def _handle_connection(self, ws: ServerConnection):
         if ws.request is not None:
-            req_token = ws.request.headers.get("Authorization", "").replace(
-                "Bearer ", ""
+            req_token = ws.request.headers.get("Authorization", "").removeprefix(
+                "Bearer "
             )
             if self.token and req_token != self.token:
                 logger.warning("Auth failed for incoming connection")
@@ -48,6 +48,7 @@ class ReverseWebSocketServer:
         if self._server:
             self._server.close()
             await self._server.wait_closed()
+        self._new_clients.put_nowait(None)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
@@ -58,4 +59,6 @@ class ReverseWebSocketServer:
         """
         while True:
             client = await self._new_clients.get()
+            if client is None:
+                break
             yield client
