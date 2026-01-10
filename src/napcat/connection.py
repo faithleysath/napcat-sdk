@@ -13,9 +13,8 @@ _STOP = object()
 
 
 class Connection:
-    def __init__(self, ws: ClientConnection | ServerConnection, self_id: int):
+    def __init__(self, ws: ClientConnection | ServerConnection):
         self.ws = ws
-        self.self_id = self_id
         self._futures: dict[str, Future[dict[str, Any]]] = {}
         self._queues: set[Queue[dict[str, Any] | object]] = set()
         self._task: Task | None = None
@@ -23,7 +22,7 @@ class Connection:
         self._closed = asyncio.Event()
 
     async def __aenter__(self):
-        self._task = asyncio.create_task(self._loop(), name=f"Conn-{self.self_id}")
+        self._task = asyncio.create_task(self._loop())
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -66,7 +65,6 @@ class Connection:
             self._queues.discard(q)
 
     async def _loop(self):
-        logger.info(f"Conn {self.self_id} start.")
         try:
             async for msg in self.ws:
                 try:
@@ -98,7 +96,6 @@ class Connection:
         self._broadcast(_STOP)
         self._queues.clear()
         self._closed.set()
-        logger.info(f"Conn {self.self_id} closed.")
 
     def _broadcast(self, item: dict | object):
         for q in list(self._queues):
