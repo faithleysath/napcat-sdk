@@ -94,7 +94,7 @@ class Connection:
         logger.info(f"Conn {self.self_id} closed.")
 
     def _broadcast(self, item):
-        for q in self._queues:
+        for q in list(self._queues):
             if q.full():
                 q.get_nowait()
             try:
