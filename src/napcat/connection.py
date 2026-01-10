@@ -1,10 +1,10 @@
 import asyncio
 import itertools
-import json
 import logging
 from asyncio import Future, Queue, Task
 from typing import AsyncGenerator
 
+import orjson
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.server import ServerConnection
 
@@ -46,7 +46,7 @@ class Connection:
         fut = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
         try:
-            await self.ws.send(json.dumps(data))
+            await self.ws.send(orjson.dumps(data).decode())
             async with asyncio.timeout(timeout):
                 return await fut
         finally:
@@ -69,8 +69,8 @@ class Connection:
         try:
             async for msg in self.ws:
                 try:
-                    data = json.loads(msg)
-                except json.JSONDecodeError:
+                    data = orjson.loads(msg)
+                except orjson.JSONDecodeError:
                     continue
                 if echo := data.get("echo"):
                     if fut := self._futures.get(echo):
