@@ -2,7 +2,7 @@ import asyncio
 import itertools
 import logging
 from asyncio import Future, Queue, Task
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 import orjson
 from websockets.asyncio.client import ClientConnection
@@ -16,8 +16,8 @@ class Connection:
     def __init__(self, ws: ClientConnection | ServerConnection, self_id: int):
         self.ws = ws
         self.self_id = self_id
-        self._futures: dict[str, Future] = {}
-        self._queues: set[Queue] = set()
+        self._futures: dict[str, Future[dict[str, Any]]] = {}
+        self._queues: set[Queue[dict[str, Any] | object]] = set()
         self._task: Task | None = None
         self._counter = itertools.count()
         self._closed = asyncio.Event()
@@ -38,12 +38,12 @@ class Connection:
             pass
         await self._closed.wait()
 
-    async def send(self, data: dict, timeout: float = 10.0) -> dict:
+    async def send(self, data: dict, timeout: float = 10.0) -> dict[str, Any]:
         if not self._task or self._task.done():
             raise ConnectionError("Connection closed")
         echo = f"seq-{next(self._counter)}"
         data = data | {"echo": echo}
-        fut = asyncio.get_running_loop().create_future()
+        fut: Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
         try:
             await self.ws.send(orjson.dumps(data))
@@ -52,15 +52,16 @@ class Connection:
         finally:
             self._futures.pop(echo, None)
 
-    async def events(self) -> AsyncGenerator[dict, None]:
-        q = Queue(maxsize=500)
+    async def events(self) -> AsyncGenerator[dict[str, Any], None]:
+        q: Queue[dict[str, Any] | object] = Queue(maxsize=500)
         self._queues.add(q)
         try:
             while True:
                 data = await q.get()
                 if data is _STOP:
                     break
-                yield data
+                if isinstance(data, dict):
+                    yield data
         finally:
             self._queues.discard(q)
 
@@ -70,12 +71,18 @@ class Connection:
             async for msg in self.ws:
                 try:
                     data = orjson.loads(msg)
+                    if not isinstance(data, dict) or not data:
+                        logger.warning(f"Invalid message: {data}")
+                        continue
                 except orjson.JSONDecodeError:
                     continue
                 if echo := data.get("echo"):
                     if fut := self._futures.get(echo):
                         if not fut.done():
                             fut.set_result(data)
+                            continue
+                    logger.warning(f"Unknown echo: {echo}")
+                    continue
                 else:
                     self._broadcast(data)
         except (asyncio.CancelledError, Exception):
@@ -93,10 +100,13 @@ class Connection:
         self._closed.set()
         logger.info(f"Conn {self.self_id} closed.")
 
-    def _broadcast(self, item):
+    def _broadcast(self, item: dict | object):
         for q in list(self._queues):
             if q.full():
-                q.get_nowait()
+                try:
+                    q.get_nowait()
+                except asyncio.QueueEmpty:
+                    pass
             try:
                 q.put_nowait(item)
             except Exception:
