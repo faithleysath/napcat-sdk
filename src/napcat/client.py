@@ -1,3 +1,5 @@
+from typing import Any, AsyncGenerator
+
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
@@ -34,3 +36,14 @@ class NapCatClient:
             await self._conn.__aexit__(exc_type, exc_val, exc_tb)
         if self._ws_ctx:
             await self._ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def events(self) -> AsyncGenerator[dict[str, Any], None]:
+        if not self._conn:
+            raise RuntimeError("Client not connected")
+        async for event in self._conn.events():
+            yield event
+
+    async def send(self, data: dict, timeout: float = 10.0) -> dict[str, Any]:
+        if not self._conn:
+            raise RuntimeError("Client not connected")
+        return await self._conn.send(data, timeout)
