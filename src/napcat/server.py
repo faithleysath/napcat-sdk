@@ -44,10 +44,13 @@ class ReverseWebSocketServer:
         self._server = await serve(self._handle_connection, self.host, self.port)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def close(self):
         if self._server:
             self._server.close()
             await self._server.wait_closed()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
     async def accept(self) -> AsyncGenerator[NapCatClient, None]:
         """
