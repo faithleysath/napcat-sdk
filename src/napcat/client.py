@@ -12,15 +12,16 @@ class NapCatClient:
         token: str | None = None,
         _existing_conn: Connection | None = None,
     ):
-        # _existing_conn 是给 Server 模式内部使用的
         self.ws_url = ws_url
         self.token = token
         self._conn = _existing_conn
         self._ws_ctx: ws_connect | None = None
 
     async def __aenter__(self):
+        # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
         if self._conn:
             await self._conn.__aenter__()
+        # 如果是 Client 模式（主动连接），建立连接并包装
         elif self.ws_url:
             headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
             self._ws_ctx = ws_connect(self.ws_url, additional_headers=headers)
@@ -32,6 +33,7 @@ class NapCatClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        # 级联关闭：Client -> Connection -> WebSocket
         if self._conn:
             await self._conn.__aexit__(exc_type, exc_val, exc_tb)
         if self._ws_ctx:
