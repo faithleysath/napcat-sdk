@@ -191,6 +191,7 @@ class TextMessageSegment(MessageSegment[Literal["text"], TextData, TextDataType]
     type: Literal["text"] = "text"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[TextData]]
 
         def __init__(self, **kwargs: Unpack[TextDataType]): ...
 
@@ -201,6 +202,7 @@ class ReplyMessageSegment(MessageSegment[Literal["reply"], ReplyData, ReplyDataT
     type: Literal["reply"] = "reply"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[ReplyData]]
 
         def __init__(self, **kwargs: Unpack[ReplyDataType]): ...
 
@@ -211,6 +213,7 @@ class ImageMessageSegment(MessageSegment[Literal["image"], ImageData, ImageDataT
     type: Literal["image"] = "image"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[ImageData]]
 
         def __init__(self, **kwargs: Unpack[ImageDataType]): ...
 
@@ -221,6 +224,7 @@ class VideoMessageSegment(MessageSegment[Literal["video"], VideoData, VideoDataT
     type: Literal["video"] = "video"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[VideoData]]
 
         def __init__(self, **kwargs: Unpack[VideoDataType]): ...
 
@@ -231,6 +235,7 @@ class FileMessageSegment(MessageSegment[Literal["file"], FileData, FileDataType]
     type: Literal["file"] = "file"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[FileData]]
 
         def __init__(self, **kwargs: Unpack[FileDataType]): ...
 
@@ -241,6 +246,7 @@ class AtMessageSegment(MessageSegment[Literal["at"], AtData, AtDataType]):
     type: Literal["at"] = "at"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[AtData]]
 
         def __init__(self, **kwargs: Unpack[AtDataType]): ...
 
@@ -253,5 +259,6 @@ class ForwardMessageSegment(
     type: Literal["forward"] = "forward"
 
     if TYPE_CHECKING:
+        _data_class: ClassVar[type[ForwardData]]
 
         def __init__(self, **kwargs: Unpack[ForwardDataType]): ...
