@@ -7,6 +7,7 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    LiteralString,
     NotRequired,
     TypedDict,
     Unpack,
@@ -23,12 +24,17 @@ class ImageSubType(IntEnum):
     MEME = 1  # 表情包/斗图
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
+class SegmentDataBase(IgnoreExtraArgsMixin):
+    pass
+
+
 class SegmentDataTypeBase(TypedDict):
     pass
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class TextData(IgnoreExtraArgsMixin):
+class TextData(SegmentDataBase):
     text: str
 
 
@@ -37,7 +43,7 @@ class TextDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class ReplyData(IgnoreExtraArgsMixin):
+class ReplyData(SegmentDataBase):
     id: int
 
 
@@ -46,7 +52,7 @@ class ReplyDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class ImageData(IgnoreExtraArgsMixin):
+class ImageData(SegmentDataBase):
     file: Annotated[
         str,
         '如果是接收，则通常是MD5.jpg。如果是发送，"file://D:/a.jpg"、"http://xxx.png"、"base64://xxxxxxxx"',
@@ -70,7 +76,7 @@ class ImageDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class VideoData(IgnoreExtraArgsMixin):
+class VideoData(SegmentDataBase):
     file: Annotated[
         str,
         '如果是接收，则通常是MD5.mp4。如果是发送，"file://D:/a.mp4"、"http://xxx.mp4"',
@@ -86,7 +92,7 @@ class VideoDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class FileData(IgnoreExtraArgsMixin):
+class FileData(SegmentDataBase):
     file: str
     file_id: str
     url: Annotated[str | None, "私聊没有群聊有"] = None
@@ -99,7 +105,7 @@ class FileDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class AtData(IgnoreExtraArgsMixin):
+class AtData(SegmentDataBase):
     qq: int | Literal["all"]
 
 
@@ -108,7 +114,7 @@ class AtDataType(SegmentDataTypeBase):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class ForwardData(IgnoreExtraArgsMixin):
+class ForwardData(SegmentDataBase):
     id: int
 
 
@@ -116,17 +122,16 @@ class ForwardDataType(SegmentDataTypeBase):
     id: int
 
 
-type SegmentDataType = (
-    TextData | ReplyData | AtData | ForwardData | ImageData | VideoData | FileData
-)
-
-
 @dataclass(slots=True, frozen=True, kw_only=True)
-class MessageSegment[T_Data: SegmentDataTypeBase](ABC):
-    type: Literal["text", "reply", "at", "forward", "image", "video", "file"]
-    data: SegmentDataType
+class MessageSegment[
+    T_Type: LiteralString,
+    T_Data: SegmentDataBase,
+    T_DataType: SegmentDataTypeBase,
+](ABC):
+    type: T_Type
+    data: T_Data
 
-    _data_class: ClassVar[type[SegmentDataType]]
+    _data_class: ClassVar[type[SegmentDataBase]]
     _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
 
     def __init_subclass__(cls, **kwargs):
@@ -152,7 +157,7 @@ class MessageSegment[T_Data: SegmentDataTypeBase](ABC):
 
         MessageSegment._registry[type_val] = cls
 
-    def __init__(self, **kwargs: Unpack[T_Data]):  # type: ignore
+    def __init__(self, **kwargs: Unpack[T_DataType]):  # type: ignore
         object.__setattr__(self, "type", self.__class__.type)
 
         data_cls = self.__class__._data_class
@@ -181,7 +186,7 @@ class MessageSegment[T_Data: SegmentDataTypeBase](ABC):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class TextMessageSegment(MessageSegment[TextDataType]):
+class TextMessageSegment(MessageSegment[Literal["text"], TextData, TextDataType]):
     data: TextData
     type: Literal["text"] = "text"
 
@@ -191,7 +196,7 @@ class TextMessageSegment(MessageSegment[TextDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class ReplyMessageSegment(MessageSegment[ReplyDataType]):
+class ReplyMessageSegment(MessageSegment[Literal["reply"], ReplyData, ReplyDataType]):
     data: ReplyData
     type: Literal["reply"] = "reply"
 
@@ -201,7 +206,7 @@ class ReplyMessageSegment(MessageSegment[ReplyDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class ImageMessageSegment(MessageSegment[ImageDataType]):
+class ImageMessageSegment(MessageSegment[Literal["image"], ImageData, ImageDataType]):
     data: ImageData
     type: Literal["image"] = "image"
 
@@ -211,7 +216,7 @@ class ImageMessageSegment(MessageSegment[ImageDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class VideoMessageSegment(MessageSegment[VideoDataType]):
+class VideoMessageSegment(MessageSegment[Literal["video"], VideoData, VideoDataType]):
     data: VideoData
     type: Literal["video"] = "video"
 
@@ -221,7 +226,7 @@ class VideoMessageSegment(MessageSegment[VideoDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class FileMessageSegment(MessageSegment[FileDataType]):
+class FileMessageSegment(MessageSegment[Literal["file"], FileData, FileDataType]):
     data: FileData
     type: Literal["file"] = "file"
 
@@ -231,7 +236,7 @@ class FileMessageSegment(MessageSegment[FileDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class AtMessageSegment(MessageSegment[AtDataType]):
+class AtMessageSegment(MessageSegment[Literal["at"], AtData, AtDataType]):
     data: AtData
     type: Literal["at"] = "at"
 
@@ -241,7 +246,9 @@ class AtMessageSegment(MessageSegment[AtDataType]):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
-class ForwardMessageSegment(MessageSegment[ForwardDataType]):
+class ForwardMessageSegment(
+    MessageSegment[Literal["forward"], ForwardData, ForwardDataType]
+):
     data: ForwardData
     type: Literal["forward"] = "forward"
 
