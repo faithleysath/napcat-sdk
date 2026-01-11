@@ -18,3 +18,8 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "napcat"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
