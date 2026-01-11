@@ -47,7 +47,7 @@ class IgnoreExtraArgsMixin(DataclassProtocol):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        cls_fields = {f.name: f for f in fields(cls)}
+        cls_fields = {f.name: f for f in fields(cls) if f.init}
         valid_args = {k: v for k, v in data.items() if k in cls_fields}
 
         missing_fields = []
@@ -70,7 +70,7 @@ class IgnoreExtraArgsInternalMixin(DataclassProtocol):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        cls_fields = {f.name: f for f in fields(cls)}
+        cls_fields = {f.name: f for f in fields(cls) if f.init}
         valid_args = {k: v for k, v in data.items() if k in cls_fields}
 
         missing_fields = []
