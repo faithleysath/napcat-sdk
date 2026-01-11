@@ -66,7 +66,7 @@ class ImageData(IgnoreExtraArgsMixin):
 
 class ImageDataType(SegmentDataTypeBase):
     file: str
-    sub_type: NotRequired[ImageSubType]
+    sub_type: NotRequired[int]
     url: NotRequired[str | None]
     file_size: NotRequired[int | None]
 
