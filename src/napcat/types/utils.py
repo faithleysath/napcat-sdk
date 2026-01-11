@@ -1,33 +1,14 @@
 import logging
-from collections.abc import (
-    Iterable as ABCIterable,
-)
-from collections.abc import (
-    Mapping as ABCMapping,
-)
-from collections.abc import (
-    MutableMapping as ABCMutableMapping,
-)
-from collections.abc import (
-    Sequence as ABCSequence,
-)
-from dataclasses import MISSING, fields, is_dataclass
+from dataclasses import MISSING, fields
 from enum import Enum
 from types import UnionType
 from typing import (
-    Annotated,
     Any,
-    Callable,
     ClassVar,
-    Iterable,
     Literal,
-    Mapping,
-    MutableMapping,
     Protocol,
     Self,
-    Sequence,
     Union,
-    cast,
     get_args,
     get_origin,
     get_type_hints,
@@ -88,277 +69,152 @@ class IgnoreExtraArgsInternalMixin(DataclassProtocol):
         return cls(**valid_args)
 
 
-class TypeValidatorMixin(DataclassProtocol):
+class TypeValidatorMixin:
     __slots__ = ()
-    _type_hints_cache: ClassVar[dict[type, dict[str, Any] | None]] = {}
+
+    # cls -> list[(field_name, kind, payload, expected)] | None
+    _spec_cache: ClassVar[dict[type, list[tuple[str, str, Any, str]] | None]] = {}
+    _CACHE_MISS = object()
 
     def __post_init__(self):
         cls = self.__class__
-        cache = self._type_hints_cache
-        if cls not in cache or cache[cls] is None:
-            try:
-                cache[cls] = get_type_hints(cls, include_extras=True)
-            except Exception as e:
-                logger.warning(f"Failed to resolve type hints for {cls.__name__}: {e}")
-                cache[cls] = None
 
-        hints = cache[cls] or {}
+        # (1) fix: cache None properly (avoid rebuilding spec forever)
+        spec = self._spec_cache.get(cls, self._CACHE_MISS)
+        if spec is self._CACHE_MISS:
+            spec = self._build_spec(cls)  # may be None
+            self._spec_cache[cls] = spec
 
-        for f in fields(self):
-            name = f.name
-            if name not in hints:
+        if not spec:
+            return
+
+        getv = getattr
+        if isinstance(spec, list):
+            for name, kind, payload, expected in spec:
+                v = getv(self, name)
+
+                ok = self._check(kind, payload, v)
+                if not ok:
+                    raise TypeError(
+                        f"Field '{name}' expected {expected}, got {type(v).__name__}: {v!r}"
+                    )
+
+    @staticmethod
+    def _isinstance_no_bool(v: Any, tp_or_tuple: Any) -> bool:
+        """
+        (4) fix: treat bool as NOT int unless bool is explicitly allowed.
+        - isinstance(True, int) == True in Python, we usually don't want that.
+        """
+        if isinstance(tp_or_tuple, tuple):
+            if isinstance(v, bool):
+                return bool in tp_or_tuple
+            return isinstance(v, tp_or_tuple)
+
+        tp = tp_or_tuple
+        if tp is int and isinstance(v, bool):
+            return False
+        return isinstance(v, tp)
+
+    @classmethod
+    def _check(cls, kind: str, payload: Any, v: Any) -> bool:
+        # Any always passes
+        if kind == "any":
+            return True
+
+        # (6) fix: merge duplicated branches (type/origin/enum are all isinstance checks)
+        if kind in ("type", "origin", "enum"):
+            return cls._isinstance_no_bool(v, payload)
+
+        if kind == "literal":
+            return v in payload
+
+        if kind == "union_types":
+            types_tuple, allow_none = payload
+            if v is None:
+                return bool(allow_none)
+            return cls._isinstance_no_bool(v, types_tuple)
+
+        # (3) fix: support unions like Optional[list[int]] etc (shallow branch checking)
+        if kind == "union":
+            branch_specs, allow_none, has_uncheckable = payload
+            if v is None:
+                return bool(allow_none)
+
+            for b_kind, b_payload, _b_expected in branch_specs:
+                if cls._check(b_kind, b_payload, v):
+                    return True
+
+            # if union contains uncheckable branches, don't raise false negatives
+            return bool(has_uncheckable)
+
+        # unknown kind -> skip (keep previous behavior)
+        return True
+
+    @classmethod
+    def _build_spec(cls, target_cls: type):
+        try:
+            hints = get_type_hints(target_cls, include_extras=False)
+        except Exception as e:
+            logger.warning(
+                f"Failed to resolve type hints for {target_cls.__name__}: {e}"
+            )
+            return None
+
+        out: list[tuple[str, str, Any, str]] = []
+        for f in fields(target_cls):
+            tp = hints.get(f.name)
+            if tp is None:
                 continue
+            kind, payload, expected = cls._compile(tp)
+            if kind != "skip":
+                out.append((f.name, kind, payload, expected))
+        return out
 
-            # 缩小 try 范围，只针对属性获取
-            try:
-                val = getattr(self, name)
-            except AttributeError:
-                continue
-
-            tp = hints[name]
-
-            try:
-                # 传递 name 用于日志调试
-                new_val = self._validate(tp, val, name)
-                # 使用 object.__setattr__ 以支持 frozen dataclasses
-                if new_val is not val:
-                    object.__setattr__(self, name, new_val)
-            except Exception as e:
-                raise ValueError(f"Validation failed for field '{name}': {e}") from e
-
-    def _validate(self, tp: Any, val: Any, name: str = "") -> Any:
-        # [Fix] 优先处理 Any，避免后续 isinstance(val, Any) 报错
+    @staticmethod
+    def _compile(tp: Any) -> tuple[str, Any, str]:
         if tp is Any:
-            return val
+            return "any", None, "Any"
 
         origin = get_origin(tp)
         args = get_args(tp)
 
-        # 0. Unwrap Annotated
-        if origin is Annotated:
-            return self._validate(args[0], val, name)
-
-        # 1. None Check
-        if val is None:
-            is_optional = tp is type(None) or (
-                origin in (Union, UnionType) and type(None) in args
-            )
-            if is_optional:
-                return None
-            raise ValueError(f"Field '{name}' cannot be None")
-
-        # 2. Fast Path: Exact Match
-        # [Fix] 增加对 type(None) 的保护，虽然 get_origin 处理了大部分
-        if origin is None and not is_dataclass(tp) and not isinstance(val, Enum):
-            try:
-                if isinstance(val, tp):
-                    return val
-            except TypeError:
-                # 某些特殊类型（如 NewType 或一些 Callable）可能不支持 isinstance
-                pass
-
-        # 3. Enum Handling
-        if isinstance(tp, type) and issubclass(tp, Enum):
-            if isinstance(val, tp):
-                return val
-            if isinstance(val, Enum):
-                val = val.value
-
-            try:
-                ret = tp(val)
-                logger.debug(f"🔄 Coerced {name}: {val!r} -> {ret}")
-                return ret
-            except ValueError:
-                pass
-
-            # 支持字符串名查找
-            if isinstance(val, str) and val in tp.__members__:
-                ret = tp[val]
-                logger.debug(f"🔄 Coerced {name}: {val!r} -> {ret}")
-                return ret
-
-            raise ValueError(f"{val!r} is not a valid {tp.__name__}")
-
-        # 4. Union Handling
-        if origin in (Union, UnionType):
-            # Pass 1: Strict Check
-            for arg in args:
-                if arg is type(None):
-                    continue
-                origin_arg = get_origin(arg)
-                # 只有非容器、非泛型才做 strict check，避免泛型 List[int] 在这里报错
-                if origin_arg is None and not is_dataclass(arg) and arg is not Any:
-                    try:
-                        if isinstance(val, arg):
-                            return val
-                    except TypeError:
-                        pass
-
-            # Pass 2: Coercion
-            errs = []
-            for arg in args:
-                if arg is type(None):
-                    continue
-                try:
-                    return self._validate(arg, val, name)
-                except (ValueError, TypeError) as e:
-                    errs.append(str(e))
-                    continue
-            raise TypeError(f"Expected {tp}, got {val!r}. Errors: {'; '.join(errs)}")
-
-        # 5. Tuple Handling
-        if origin is tuple:
-            if not isinstance(val, (list, tuple)):
-                raise TypeError(f"Expected tuple/list for {name}, got {type(val)}")
-
-            if len(args) == 2 and args[1] is Ellipsis:
-                item_tp = args[0]
-                return tuple(
-                    self._validate(item_tp, v, f"{name}[{i}]")
-                    for i, v in enumerate(val)
-                )
-
-            if args:
-                if len(val) != len(args):
-                    raise ValueError(
-                        f"Expected tuple of length {len(args)}, got {len(val)}"
-                    )
-                return tuple(
-                    self._validate(arg_tp, v, f"{name}[{i}]")
-                    for i, (arg_tp, v) in enumerate(zip(args, val))
-                )
-
-            return tuple(val)
-
-        # 6. List/Set/Sequence/Iterable Handling
-        if origin in (list, set, frozenset):
-            if not isinstance(val, (list, tuple, set, frozenset)):
-                raise TypeError(f"Expected iterable for {name}, got {type(val)}")
-            item_tp = args[0] if args else Any
-            new_items = [
-                self._validate(item_tp, v, f"{name}[{i}]") for i, v in enumerate(val)
-            ]
-            return origin(new_items)
-
-        # tuple 单独你原来已经处理过（#5），这里不用管
-
-        # typing.Sequence / typing.Iterable / collections.abc.Sequence / collections.abc.Iterable
-        if origin in (ABCSequence, ABCIterable) or tp in (Sequence, Iterable):
-            # 防止把 str/bytes 当成 iterable 拆字符
-            if isinstance(val, (str, bytes, bytearray)):
-                raise TypeError(f"Expected iterable for {name}, got scalar {type(val)}")
-            # 防止 dict 被当 iterable（遍历 key）
-            if isinstance(val, ABCMapping):
-                raise TypeError(
-                    f"Expected iterable for {name}, got mapping {type(val)}"
-                )
-            if not isinstance(val, ABCIterable):
-                raise TypeError(f"Expected iterable for {name}, got {type(val)}")
-
-            item_tp = args[0] if args else Any
-            new_items = [
-                self._validate(item_tp, v, f"{name}[{i}]") for i, v in enumerate(val)
-            ]
-            return list(new_items)
-
-        # 7. Dict/Mapping Handling
-        if origin in (dict, ABCMapping, ABCMutableMapping, Mapping, MutableMapping):
-            if not isinstance(val, ABCMapping):
-                raise TypeError(f"Expected mapping for {name}, got {type(val)}")
-
-            kt, vt = args if len(args) == 2 else (Any, Any)
-            return {
-                self._validate(kt, k, f"{name}.k"): self._validate(vt, v, f"{name}.v")
-                for k, v in val.items()
-            }
-
-        # 8. Literal
         if origin is Literal:
-            if val in args:
-                return val
-            val_str = str(val)
-            for opt in args:
-                # 限制只尝试基础类型的 coercion，避免对象转 str 后误判
-                if type(opt) in (int, bool, float, str) and str(opt) == val_str:
-                    logger.debug(f"🔄 Coerced {name}: {val!r} -> Literal[{opt}]")
-                    return opt
-            raise ValueError(f"Expected {args}, got {val!r}")
+            return "literal", set(args), f"Literal{args}"
 
-        # 9. Nested Dataclass
-        if isinstance(val, dict) and isinstance(tp, type) and is_dataclass(tp):
-            valid_field_names = {f.name for f in fields(tp) if f.init}
-            filtered_val = {k: v for k, v in val.items() if k in valid_field_names}
+        if isinstance(tp, type) and issubclass(tp, Enum):
+            return "enum", tp, tp.__name__
 
-            from_dict = getattr(tp, "from_dict", None)
-            if from_dict is not None:
-                from_dict_fn = cast(Callable[[dict[str, Any]], Any], from_dict)
-                return from_dict_fn(filtered_val)
-            return tp(**filtered_val)
+        if origin in (Union, UnionType):
+            allow_none = type(None) in args
+            branches = [a for a in args if a is not type(None)]
 
-        # 10. Primitives Coercion (numbers <-> strings only)
-        # 只支持：str <-> int/float，int <-> float（可选），以及数值 -> str
-        if tp is int:
-            if isinstance(val, int) and not isinstance(val, bool):
-                return val
+            # fast path: union of plain types -> old behavior kept
+            if branches and all(isinstance(a, type) for a in branches):
+                return "union_types", (tuple(branches), allow_none), str(tp)
 
-            # str -> int
-            if isinstance(val, str):
-                s = val.strip()
-                try:
-                    ret = int(s)
-                    logger.warning(f"🔄 Coerced {name}: {val!r} -> {ret!r}")
-                    return ret
-                except ValueError:
-                    pass
+            # (3) new path: compile checkable branches; keep track of uncheckables
+            branch_specs: list[tuple[str, Any, str]] = []
+            has_uncheckable = False
+            for b in branches:
+                b_kind, b_payload, b_expected = TypeValidatorMixin._compile(b)
+                if b_kind == "skip":
+                    has_uncheckable = True
+                else:
+                    branch_specs.append((b_kind, b_payload, b_expected))
 
-            # float -> int（只接受整数形态，比如 3.0）
-            if isinstance(val, float) and val.is_integer():
-                ret = int(val)
-                logger.warning(f"🔄 Coerced {name}: {val!r} -> {ret!r}")
-                return ret
+            # If nothing checkable, just skip (can't validate)
+            if not branch_specs:
+                return "skip", None, str(tp)
 
-            # 其他一律不在这里处理，交给后续 fallback 报错
-            # （你外层会最终 raise TypeError）
-            pass
+            return "union", (branch_specs, allow_none, has_uncheckable), str(tp)
 
-        if tp is float:
-            if isinstance(val, float):
-                return val
+        if origin is not None:
+            try:
+                return "origin", origin, getattr(origin, "__name__", str(origin))
+            except TypeError:
+                return "skip", None, str(tp)
 
-            # int -> float
-            if isinstance(val, int) and not isinstance(val, bool):
-                ret = float(val)
-                logger.warning(f"🔄 Coerced {name}: {val!r} -> {ret!r}")
-                return ret
+        if isinstance(tp, type):
+            return "type", tp, tp.__name__
 
-            # str -> float
-            if isinstance(val, str):
-                s = val.strip()
-                try:
-                    ret = float(s)
-                    logger.warning(f"🔄 Coerced {name}: {val!r} -> {ret!r}")
-                    return ret
-                except ValueError:
-                    pass
-
-            pass
-
-        if tp is str:
-            if isinstance(val, str):
-                return val
-
-            # int/float -> str
-            if isinstance(val, (int, float)) and not isinstance(val, bool):
-                ret = str(val)
-                logger.warning(f"🔄 Coerced {name}: {val!r} -> {ret!r}")
-                return ret
-
-            pass
-
-        # [Final Fallback]
-        # 如果什么都没匹配到，且 origin 为 None（普通类），尝试最后一次类型检查
-        if origin is None and isinstance(tp, type):
-            if isinstance(val, tp):
-                return val
-
-        raise TypeError(f"Cannot validate {val!r} as {tp}")
+        return "skip", None, str(tp)
