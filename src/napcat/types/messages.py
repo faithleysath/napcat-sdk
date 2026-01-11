@@ -1,5 +1,5 @@
 from abc import ABC
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import (
     Annotated,
@@ -53,7 +53,7 @@ class ImageData(IgnoreExtraArgsMixin):
         str,
         '如果是接收，则通常是MD5.jpg。如果是发送，"file://D:/a.jpg"、"http://xxx.png"、"base64://xxxxxxxx"',
     ]
-    sub_type: ImageSubType
+    sub_type: ImageSubType = ImageSubType.NORMAL
     url: Annotated[str | None, "如果是发送，可以省略此项"] = None
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
 
@@ -66,7 +66,7 @@ class ImageData(IgnoreExtraArgsMixin):
 
 class ImageDataType(SegmentDataTypeBase):
     file: str
-    sub_type: ImageSubType
+    sub_type: NotRequired[ImageSubType]
     url: NotRequired[str | None]
     file_size: NotRequired[int | None]
 
@@ -142,19 +142,19 @@ class MessageSegment[T_Data: SegmentDataTypeBase](ABC):
             raise TypeError(f"Class {cls.__name__} missing type hint for 'data'")
         cls._data_class = data_cls
 
-        for f in fields(cls):
-            if f.name == "type":
-                type_val = f.default
-                if not isinstance(type_val, str):
-                    continue
-                if type_val is not Any:
-                    if type_val in MessageSegment._registry:
-                        raise ValueError(
-                            f"Duplicate message type registered: {type_val}"
-                        )
+        _MISSING = object()
+        type_val = getattr(cls, "type", _MISSING)
 
-                    MessageSegment._registry[type_val] = cls
-                break
+        if type_val is _MISSING:
+            return
+
+        if not isinstance(type_val, str):
+            return
+
+        if type_val in MessageSegment._registry:
+            raise ValueError(f"Duplicate message type registered: {type_val}")
+
+        MessageSegment._registry[type_val] = cls
 
     def __init__(self, **kwargs: Unpack[T_Data]):  # type: ignore
         object.__setattr__(self, "type", self.__class__.type)
