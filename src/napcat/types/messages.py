@@ -2,6 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     Any,
     ClassVar,
@@ -189,11 +190,19 @@ class TextMessageSegment(MessageSegment[TextDataType]):
     data: TextData
     type: Literal["text"] = "text"
 
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[TextDataType]): ...
+
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class ReplyMessageSegment(MessageSegment[ReplyDataType]):
     data: ReplyData
     type: Literal["reply"] = "reply"
+
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[ReplyDataType]): ...
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -201,11 +210,19 @@ class ImageMessageSegment(MessageSegment[ImageDataType]):
     data: ImageData
     type: Literal["image"] = "image"
 
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[ImageDataType]): ...
+
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class VideoMessageSegment(MessageSegment[VideoDataType]):
     data: VideoData
     type: Literal["video"] = "video"
+
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[VideoDataType]): ...
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
@@ -213,14 +230,26 @@ class FileMessageSegment(MessageSegment[FileDataType]):
     data: FileData
     type: Literal["file"] = "file"
 
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[FileDataType]): ...
+
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class AtMessageSegment(MessageSegment[AtDataType]):
     data: AtData
     type: Literal["at"] = "at"
 
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[AtDataType]): ...
+
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class ForwardMessageSegment(MessageSegment[ForwardDataType]):
     data: ForwardData
     type: Literal["forward"] = "forward"
+
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Unpack[ForwardDataType]): ...
