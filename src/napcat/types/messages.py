@@ -23,9 +23,6 @@ class ImageSubType(IntEnum):
     MEME = 1  # 表情包/斗图
 
 
-# --- Data Objects (对应你定义的 *Data) ---
-
-
 class SegmentDataTypeBase(TypedDict):
     pass
 
@@ -118,8 +115,6 @@ class ForwardData(IgnoreExtraArgsMixin):
 class ForwardDataType(SegmentDataTypeBase):
     id: int
 
-
-# --- Segment Objects (对应你定义的 *MessageSegment) ---
 
 type SegmentDataType = (
     TextData | ReplyData | AtData | ForwardData | ImageData | VideoData | FileData
