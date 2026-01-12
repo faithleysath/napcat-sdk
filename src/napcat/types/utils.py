@@ -1,11 +1,15 @@
 import logging
 from dataclasses import MISSING, fields
 from enum import Enum
+from functools import lru_cache
 from types import UnionType
 from typing import (
+    Annotated,
     Any,
     ClassVar,
+    Final,
     Literal,
+    LiteralString,
     Protocol,
     Self,
     Union,
@@ -69,152 +73,127 @@ class IgnoreExtraArgsInternalMixin(DataclassProtocol):
         return cls(**valid_args)
 
 
-class TypeValidatorMixin:
-    __slots__ = ()
+@lru_cache(maxsize=None)
+def _cached_type_hints(cls: type) -> dict[str, Any]:
+    return get_type_hints(cls, include_extras=True)
 
-    # cls -> list[(field_name, kind, payload, expected)] | None
-    _spec_cache: ClassVar[dict[type, list[tuple[str, str, Any, str]] | None]] = {}
-    _CACHE_MISS = object()
 
-    def __post_init__(self):
-        cls = self.__class__
+def _type_repr(t: Any) -> str:
+    try:
+        return t.__name__  # type: ignore[attr-defined]
+    except Exception:
+        return repr(t)
 
-        # (1) fix: cache None properly (avoid rebuilding spec forever)
-        spec = self._spec_cache.get(cls, self._CACHE_MISS)
-        if spec is self._CACHE_MISS:
-            spec = self._build_spec(cls)  # may be None
-            self._spec_cache[cls] = spec
 
-        if not spec:
-            return
+def _strip_wrappers(t: Any) -> Any:
+    while True:
+        origin = get_origin(t)
+        if origin is Annotated:
+            t = get_args(t)[0]
+            continue
+        if origin is Final:
+            t = get_args(t)[0]
+            continue
+        if origin is ClassVar:
+            t = get_args(t)[0]
+            continue
+        return t
 
-        getv = getattr
-        if isinstance(spec, list):
-            for name, kind, payload, expected in spec:
-                v = getv(self, name)
 
-                ok = self._check(kind, payload, v)
-                if not ok:
-                    raise TypeError(
-                        f"Field '{name}' expected {expected}, got {type(v).__name__}: {v!r}"
-                    )
-
-    @staticmethod
-    def _isinstance_no_bool(v: Any, tp_or_tuple: Any) -> bool:
-        """
-        (4) fix: treat bool as NOT int unless bool is explicitly allowed.
-        - isinstance(True, int) == True in Python, we usually don't want that.
-        """
-        if isinstance(tp_or_tuple, tuple):
-            if isinstance(v, bool):
-                return bool in tp_or_tuple
-            return isinstance(v, tp_or_tuple)
-
-        tp = tp_or_tuple
-        if tp is int and isinstance(v, bool):
-            return False
-        return isinstance(v, tp)
-
-    @classmethod
-    def _check(cls, kind: str, payload: Any, v: Any) -> bool:
-        # Any always passes
-        if kind == "any":
+def _literal_matches(value: Any, literal_vals: tuple[Any, ...]) -> bool:
+    # 比较严格：不仅 value == lit，还要求 type(value) is type(lit)，避免 True == 1 这种情况
+    for lit in literal_vals:
+        if value == lit and type(value) is type(lit):
             return True
+    return False
 
-        # (6) fix: merge duplicated branches (type/origin/enum are all isinstance checks)
-        if kind in ("type", "origin", "enum"):
-            return cls._isinstance_no_bool(v, payload)
 
-        if kind == "literal":
-            return v in payload
+def _shallow_isinstance(value: Any, expected: Any) -> bool:
+    expected = _strip_wrappers(expected)
 
-        if kind == "union_types":
-            types_tuple, allow_none = payload
-            if v is None:
-                return bool(allow_none)
-            return cls._isinstance_no_bool(v, types_tuple)
-
-        # (3) fix: support unions like Optional[list[int]] etc (shallow branch checking)
-        if kind == "union":
-            branch_specs, allow_none, has_uncheckable = payload
-            if v is None:
-                return bool(allow_none)
-
-            for b_kind, b_payload, _b_expected in branch_specs:
-                if cls._check(b_kind, b_payload, v):
-                    return True
-
-            # if union contains uncheckable branches, don't raise false negatives
-            return bool(has_uncheckable)
-
-        # unknown kind -> skip (keep previous behavior)
+    if expected is Any or expected is object:
         return True
 
-    @classmethod
-    def _build_spec(cls, target_cls: type):
-        try:
-            hints = get_type_hints(target_cls, include_extras=False)
-        except Exception as e:
-            logger.warning(
-                f"Failed to resolve type hints for {target_cls.__name__}: {e}"
-            )
-            return None
+    # LiteralString -> str
+    if expected is LiteralString:
+        return isinstance(value, str)
 
-        out: list[tuple[str, str, Any, str]] = []
-        for f in fields(target_cls):
-            tp = hints.get(f.name)
-            if tp is None:
+    origin = get_origin(expected)
+
+    # Literal[...]
+    if origin is Literal:
+        return _literal_matches(value, get_args(expected))
+
+    # Union / Optional / PEP604 |
+    if origin is Union or origin is UnionType:
+        return any(_shallow_isinstance(value, opt) for opt in get_args(expected))
+
+    # type[T]
+    if origin is type:
+        if not isinstance(value, type):
+            return False
+        args = get_args(expected)
+        if not args or args == (Any,):
+            return True
+        base = _strip_wrappers(args[0])
+        return isinstance(base, type) and issubclass(value, base)
+
+    # 枚举：必须是枚举实例（严格要求）
+    if isinstance(expected, type) and issubclass(expected, Enum):
+        return isinstance(value, expected)
+
+    # 容器/泛型：只检查最表层容器类型，不检查内部
+    if origin is not None:
+        if isinstance(origin, type):
+            return isinstance(value, origin)
+        # 其他 origin（比如特殊 typing 构造）无法可靠 isinstance，保守放行
+        return True
+
+    # 普通类
+    if isinstance(expected, type):
+        return isinstance(value, expected)
+
+    # 其他 typing 构造（TypeVar/Protocol 等）：这里无法可靠判断，保守放行
+    return True
+
+
+class TypeValidatorMixin(DataclassProtocol):
+    """
+    dataclass mixin: 在 __post_init__ 做字段类型校验（只检查最表层）。
+    - 容器只校验容器本身类型，不校验内部元素类型
+    - Enum 必须是 Enum 实例，不能用原始值代替
+    """
+
+    __slots__ = ()
+
+    def __post_init__(self) -> None:
+        # 兼容 cooperative multiple inheritance
+        super_post = getattr(super(), "__post_init__", None)
+        if callable(super_post):
+            super_post()
+
+        self.validate_types()
+
+    def validate_types(self) -> None:
+        cls = self.__class__
+        hints = _cached_type_hints(cls)
+
+        errors: list[str] = []
+        for f in fields(cls):
+            name = f.name
+            if name not in hints:
                 continue
-            kind, payload, expected = cls._compile(tp)
-            if kind != "skip":
-                out.append((f.name, kind, payload, expected))
-        return out
 
-    @staticmethod
-    def _compile(tp: Any) -> tuple[str, Any, str]:
-        if tp is Any:
-            return "any", None, "Any"
+            expected = hints[name]
+            value = getattr(self, name)
 
-        origin = get_origin(tp)
-        args = get_args(tp)
+            if not _shallow_isinstance(value, expected):
+                errors.append(
+                    f"{name}: expected {_type_repr(_strip_wrappers(expected))}, "
+                    f"got {type(value).__name__} ({value!r})"
+                )
 
-        if origin is Literal:
-            return "literal", set(args), f"Literal{args}"
-
-        if isinstance(tp, type) and issubclass(tp, Enum):
-            return "enum", tp, tp.__name__
-
-        if origin in (Union, UnionType):
-            allow_none = type(None) in args
-            branches = [a for a in args if a is not type(None)]
-
-            # fast path: union of plain types -> old behavior kept
-            if branches and all(isinstance(a, type) for a in branches):
-                return "union_types", (tuple(branches), allow_none), str(tp)
-
-            # (3) new path: compile checkable branches; keep track of uncheckables
-            branch_specs: list[tuple[str, Any, str]] = []
-            has_uncheckable = False
-            for b in branches:
-                b_kind, b_payload, b_expected = TypeValidatorMixin._compile(b)
-                if b_kind == "skip":
-                    has_uncheckable = True
-                else:
-                    branch_specs.append((b_kind, b_payload, b_expected))
-
-            # If nothing checkable, just skip (can't validate)
-            if not branch_specs:
-                return "skip", None, str(tp)
-
-            return "union", (branch_specs, allow_none, has_uncheckable), str(tp)
-
-        if origin is not None:
-            try:
-                return "origin", origin, getattr(origin, "__name__", str(origin))
-            except TypeError:
-                return "skip", None, str(tp)
-
-        if isinstance(tp, type):
-            return "type", tp, tp.__name__
-
-        return "skip", None, str(tp)
+        if errors:
+            raise TypeError(
+                f"{cls.__name__} type validation failed:\n- " + "\n- ".join(errors)
+            )
