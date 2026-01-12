@@ -1,15 +1,12 @@
 import asyncio
 
-from websockets.asyncio.client import connect as ws_connect
-
-from napcat.connection import Connection
+from napcat.client import NapCatClient
 
 
 async def forward_ws_connection(url: str) -> None:
-    async with ws_connect(url) as ws:
-        async with Connection(ws) as conn:
-            async for event in conn.events():
-                print(event)
+    async with NapCatClient(url) as client:
+        async for event in client.events():
+            print(event)
 
 
 async def main():

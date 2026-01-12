@@ -13,7 +13,7 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     self_id: int
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "NapCatEvent":
+    def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
         # 尝试按照已知逻辑解析
         try:
             post_type = data.get("post_type")

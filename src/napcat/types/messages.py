@@ -41,7 +41,7 @@ class UnknownData(SegmentDataBase):
 
     # 覆盖 from_dict，直接把整个字典塞进 raw，不进行过滤
     @classmethod
-    def from_dict(cls, data: dict) -> "UnknownData":
+    def from_dict(cls, data: dict) -> UnknownData:
         return cls(raw=data)
 
 
@@ -63,7 +63,7 @@ class ReplyData(SegmentDataBase):
     id: int
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ReplyData":
+    def from_dict(cls, data: dict) -> ReplyData:
         return super().from_dict(data | {"id": int(data["id"])})
 
 
