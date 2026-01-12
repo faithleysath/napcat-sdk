@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 from .messages import MessageSegment
 from .utils import IgnoreExtraArgsMixin
