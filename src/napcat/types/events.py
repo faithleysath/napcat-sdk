@@ -74,13 +74,16 @@ class MessageEvent(NapCatEvent):
     raw_message: str
     message: list[MessageSegment]
     message_format: Literal["array"] = "array"
-    post_type: Literal["message", "message_sent"] = "message"
+    post_type: Literal["message", "message_sent"]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MessageEvent:
         msg_type = data.get("message_type")
 
         raw_segments = data.get("message", [])
+        if not isinstance(raw_segments, list):
+            raise ValueError("Invalid message format")
+
         new_data = data | {
             "message": [MessageSegment.from_dict(seg) for seg in raw_segments]
         }
