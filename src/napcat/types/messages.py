@@ -34,6 +34,22 @@ class SegmentDataTypeBase(TypedDict):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
+class UnknownData(SegmentDataBase):
+    """用于存放未知消息段的原始数据"""
+
+    raw: dict[str, Any]
+
+    # 覆盖 from_dict，直接把整个字典塞进 raw，不进行过滤
+    @classmethod
+    def from_dict(cls, data: dict) -> "UnknownData":
+        return cls(raw=data)
+
+
+class UnknownDataType(SegmentDataTypeBase):
+    raw: dict[str, Any]
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
 class TextData(SegmentDataBase):
     text: str
 
@@ -150,7 +166,7 @@ class ForwardDataType(SegmentDataTypeBase):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageSegment[
-    T_Type: LiteralString,
+    T_Type: LiteralString | str,
     T_Data: SegmentDataBase,
     T_DataType: SegmentDataTypeBase,
 ](ABC):
@@ -206,9 +222,19 @@ class MessageSegment[
 
         target_cls = cls._registry.get(seg_type)
         if not target_cls:
-            raise ValueError(f"Unknown segment type: {seg_type}")
+            return UnknownMessageSegment(
+                type=seg_type, data=UnknownData(raw=data_payload)
+            )
 
         return target_cls(**data_payload)
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class UnknownMessageSegment(MessageSegment[str, UnknownData, UnknownDataType]):
+    """表示未知的消息段"""
+
+    type: str  # 这里不再是 Literal，而是动态字符串
+    data: UnknownData  # 存放原始数据
 
 
 @dataclass(slots=True, frozen=True, kw_only=True, init=False)

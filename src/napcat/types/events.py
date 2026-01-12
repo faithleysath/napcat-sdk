@@ -13,15 +13,40 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     self_id: int
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
-        post_type = data.get("post_type")
-        match post_type:
-            case "meta_event":
-                return MetaEvent.from_dict(data)
-            case "message" | "message_sent":
-                return MessageEvent.from_dict(data)
-            case _:
-                raise ValueError(f"Unknown post type: {post_type}")
+    def from_dict(cls, data: dict[str, Any]) -> "NapCatEvent":
+        # 尝试按照已知逻辑解析
+        try:
+            post_type = data.get("post_type")
+            match post_type:
+                case "meta_event":
+                    return MetaEvent.from_dict(data)
+                case "message" | "message_sent":
+                    return MessageEvent.from_dict(data)
+                # 未来加 notice / request 也是写在这里
+                case _:
+                    # 只有在这里显式抛出 ValueError，才能跳到下面的 except
+                    # 如果不抛出，就需要在这里直接 return UnknownEvent(...)
+                    raise ValueError(f"Unknown post type: {post_type}")
+
+        except (ValueError, TypeError, KeyError):
+            # 记录日志可以在这里做，或者静默处理
+            pass
+
+        # --- 兜底逻辑：所有解析失败或未知的类型都走这里 ---
+        return UnknownEvent(
+            time=int(data.get("time", 0)),
+            self_id=int(data.get("self_id", 0)),
+            post_type=str(data.get("post_type", "unknown")),
+            raw_data=data,
+        )
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class UnknownEvent(NapCatEvent):
+    """万能兜底事件：当 post_type 未知或解析失败时返回此对象"""
+
+    raw_data: dict[str, Any]
+    post_type: str = "unknown"  # 覆盖父类可能的类型限制，允许任意字符串
 
 
 # --- Meta Events ---
