@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from .messages import MessageSegment
-from .utils import IgnoreExtraArgsMixin
+from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 # --- Base ---
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class NapCatEvent(IgnoreExtraArgsMixin):
+class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     time: int
     self_id: int
 
@@ -28,7 +28,7 @@ class NapCatEvent(IgnoreExtraArgsMixin):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class HeartbeatStatus(IgnoreExtraArgsMixin):
+class HeartbeatStatus(TypeValidatorMixin, IgnoreExtraArgsMixin):
     online: bool
     good: bool
 

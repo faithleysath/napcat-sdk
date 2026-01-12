@@ -1,4 +1,3 @@
-import logging
 from dataclasses import MISSING, fields
 from enum import Enum
 from functools import lru_cache
@@ -17,8 +16,6 @@ from typing import (
     get_type_hints,
     runtime_checkable,
 )
-
-logger = logging.getLogger("napcat.types.utils")
 
 
 @runtime_checkable
@@ -142,7 +139,7 @@ def _shallow_isinstance(value: Any, expected: Any) -> bool:
     return True
 
 
-class TypeValidatorMixin(DataclassProtocol):
+class TypeValidatorMixin:
     """
     dataclass mixin: 在 __post_init__ 做字段类型校验（只检查最表层）。
     - 容器只校验容器本身类型，不校验内部元素类型
@@ -164,7 +161,7 @@ class TypeValidatorMixin(DataclassProtocol):
         hints = _cached_type_hints(cls)
 
         errors: list[str] = []
-        for f in fields(cls):
+        for f in _cache_cls_fields(cls):
             name = f.name
             if name not in hints:
                 continue

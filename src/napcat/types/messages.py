@@ -14,7 +14,7 @@ from typing import (
     get_type_hints,
 )
 
-from .utils import IgnoreExtraArgsMixin
+from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 
 class ImageSubType(IntEnum):
@@ -25,7 +25,7 @@ class ImageSubType(IntEnum):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class SegmentDataBase(IgnoreExtraArgsMixin):
+class SegmentDataBase(TypeValidatorMixin, IgnoreExtraArgsMixin):
     pass
 
 
