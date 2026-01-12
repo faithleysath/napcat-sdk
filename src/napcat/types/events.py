@@ -1,19 +1,19 @@
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from .messages import MessageSegment
-from .utils import IgnoreExtraArgsInternalMixin, IgnoreExtraArgsMixin
+from .utils import IgnoreExtraArgsMixin
 
 # --- Base ---
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class NapCatEvent(IgnoreExtraArgsInternalMixin):
+class NapCatEvent(IgnoreExtraArgsMixin):
     time: int
     self_id: int
 
-    @staticmethod
-    def from_dict(data: dict[str, Any]) -> NapCatEvent:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         post_type = data.get("post_type")
         match post_type:
             case "meta_event":
@@ -37,8 +37,8 @@ class HeartbeatStatus(IgnoreExtraArgsMixin):
 class MetaEvent(NapCatEvent):
     post_type: Literal["meta_event"] = "meta_event"
 
-    @staticmethod
-    def from_dict(data: dict[str, Any]) -> MetaEvent:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MetaEvent:
         meta_type = data.get("meta_event_type")
         if meta_type == "lifecycle":
             # LifecycleMetaEvent / ConnectEvent
@@ -76,8 +76,8 @@ class MessageEvent(NapCatEvent):
     message_format: Literal["array"] = "array"
     post_type: Literal["message", "message_sent"] = "message"
 
-    @staticmethod
-    def from_dict(data: dict[str, Any]) -> MessageEvent:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MessageEvent:
         msg_type = data.get("message_type")
 
         raw_segments = data.get("message", [])
