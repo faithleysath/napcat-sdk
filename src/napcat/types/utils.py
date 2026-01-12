@@ -49,28 +49,9 @@ class IgnoreExtraArgsMixin(DataclassProtocol):
 
         return cls(**valid_args)
 
-
-class IgnoreExtraArgsInternalMixin(DataclassProtocol):
-    __slots__ = ()
-
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
-        cls_fields = {f.name: f for f in fields(cls) if f.init}
-        valid_args = {k: v for k, v in data.items() if k in cls_fields}
-
-        missing_fields = []
-        for name, field in cls_fields.items():
-            if name not in valid_args:
-                if field.default is MISSING and field.default_factory is MISSING:
-                    missing_fields.append(name)
-
-        if missing_fields:
-            raise ValueError(
-                f"Failed to parse {cls.__name__}: Missing required fields {missing_fields}. "
-                f"Input data: {data}"
-            )
-
-        return cls(**valid_args)
+    def _from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls.from_dict(data)
 
 
 @lru_cache(maxsize=None)
