@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, LiteralString
 
 from .messages import MessageSegment
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
@@ -11,6 +11,7 @@ from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     time: int
     self_id: int
+    post_type: LiteralString | str
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
