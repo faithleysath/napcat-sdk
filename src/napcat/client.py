@@ -3,7 +3,8 @@ from typing import Any, AsyncGenerator
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
-from .types import NapCatEvent
+from .types import NapCatEvent, NapCatResponse
+from .types.responses import ResponseDataBase
 
 
 class NapCatClient:
@@ -50,3 +51,27 @@ class NapCatClient:
         if not self._conn:
             raise RuntimeError("Client not connected")
         return await self._conn.send(data, timeout)
+
+    async def call_action[T: ResponseDataBase](
+        self,
+        action: str,
+        params: dict[str, Any],
+        result_type: type[T] | None = None,  # 新增：接收期望的返回类型
+    ) -> NapCatResponse[T]:
+        """
+        统一调用入口
+        """
+        raw_resp = await self.send({"action": action, "params": params})
+        # 传入 result_type 进行自动反序列化
+        return NapCatResponse.from_dict(raw_resp, data_type=result_type)
+
+    # --- 黑魔法区域 ---
+
+    def __getattr__(self, item: str):
+        if item.startswith("_"):
+            raise AttributeError(item)
+
+        async def dynamic_api_call(**kwargs) -> NapCatResponse[Any]:
+            return await self.call_action(item, kwargs)
+
+        return dynamic_api_call
