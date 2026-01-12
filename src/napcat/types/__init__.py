@@ -5,9 +5,11 @@ from .events import (
     HeartbeatEvent,
     LifecycleMetaEvent,
     MessageEvent,
+    MessageSender,
     MetaEvent,
     NapCatEvent,
     PrivateMessageEvent,
+    UnknownEvent,
 )
 from .messages import (
     AtMessageSegment,
@@ -18,6 +20,7 @@ from .messages import (
     MessageSegment,
     ReplyMessageSegment,
     TextMessageSegment,
+    UnknownMessageSegment,
     VideoMessageSegment,
 )
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
@@ -31,6 +34,8 @@ __all__ = [
     "GroupMessageEvent",
     "HeartbeatEvent",
     "LifecycleMetaEvent",
+    "UnknownEvent",
+    "MessageSender",
     # message segments (most used)
     "MessageSegment",
     "TextMessageSegment",
@@ -40,6 +45,7 @@ __all__ = [
     "FileMessageSegment",
     "AtMessageSegment",
     "ForwardMessageSegment",
+    "UnknownMessageSegment",
     # misc
     "ImageSubType",
     "IgnoreExtraArgsMixin",
