@@ -46,6 +46,10 @@ class TextDataType(SegmentDataTypeBase):
 class ReplyData(SegmentDataBase):
     id: int
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "ReplyData":
+        return super().from_dict(data | {"id": int(data["id"])})
+
 
 class ReplyDataType(SegmentDataTypeBase):
     id: int
@@ -64,7 +68,11 @@ class ImageData(SegmentDataBase):
     @classmethod
     def from_dict(cls, data: dict) -> ImageData:
         return super().from_dict(
-            data | {"sub_type": ImageSubType(data.get("sub_type", 0))}
+            data
+            | {
+                "sub_type": ImageSubType(data.get("sub_type", 0)),
+                "file_size": int(data.get("file_size", 0)),
+            }
         )
 
 
@@ -83,6 +91,15 @@ class VideoData(SegmentDataBase):
     ]
     url: Annotated[str | None, "如果是发送，可以省略此项"] = None
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> VideoData:
+        return super().from_dict(
+            data
+            | {
+                "file_size": int(data.get("file_size", 0)),
+            }
+        )
 
 
 class VideoDataType(SegmentDataTypeBase):
@@ -115,11 +132,20 @@ class AtDataType(SegmentDataTypeBase):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class ForwardData(SegmentDataBase):
-    id: int
+    id: str
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ForwardData:
+        return super().from_dict(
+            data
+            | {
+                "id": str(data.get("id", 0)),
+            }
+        )
 
 
 class ForwardDataType(SegmentDataTypeBase):
-    id: int
+    id: str
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

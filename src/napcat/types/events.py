@@ -68,9 +68,19 @@ class HeartbeatEvent(MetaEvent):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
+class MessageSender(TypeValidatorMixin, IgnoreExtraArgsMixin):
+    user_id: int
+    nickname: str
+    card: str | None = None
+    # 使用 Literal 约束角色，私聊消息可能没有 role 字段，所以设为 None
+    role: Literal["owner", "admin", "member"] | None = None
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
 class MessageEvent(NapCatEvent):
     user_id: int
     message_id: int
+    sender: MessageSender | None = None
     raw_message: str
     message: list[MessageSegment]
     message_format: Literal["array"] = "array"
@@ -85,7 +95,9 @@ class MessageEvent(NapCatEvent):
             raise ValueError("Invalid message format")
 
         new_data = data | {
-            "message": [MessageSegment.from_dict(seg) for seg in raw_segments]
+            "message": [MessageSegment.from_dict(seg) for seg in raw_segments],
+            "sender": data.get("sender", None)
+            and MessageSender.from_dict(data["sender"]),
         }
 
         if msg_type == "group":
