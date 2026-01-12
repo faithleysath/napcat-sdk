@@ -11,7 +11,6 @@ from typing import (
     Literal,
     LiteralString,
     Protocol,
-    Self,
     Union,
     get_args,
     get_origin,
@@ -28,15 +27,15 @@ class DataclassProtocol(Protocol):
 
 
 @lru_cache(maxsize=None)
-def _cache_cls_fields(cls: type) -> tuple:
+def _cache_cls_fields(cls: type[DataclassProtocol]) -> tuple:
     return fields(cls)
 
 
-class IgnoreExtraArgsMixin(DataclassProtocol):
+class IgnoreExtraArgsMixin:
     __slots__ = ()
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
+    def from_dict[T: DataclassProtocol](cls: type[T], data: dict[str, Any]) -> T:
         cls_fields = {f.name: f for f in _cache_cls_fields(cls) if f.init}
         valid_args = {k: v for k, v in data.items() if k in cls_fields}
 
@@ -55,8 +54,8 @@ class IgnoreExtraArgsMixin(DataclassProtocol):
         return cls(**valid_args)
 
     @classmethod
-    def _from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls.from_dict(data)
+    def _from_dict[T: DataclassProtocol](cls: type[T], data: dict[str, Any]) -> T:
+        return IgnoreExtraArgsMixin.from_dict.__func__(cls, data)
 
 
 @lru_cache(maxsize=None)

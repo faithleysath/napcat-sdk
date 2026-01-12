@@ -13,7 +13,7 @@ class NapCatEvent(IgnoreExtraArgsMixin):
     self_id: int
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
+    def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
         post_type = data.get("post_type")
         match post_type:
             case "meta_event":
