@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Literal, LiteralString
+from typing import Any, Literal, LiteralString, cast
 
-from .messages import MessageSegment
+from .messages import MessageSegment, SegmentDataBase, SegmentDataTypeBase
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 # --- Base ---
@@ -108,7 +108,7 @@ class MessageEvent(NapCatEvent):
     message_id: int
     sender: MessageSender | None = None
     raw_message: str
-    message: list[MessageSegment]
+    message: list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]
     message_format: Literal["array"] = "array"
     post_type: Literal["message", "message_sent"]
 
@@ -121,7 +121,7 @@ class MessageEvent(NapCatEvent):
             raise ValueError("Invalid message format")
 
         new_data = data | {
-            "message": [MessageSegment.from_dict(seg) for seg in raw_segments],
+            "message": [MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments)],
             "sender": data.get("sender", None)
             and MessageSender.from_dict(data["sender"]),
         }

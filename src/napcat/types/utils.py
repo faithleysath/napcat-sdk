@@ -1,4 +1,4 @@
-from dataclasses import MISSING, fields
+from dataclasses import MISSING, Field, fields
 from enum import Enum
 from functools import lru_cache
 from types import UnionType
@@ -24,7 +24,7 @@ class DataclassProtocol(Protocol):
 
 
 @lru_cache(maxsize=None)
-def _cache_cls_fields(cls: type[DataclassProtocol]) -> tuple:
+def _cache_cls_fields(cls: type[DataclassProtocol]) -> tuple[Field[Any], ...]:
     return fields(cls)
 
 
@@ -36,7 +36,7 @@ class IgnoreExtraArgsMixin:
         cls_fields = {f.name: f for f in _cache_cls_fields(cls) if f.init}
         valid_args = {k: v for k, v in data.items() if k in cls_fields}
 
-        missing_fields = []
+        missing_fields: list[str] = []
         for name, field in cls_fields.items():
             if name not in valid_args:
                 if field.default is MISSING and field.default_factory is MISSING:

@@ -11,6 +11,7 @@ from typing import (
     NotRequired,
     TypedDict,
     Unpack,
+    cast,
     get_type_hints,
 )
 
@@ -41,7 +42,7 @@ class UnknownData(SegmentDataBase):
 
     # 覆盖 from_dict，直接把整个字典塞进 raw，不进行过滤
     @classmethod
-    def from_dict(cls, data: dict) -> UnknownData:
+    def from_dict(cls, data: dict[str, Any]) -> UnknownData:
         return cls(raw=data)
 
 
@@ -63,7 +64,7 @@ class ReplyData(SegmentDataBase):
     id: int
 
     @classmethod
-    def from_dict(cls, data: dict) -> ReplyData:
+    def from_dict(cls, data: dict[str, Any]) -> ReplyData:
         return super().from_dict(data | {"id": int(data["id"])})
 
 
@@ -82,7 +83,7 @@ class ImageData(SegmentDataBase):
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
 
     @classmethod
-    def from_dict(cls, data: dict) -> ImageData:
+    def from_dict(cls, data: dict[str, Any]) -> ImageData:
         return super().from_dict(
             data
             | {
@@ -109,7 +110,7 @@ class VideoData(SegmentDataBase):
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
 
     @classmethod
-    def from_dict(cls, data: dict) -> VideoData:
+    def from_dict(cls, data: dict[str, Any]) -> VideoData:
         return super().from_dict(
             data
             | {
@@ -151,7 +152,7 @@ class ForwardData(SegmentDataBase):
     id: str
 
     @classmethod
-    def from_dict(cls, data: dict) -> ForwardData:
+    def from_dict(cls, data: dict[str, Any]) -> ForwardData:
         return super().from_dict(
             data
             | {
@@ -174,9 +175,9 @@ class MessageSegment[
     data: T_Data
 
     _data_class: ClassVar[type[SegmentDataBase]]
-    _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
+    _registry: ClassVar[dict[str, type[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]]] = {}
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any):
         super().__init_subclass__(**kwargs)
         hints = get_type_hints(cls)
         data_cls = hints.get("data")
@@ -208,17 +209,19 @@ class MessageSegment[
                 f"Class {self.__class__.__name__} missing type hint for 'data'"
             )
 
-        data_inst = data_cls.from_dict(kwargs)
+        data_inst = data_cls.from_dict(cast(dict[str, Any], kwargs))
         object.__setattr__(self, "data", data_inst)
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> MessageSegment:
+    def from_dict(cls, raw: dict[str, Any]) -> MessageSegment[Any, Any, Any]:
         seg_type = raw.get("type")
         if not isinstance(seg_type, str):
             raise ValueError("Invalid or missing 'type' field in message segment")
         data_payload = raw.get("data", {})
         if not isinstance(data_payload, dict):
             raise ValueError("Invalid message segment data")
+
+        data_payload = cast(dict[str, Any], data_payload)
 
         target_cls = cls._registry.get(seg_type)
         if not target_cls:

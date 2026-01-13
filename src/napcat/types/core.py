@@ -44,7 +44,7 @@ class NapCatResponse[T: ResponseDataBase](TypeValidatorMixin, IgnoreExtraArgsMix
         parsed_payload = raw_payload
 
         # 核心逻辑：如果指定了类型且数据是字典，尝试递归解析
-        if data_type and raw_payload is not None:
+        if data_type and raw_payload != {}:
             parsed_payload = data_type.from_dict(raw_payload)
 
         return cls(
