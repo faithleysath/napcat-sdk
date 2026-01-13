@@ -1,6 +1,4 @@
 # src/napcat/types/__init__.py
-
-from .core import NapCatRequest, NapCatResponse
 from .events import (
     GroupMessageEvent,
     HeartbeatEvent,
@@ -24,7 +22,6 @@ from .messages import (
     UnknownMessageSegment,
     VideoMessageSegment,
 )
-from .responses import LoginInfoData, MessageIdData
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 __all__ = [
@@ -52,9 +49,4 @@ __all__ = [
     "ImageSubType",
     "IgnoreExtraArgsMixin",
     "TypeValidatorMixin",
-    # response
-    "NapCatRequest",
-    "NapCatResponse",
-    "LoginInfoData",
-    "MessageIdData",
 ]

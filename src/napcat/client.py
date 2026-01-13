@@ -4,8 +4,7 @@ from typing import Any, AsyncGenerator
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
-from .types import NapCatEvent, NapCatResponse
-from .types.responses import ResponseDataBase
+from .types import NapCatEvent
 
 
 class NapCatClient:
@@ -58,18 +57,32 @@ class NapCatClient:
             raise RuntimeError("Client not connected")
         return await self._conn.send(data, timeout)
 
-    async def call_action[T: ResponseDataBase](
+    async def call_action(
         self,
         action: str,
-        params: dict[str, Any],
-        result_type: type[T] | None = None,  # 新增：接收期望的返回类型
-    ) -> NapCatResponse[T]:
+        params: dict[str, Any] | None = None,
+    ) -> Any:
         """
         统一调用入口
         """
+        if params is None:
+            params = {}
+            
+        # 1. 发送请求
         raw_resp = await self.send({"action": action, "params": params})
-        # 传入 result_type 进行自动反序列化
-        return NapCatResponse.from_dict(raw_resp, data_type=result_type)
+        
+        # 2. 检查状态（OneBot 标准：retcode 为 0 表示成功）
+        status = raw_resp.get("status")
+        retcode = raw_resp.get("retcode", 0) # 默认为0以防万一，或者-1
+        
+        if status == "failed" or retcode != 0:
+            # 抛出异常，让业务层知道出错了，而不是默默返回一个错误包
+            msg = raw_resp.get("message", "Unknown error")
+            wording = raw_resp.get("wording", "")
+            raise RuntimeError(f"API Call Failed: [{retcode}] {msg} {wording}")
+
+        # 3. 成功则直接返回 'data' 字段
+        return raw_resp.get("data", {})
 
     # --- 黑魔法区域 ---
 
@@ -77,7 +90,7 @@ class NapCatClient:
         if item.startswith("_"):
             raise AttributeError(item)
 
-        async def dynamic_api_call(**kwargs: Any) -> NapCatResponse[Any]:
+        async def dynamic_api_call(**kwargs: Any) -> dict[str, Any]:
             return await self.call_action(item, kwargs)
 
         return dynamic_api_call
