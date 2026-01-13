@@ -21,5 +21,6 @@ module-name = "napcat"
 
 [dependency-groups]
 dev = [
+    "prance[osv]>=25.4.8.0",
     "pytest>=9.0.2",
 ]
