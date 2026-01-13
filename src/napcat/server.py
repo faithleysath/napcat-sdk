@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from types import TracebackType
 from typing import Awaitable, Callable
 
 from websockets.asyncio.server import ServerConnection, serve
@@ -64,7 +65,12 @@ class ReverseWebSocketServer:
         self._server = await serve(self._handle_connection, self.host, self.port)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ):
         await self.close()
 
     async def close(self):
