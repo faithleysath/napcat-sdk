@@ -1,7 +1,7 @@
 # src/napcat/types/core.py
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from .responses import ResponseDataBase
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
@@ -29,11 +29,11 @@ class NapCatResponse[T: ResponseDataBase](TypeValidatorMixin, IgnoreExtraArgsMix
     echo: str | None = None
 
     @classmethod
-    def from_dict(
+    def from_dict[U: ResponseDataBase](
         cls,
         data: dict[str, Any],  # <--- 修正点：必须叫 data，与 Mixin 保持一致
-        data_type: type[T] | None = None,
-    ) -> NapCatResponse[T]:
+        data_type: type[U] | None = None,
+    ) -> NapCatResponse[U]:
         """
         从字典构建响应对象，并尝试自动解析 data 字段
         :param data: 原始字典数据 (API 返回的完整 JSON)
@@ -41,20 +41,20 @@ class NapCatResponse[T: ResponseDataBase](TypeValidatorMixin, IgnoreExtraArgsMix
         """
         # 为了防止混淆，先把字典里的 payload data 取个别名
         raw_payload: dict[str, Any] = data.get("data", {})
-        parsed_payload = raw_payload
+        parsed_payload: U | dict[str, Any] = raw_payload
 
         # 核心逻辑：如果指定了类型且数据是字典，尝试递归解析
         if data_type and raw_payload != {}:
             parsed_payload = data_type.from_dict(raw_payload)
 
-        return cls(
+        return cast(NapCatResponse[U], cls(
             status=data.get("status", "failed"),
             retcode=data.get("retcode", -1),
-            data=parsed_payload,
+            data=cast(Any, parsed_payload),
             message=data.get("message", ""),
             wording=data.get("wording", ""),
             echo=data.get("echo"),
-        )
+        ))
 
     @property
     def is_ok(self) -> bool:

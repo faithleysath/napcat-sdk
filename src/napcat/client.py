@@ -1,3 +1,4 @@
+from types import TracebackType
 from typing import Any, AsyncGenerator
 
 from websockets.asyncio.client import connect as ws_connect
@@ -34,7 +35,12 @@ class NapCatClient:
             raise ValueError("Invalid Client: No URL and no existing connection")
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ):
         # 级联关闭：Client -> Connection -> WebSocket
         if self._conn:
             await self._conn.__aexit__(exc_type, exc_val, exc_tb)
@@ -47,7 +53,7 @@ class NapCatClient:
         async for event in self._conn.events():
             yield NapCatEvent.from_dict(event)
 
-    async def send(self, data: dict, timeout: float = 10.0) -> dict[str, Any]:
+    async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
             raise RuntimeError("Client not connected")
         return await self._conn.send(data, timeout)
@@ -71,7 +77,7 @@ class NapCatClient:
         if item.startswith("_"):
             raise AttributeError(item)
 
-        async def dynamic_api_call(**kwargs) -> NapCatResponse[Any]:
+        async def dynamic_api_call(**kwargs: Any) -> NapCatResponse[Any]:
             return await self.call_action(item, kwargs)
 
         return dynamic_api_call
