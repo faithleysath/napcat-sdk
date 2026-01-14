@@ -1,12 +1,39 @@
 [project]
 name = "napcat-sdk"
-version = "0.1.2"
-description = "Add your description here"
+version = "0.1.3"
+description = "NapCat SDK for Python - Fully typed and async ready"
 readme = "README.md"
+license = { file = "LICENSE" }
 authors = [
     { name = "吴天一", email = "faithleysath@gmail.com" }
 ]
 requires-python = ">=3.14.2"
+keywords = ["napcat", "sdk", "api", "async", "typed"] # 方便在 PyPI 搜索
+# 这里是关键的元数据增强
+classifiers = [
+    # 开发状态 (3 - Alpha, 4 - Beta, 5 - Production/Stable)
+    "Development Status :: 3 - Alpha",
+    
+    # 受众
+    "Intended Audience :: Developers",
+    
+    # 许可证 (请根据实际情况选择，这里假设是 MIT)
+    "License :: OSI Approved :: MIT License",
+    
+    # 编程语言版本
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    
+    # 操作系统
+    "Operating System :: OS Independent",
+    
+    # *** 关键：声明这是一个包含类型注解的包 ***
+    "Typing :: Typed",
+    
+    # 话题
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Communications :: Chat",
+]
 dependencies = [
     "orjson>=3.11.5",
     "websockets>=15.0.1",
