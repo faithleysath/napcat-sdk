@@ -21,6 +21,7 @@ class NapCatClient:
         self._ws_ctx: ws_connect | None = None
 
         self.api = NapCatAPI(self)
+        self.self_id: int = -1
 
     async def __aenter__(self):
         # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
@@ -35,6 +36,18 @@ class NapCatClient:
             await self._conn.__aenter__()
         else:
             raise ValueError("Invalid Client: No URL and no existing connection")
+        # 2. 获取自身 ID (增加容错处理)
+        try:
+            resp = await self.api.get_login_info() 
+            # 检查返回码 (OneBot 标准：retcode 0 为成功)
+            if resp.get("status") == "ok" or resp.get("retcode") == 0:
+                self.self_id = int(resp["data"]["user_id"])
+            else:
+                raise RuntimeError(f"Login info fetch failed: {resp}")
+                
+        except Exception as e:
+            print(f"Warning: Failed to get self_id: {e}")
+            self.self_id = -1
         return self
 
     async def __aexit__(
