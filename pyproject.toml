@@ -34,3 +34,5 @@ openapi-scopes = ["schemas", "paths"]
 output = "src/napcat/types/schemas.py"
 output-model-type = "typing.TypedDict"
 target-python-version = "3.14"
+use-inline-field-description = true
+use-schema-description = true
