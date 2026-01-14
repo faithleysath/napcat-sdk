@@ -1,9 +1,9 @@
 [project]
 name = "napcat-sdk"
-version = "0.1.3"
+version = "0.1.4"
 description = "NapCat SDK for Python - Fully typed and async ready"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { text = "MIT License" }
 authors = [
     { name = "吴天一", email = "faithleysath@gmail.com" }
 ]
