@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any, Literal, LiteralString, cast
 
 if TYPE_CHECKING:
     from ..client import NapCatClient
+else:
+    NapCatClient = Any
 
 from .messages import MessageSegment
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
