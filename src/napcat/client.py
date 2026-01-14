@@ -61,28 +61,14 @@ class NapCatClient:
         self,
         action: str,
         params: dict[str, Any] | None = None,
-    ) -> Any:
+    ) -> dict[str, Any]:
         """
         统一调用入口
         """
         if params is None:
             params = {}
-            
-        # 1. 发送请求
-        raw_resp = await self.send({"action": action, "params": params})
-        
-        # 2. 检查状态（OneBot 标准：retcode 为 0 表示成功）
-        status = raw_resp.get("status")
-        retcode = raw_resp.get("retcode", 0) # 默认为0以防万一，或者-1
-        
-        if status == "failed" or retcode != 0:
-            # 抛出异常，让业务层知道出错了，而不是默默返回一个错误包
-            msg = raw_resp.get("message", "Unknown error")
-            wording = raw_resp.get("wording", "")
-            raise RuntimeError(f"API Call Failed: [{retcode}] {msg} {wording}")
+        return await self.send({"action": action, "params": params})
 
-        # 3. 成功则直接返回 'data' 字段
-        return raw_resp.get("data", {})
 
     # --- 黑魔法区域 ---
 
