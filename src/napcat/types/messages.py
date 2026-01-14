@@ -167,15 +167,15 @@ class ForwardDataType(SegmentDataTypeBase):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageSegment[
-    T_Type: LiteralString | str,
-    T_Data: SegmentDataBase,
-    T_DataType: SegmentDataTypeBase,
+    T_Type: LiteralString | str = LiteralString | str,
+    T_Data: SegmentDataBase = SegmentDataBase,
+    T_DataType: SegmentDataTypeBase = SegmentDataTypeBase,
 ](ABC):
     type: T_Type
     data: T_Data
 
     _data_class: ClassVar[type[SegmentDataBase]]
-    _registry: ClassVar[dict[str, type[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]]] = {}
+    _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
         super().__init_subclass__(**kwargs)

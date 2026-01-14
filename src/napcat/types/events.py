@@ -1,7 +1,10 @@
-from dataclasses import dataclass
-from typing import Any, Literal, LiteralString, cast
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Literal, LiteralString, cast
 
-from .messages import MessageSegment, SegmentDataBase, SegmentDataTypeBase
+if TYPE_CHECKING:
+    from ..client import NapCatClient
+
+from .messages import MessageSegment
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 # --- Base ---
@@ -12,6 +15,9 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     time: int
     self_id: int
     post_type: LiteralString | str
+    _client: NapCatClient | None = field(
+        init=False, repr=False, hash=False, compare=False, default=None
+    )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
@@ -108,7 +114,7 @@ class MessageEvent(NapCatEvent):
     message_id: int
     sender: MessageSender | None = None
     raw_message: str
-    message: list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]
+    message: tuple[MessageSegment]
     message_format: Literal["array"] = "array"
     post_type: Literal["message", "message_sent"]
 
@@ -121,7 +127,7 @@ class MessageEvent(NapCatEvent):
             raise ValueError("Invalid message format")
 
         new_data = data | {
-            "message": [MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments)],
+            "message": tuple(MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments)),
             "sender": data.get("sender", None)
             and MessageSender.from_dict(data["sender"]),
         }
@@ -139,8 +145,30 @@ class PrivateMessageEvent(MessageEvent):
     target_id: int
     message_type: Literal["private"] = "private"
 
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
+        """
+        发送私聊消息，返回消息 ID
+        """
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        return await self._client.send_private_msg(
+            user_id=self.user_id,
+            message=message
+        )
+
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GroupMessageEvent(MessageEvent):
     group_id: int
     message_type: Literal["group"] = "group"
+
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
+        """
+        发送群消息，返回消息 ID
+        """
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        return await self._client.send_group_msg(
+            group_id=self.group_id,
+            message=message
+        )

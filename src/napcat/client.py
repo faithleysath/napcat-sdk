@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Mapping
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
-from .types import NapCatEvent
+from .types import NapCatEvent, MessageSegment, TextMessageSegment
 from .client_api import NapCatAPI
 
 
@@ -66,7 +66,9 @@ class NapCatClient:
         if not self._conn:
             raise RuntimeError("Client not connected")
         async for event in self._conn.events():
-            yield NapCatEvent.from_dict(event)
+            event = NapCatEvent.from_dict(event)
+            object.__setattr__(event, "_client", self)
+            yield event
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
@@ -84,6 +86,30 @@ class NapCatClient:
         if params is None:
             params = {}
         return await self.send({"action": action, "params": params})
+    
+    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment]) -> int:
+        """
+        发送私聊消息，返回消息 ID
+        """
+        if isinstance(message, str):
+            message = [TextMessageSegment(text=message)]
+        resp = await self.api.send_private_msg(
+            user_id=user_id,
+            message=message
+        )
+        return int(resp["data"]["message_id"])
+    
+    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment]) -> int:
+        """
+        发送群消息，返回消息 ID
+        """
+        if isinstance(message, str):
+            message = [TextMessageSegment(text=message)]
+        resp = await self.api.send_group_msg(
+            group_id=group_id,
+            message=message
+        )
+        return int(resp["data"]["message_id"])
 
 
     # --- 黑魔法区域 ---
