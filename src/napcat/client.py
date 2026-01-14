@@ -5,10 +5,10 @@ from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
 from .types import NapCatEvent
-from .client_gen import NapCatClientGenerated
+from .client_api import NapCatAPI
 
 
-class NapCatClient(NapCatClientGenerated):
+class NapCatClient:
     def __init__(
         self,
         ws_url: str | None = None,
@@ -19,6 +19,8 @@ class NapCatClient(NapCatClientGenerated):
         self.token = token
         self._conn = _existing_conn
         self._ws_ctx: ws_connect | None = None
+
+        self.api = NapCatAPI(self)
 
     async def __aenter__(self):
         # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
