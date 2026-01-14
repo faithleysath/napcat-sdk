@@ -24,3 +24,13 @@ dev = [
     "datamodel-code-generator[ruff]>=0.53.0",
     "pytest>=9.0.2",
 ]
+
+[tool.datamodel-codegen]
+formatters = ["ruff-check", "ruff-format"]
+input = "schema.openapi.json"
+input-file-type = "openapi"
+naming-strategy = "full-path"
+openapi-scopes = ["schemas", "paths"]
+output = "src/napcat/types/schemas.py"
+output-model-type = "typing.TypedDict"
+target-python-version = "3.14"
