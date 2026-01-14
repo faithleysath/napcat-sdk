@@ -12,6 +12,12 @@ dependencies = [
     "websockets>=15.0.1",
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/faithleysath/napcat-sdk"
+"Repository" = "https://github.com/faithleysath/napcat-sdk"
+"Documentation" = "https://github.com/faithleysath/napcat-sdk/blob/main/README.md"
+"Bug Tracker" = "https://github.com/faithleysath/napcat-sdk/issues"
+
 [build-system]
 requires = ["uv_build>=0.9.21,<0.10.0"]
 build-backend = "uv_build"
