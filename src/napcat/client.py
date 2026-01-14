@@ -1,13 +1,14 @@
 from types import TracebackType
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Mapping
 
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
 from .types import NapCatEvent
+from .client_gen import NapCatClientGenerated
 
 
-class NapCatClient:
+class NapCatClient(NapCatClientGenerated):
     def __init__(
         self,
         ws_url: str | None = None,
@@ -60,7 +61,7 @@ class NapCatClient:
     async def call_action(
         self,
         action: str,
-        params: dict[str, Any] | None = None,
+        params: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         统一调用入口
