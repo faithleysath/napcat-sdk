@@ -201,7 +201,8 @@ class MessageSegment[
         MessageSegment._registry[type_val] = cls
 
     def __init__(self, **kwargs: Unpack[T_DataType]):  # type: ignore
-        object.__setattr__(self, "type", self.__class__.type)
+        type_field = self.__class__.__dataclass_fields__["type"]
+        object.__setattr__(self, "type", type_field.default)
 
         data_cls = self.__class__._data_class
         if not data_cls:
