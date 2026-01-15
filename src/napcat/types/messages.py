@@ -1,3 +1,5 @@
+from __future__ import annotations
+import builtins
 from abc import ABC
 from dataclasses import dataclass
 from enum import IntEnum
@@ -167,15 +169,15 @@ class ForwardDataType(SegmentDataTypeBase):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageSegment[
-    T_Type: LiteralString | str = LiteralString | str,
-    T_Data: SegmentDataBase = SegmentDataBase,
-    T_DataType: SegmentDataTypeBase = SegmentDataTypeBase,
+    T_Type: LiteralString | str,
+    T_Data: SegmentDataBase,
+    T_DataType: SegmentDataTypeBase,
 ](ABC):
     type: T_Type
     data: T_Data
 
-    _data_class: ClassVar[type[SegmentDataBase]]
-    _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
+    _data_class: ClassVar[builtins.type[SegmentDataBase]]
+    _registry: ClassVar[dict[str, builtins.type[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
         super().__init_subclass__(**kwargs)

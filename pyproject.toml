@@ -1,13 +1,13 @@
 [project]
 name = "napcat-sdk"
-version = "0.2.0"
+version = "0.2.1"
 description = "NapCat SDK for Python - Fully typed and async ready"
 readme = "README.md"
 license = { text = "MIT License" }
 authors = [
     { name = "吴天一", email = "faithleysath@gmail.com" }
 ]
-requires-python = ">=3.14.2"
+requires-python = ">=3.12"
 keywords = ["napcat", "sdk", "api", "async", "typed"] # 方便在 PyPI 搜索
 # 这里是关键的元数据增强
 classifiers = [
@@ -21,7 +21,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     
     # 编程语言版本
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     
     # 操作系统
@@ -66,6 +67,6 @@ naming-strategy = "full-path"
 openapi-scopes = ["schemas", "paths"]
 output = "src/napcat/types/schemas.py"
 output-model-type = "typing.TypedDict"
-target-python-version = "3.14"
+target-python-version = "3.12"
 use-inline-field-description = true
 use-schema-description = true

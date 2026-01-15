@@ -1,7 +1,9 @@
 from types import TracebackType
-from typing import Any, AsyncGenerator, Mapping
+from typing import Any, AsyncGenerator, LiteralString, Mapping
 
 from websockets.asyncio.client import connect as ws_connect
+
+from napcat.types.messages import SegmentDataBase, SegmentDataTypeBase
 
 from .connection import Connection
 from .types import NapCatEvent, MessageSegment, TextMessageSegment
@@ -87,7 +89,7 @@ class NapCatClient:
             params = {}
         return await self.send({"action": action, "params": params})
     
-    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment]) -> int:
+    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
         """
         发送私聊消息，返回消息 ID
         """
@@ -99,7 +101,7 @@ class NapCatClient:
         )
         return int(resp["data"]["message_id"])
     
-    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment]) -> int:
+    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
         """
         发送群消息，返回消息 ID
         """
