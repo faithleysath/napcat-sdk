@@ -1,3 +1,82 @@
-# NapCat-SDK
+<div align="center">
+  <img src="https://img.icons8.com/color/96/sleeping-cat.png" width="100" height="100" alt="NapCat Logo">
 
-`NapCat-SDK`是一个强类型完全、Python3.
+  # NapCat-SDK for Python
+
+  <p align="center">
+    <b>Type-Safe</b> • <b>Async-Ready</b> • <b>Framework-Free</b>
+  </p>
+
+  <p>
+    <a href="https://pypi.org/project/napcat-sdk/">
+        <img src="https://img.shields.io/pypi/v/napcat-sdk?style=flat-square&color=006DAD&label=PyPI" alt="PyPI">
+    </a>
+    <a href="https://github.com/faithleysath/napcat-sdk/blob/main/LICENSE">
+        <img src="https://img.shields.io/github/license/faithleysath/napcat-sdk?style=flat-square&color=blueviolet" alt="License">
+    </a>
+    <img src="https://img.shields.io/badge/Python-3.12+-FFE873?style=flat-square&logo=python&logoColor=black" alt="Python Version">
+    <img src="https://img.shields.io/badge/Typing-Strict-22c55e?style=flat-square" alt="Typing">
+  </p>
+
+  <h3>Stop guessing parameter types. Let the IDE do the work.</h3>
+  <p>告别查文档，享受 <b>100% 类型覆盖</b> 带来的极致补全体验。</p>
+</div>
+
+---
+
+## ⚡ The "IDE Magic"
+
+这就是为什么你应该选择 NapCat-SDK：
+
+| **智能 API 补全** | **精准参数提示** |
+| :---: | :---: |
+| ![API Completion](./img/api-completion.gif) | ![Type Hinting](./img/api-completion.gif) |
+
+> 👆 真正的 **140+ API** 全量类型覆盖，每一次按键都有 IDE 的守护。
+
+---
+
+## ✨ Features
+
+- 🚀 **完全异步**: 基于 `websockets` + `asyncio`，高并发无压力。
+- 💎 **强类型优先**: 每一个 Event、每一个 MessageSegment 都有严格定义。
+- 🔌 **双模式支持**: Client (正向) / Server (反向) 随意切换。
+- 🛠 **零依赖**: 仅依赖 `websockets` 和 `orjson`，极其轻量。
+
+---
+
+## 📸 Quick Look
+
+<div align="center">
+  <img src="https://your-ray-so-image-url.png" alt="Code Example" width="800">
+</div>
+
+<details>
+<summary><b>🖱️ 点击复制代码文本</b></summary>
+
+```python
+import asyncio
+from napcat.client import NapCatClient
+from napcat.types import GroupMessageEvent
+
+async def main():
+    async with NapCatClient(ws_url="...", token="...") as client:
+        async for event in client.events():
+            match event:
+                case GroupMessageEvent(raw_message="ping"):
+                    await event.reply("pong!")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+</details>
+
+---
+
+## 📦 Installation
+
+```bash
+uv add napcat-sdk
+# or
+pip install napcat-sdk
+```
