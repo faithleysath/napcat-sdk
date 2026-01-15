@@ -28,9 +28,9 @@
 
 这就是为什么你应该选择 NapCat-SDK：
 
-| **智能 API 补全** | **精准参数提示** |
+| **智能 API 补全 + 精准参数提示** | **原生开发体验+零心智负担** |
 | :---: | :---: |
-| ![API Completion](./img/api-completion.gif) | ![Type Hinting](./img/api-completion.gif) |
+| ![API Completion](./img/api-completion.gif) | ![Native Dev](./img/native-dev.gif) |
 
 > 👆 真正的 **140+ API** 全量类型覆盖，每一次按键都有 IDE 的守护。
 
