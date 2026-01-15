@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://img.icons8.com/color/96/sleeping-cat.png" width="100" height="100" alt="NapCat Logo">
+  <img src="./img/logo.png" width="180" height="200" alt="NapCat Logo">
 
   # NapCat-SDK for Python
 
