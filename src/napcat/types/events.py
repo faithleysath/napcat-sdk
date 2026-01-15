@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 else:
     NapCatClient = Any
 
-from .messages import MessageSegment
+from .messages import MessageSegment, TextMessageSegment, ReplyMessageSegment, AtMessageSegment
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 # --- Base ---
@@ -140,6 +140,29 @@ class MessageEvent(NapCatEvent):
             return PrivateMessageEvent._from_dict(new_data)
 
         raise ValueError(f"Unknown message type: {msg_type}")
+    
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
+        """
+        发送消息，返回消息 ID
+        子类需要实现此方法
+        """
+        raise NotImplementedError("send_msg must be implemented in subclasses")
+    
+    async def reply(self, message: str | list[MessageSegment], at: bool = False) -> int:
+        """
+        回复当前消息，返回消息 ID
+        """
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        
+        if isinstance(message, str):
+            message = [TextMessageSegment(text=message)]
+
+        return await self.send_msg(
+            [ReplyMessageSegment(id=self.message_id)] + (
+                [AtMessageSegment(qq=self.user_id)] if at else []
+            ) + message
+        )
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
