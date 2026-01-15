@@ -1,6 +1,7 @@
 from __future__ import annotations
 import builtins
 from abc import ABC
+import sys
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import (
@@ -67,7 +68,16 @@ class ReplyData(SegmentDataBase):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ReplyData:
-        return super().from_dict(data | {"id": int(data["id"])})
+        # 1. 先准备好数据，这样这部分逻辑不用写两遍
+        new_data = data | {"id": int(data["id"])}
+
+        # 2. 根据 Python 版本自动切换
+        if sys.version_info >= (3, 14):
+            # 3.14+: 优雅写法
+            return super().from_dict(new_data)
+        else:
+            # <3.14: 丑陋写法 (兼容 3.12 Bug)
+            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class ReplyDataType(SegmentDataTypeBase):
@@ -86,13 +96,15 @@ class ImageData(SegmentDataBase):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ImageData:
-        return super().from_dict(
-            data
-            | {
-                "sub_type": ImageSubType(data.get("sub_type", 0)),
-                "file_size": int(data.get("file_size", 0)),
-            }
-        )
+        new_data = data | {
+            "sub_type": ImageSubType(data.get("sub_type", 0)),
+            "file_size": int(data.get("file_size", 0)),
+        }
+
+        if sys.version_info >= (3, 14):
+            return super().from_dict(new_data)
+        else:
+            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class ImageDataType(SegmentDataTypeBase):
@@ -113,12 +125,14 @@ class VideoData(SegmentDataBase):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VideoData:
-        return super().from_dict(
-            data
-            | {
-                "file_size": int(data.get("file_size", 0)),
-            }
-        )
+        new_data = data | {
+            "file_size": int(data.get("file_size", 0)),
+        }
+
+        if sys.version_info >= (3, 14):
+            return super().from_dict(new_data)
+        else:
+            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class VideoDataType(SegmentDataTypeBase):
@@ -155,12 +169,14 @@ class ForwardData(SegmentDataBase):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ForwardData:
-        return super().from_dict(
-            data
-            | {
-                "id": str(data.get("id", 0)),
-            }
-        )
+        new_data = data | {
+            "id": str(data.get("id", 0)),
+        }
+
+        if sys.version_info >= (3, 14):
+            return super().from_dict(new_data)
+        else:
+            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class ForwardDataType(SegmentDataTypeBase):
