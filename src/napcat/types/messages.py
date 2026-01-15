@@ -180,7 +180,6 @@ class MessageSegment[
     _registry: ClassVar[dict[str, builtins.type[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
-        super().__init_subclass__(**kwargs)
         hints = get_type_hints(cls)
         data_cls = hints.get("data")
 
