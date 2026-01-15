@@ -28,7 +28,7 @@
 
 这就是为什么你应该选择 NapCat-SDK：
 
-| **智能 API 补全 + 精准参数提示** | **原生开发体验+零心智负担** |
+| **智能 API 补全 + 精准参数提示** | **原生开发体验 + 零心智负担** |
 | :---: | :---: |
 | ![API Completion](./img/api-completion.gif) | ![Native Dev](./img/native-dev.gif) |
 
