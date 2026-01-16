@@ -48,7 +48,7 @@
 ## 📸 Quick Look
 
 <div align="center">
-  <img src="https://your-ray-so-image-url.png" alt="Code Example" width="800">
+  <img src="./img/code-snapshot.png" alt="Code Example" width="800">
 </div>
 
 <details>
@@ -56,15 +56,43 @@
 
 ```python
 import asyncio
-from napcat.client import NapCatClient
-from napcat.types import GroupMessageEvent
+from napcat import NapCatClient, GroupMessageEvent, PrivateMessageEvent
+
+# --- 消费者 A: 监听私聊 ---
+async def listen_private(client: NapCatClient):
+    print(">> 私聊监听启动")
+    # 独立的 async for，享受完整的事件流副本
+    async for event in client.events():
+        match event:
+            case PrivateMessageEvent():
+                print(f"[私信] {event.sender.nickname}: {event.raw_message}")
+                await client.send_private_msg(user_id=event.user_id, message="已阅")
+            case _:
+                pass
+
+# --- 消费者 B: 监听群聊 ---
+async def listen_group(client: NapCatClient):
+    print(">> 群聊监听启动")
+    # 另一个独立的 async for，互不抢占
+    async for event in client.events():
+        match event:
+            case GroupMessageEvent():
+                print(f"[群消息] {event.group_id}: {event.raw_message}")
+                await client.send_group_msg(group_id=event.group_id, message="复读")
+            case _:
+                pass
 
 async def main():
-    async with NapCatClient(ws_url="...", token="...") as client:
-        async for event in client.events():
-            match event:
-                case GroupMessageEvent(raw_message="ping"):
-                    await event.reply("pong!")
+    # 正向 WebSocket 连接
+    client = NapCatClient(ws_url="ws://127.0.0.1:8000", token="123456")
+
+    async with client:
+        # 关键点：使用 gather 同时运行多个消费者
+        # 底层 Connection 会自动将收到的事件广播给每一个激活的迭代器
+        await asyncio.gather(
+            listen_private(client),
+            listen_group(client)
+        )
 
 if __name__ == "__main__":
     asyncio.run(main())

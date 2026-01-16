@@ -115,7 +115,7 @@ class MessageSender(TypeValidatorMixin, IgnoreExtraArgsMixin):
 class MessageEvent(NapCatEvent):
     user_id: int
     message_id: int
-    sender: MessageSender | None = None
+    sender: MessageSender
     raw_message: str
     message: tuple[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]
     message_format: Literal["array"] = "array"
@@ -131,8 +131,7 @@ class MessageEvent(NapCatEvent):
 
         new_data = data | {
             "message": tuple(MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments)),
-            "sender": data.get("sender", None)
-            and MessageSender.from_dict(data["sender"]),
+            "sender": MessageSender.from_dict(data["sender"]),
         }
 
         if msg_type == "group":
