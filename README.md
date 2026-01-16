@@ -66,7 +66,7 @@ async def listen_private(client: NapCatClient):
         match event:
             case PrivateMessageEvent():
                 print(f"[私信] {event.sender.nickname}: {event.raw_message}")
-                await client.send_private_msg(user_id=event.user_id, message="已阅")
+                await event.send_msg("已阅")
             case _:
                 pass
 
@@ -78,17 +78,14 @@ async def listen_group(client: NapCatClient):
         match event:
             case GroupMessageEvent():
                 print(f"[群消息] {event.group_id}: {event.raw_message}")
-                await client.send_group_msg(group_id=event.group_id, message="复读")
+                await event.reply("复读")
             case _:
                 pass
 
 async def main():
     # 正向 WebSocket 连接
-    client = NapCatClient(ws_url="ws://127.0.0.1:8000", token="123456")
-
-    async with client:
+    async with NapCatClient(ws_url="ws://localhost:80", token="123") as client:
         # 关键点：使用 gather 同时运行多个消费者
-        # 底层 Connection 会自动将收到的事件广播给每一个激活的迭代器
         await asyncio.gather(
             listen_private(client),
             listen_group(client)
