@@ -1,0 +1,14 @@
+[project]
+name = "napcat-docs"
+version = "0.1.0"
+description = "NapCat SDK Documentation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mkdocs-material>=9.7.1",
+    "mkdocstrings[python]>=1.0.0",
+    "napcat-sdk",
+]
+
+[tool.uv.sources]
+napcat-sdk = { workspace = true }

@@ -1,0 +1,20 @@
+site_name: NapCat SDK
+site_url: https://faithleysath.github.io/napcat-sdk/
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.instant
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [../src]
+
+nav:
+  - Home: index.md
+  - API Reference: api.md

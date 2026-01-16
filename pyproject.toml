@@ -70,3 +70,6 @@ output-model-type = "typing.TypedDict"
 target-python-version = "3.12"
 use-inline-field-description = true
 use-schema-description = true
+
+[tool.uv.workspace]
+members = ["docs"]
