@@ -22,7 +22,6 @@ from .messages import (
     UnknownMessageSegment,
     VideoMessageSegment,
 )
-from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 __all__ = [
     # events (most used)
@@ -47,6 +46,4 @@ __all__ = [
     "UnknownMessageSegment",
     # misc
     "ImageSubType",
-    "IgnoreExtraArgsMixin",
-    "TypeValidatorMixin",
 ]
