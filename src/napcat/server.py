@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from types import TracebackType
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from websockets.asyncio.server import ServerConnection, serve
 

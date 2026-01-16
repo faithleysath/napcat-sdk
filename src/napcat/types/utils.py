@@ -10,7 +10,6 @@ from typing import (
     Literal,
     LiteralString,
     Protocol,
-    Union,
     get_args,
     get_origin,
     get_type_hints,
@@ -107,7 +106,7 @@ def _shallow_isinstance(value: Any, expected: Any) -> bool:
         return _literal_matches(value, get_args(expected))
 
     # Union / Optional / PEP604 |
-    if origin is Union or origin is UnionType:
+    if origin is UnionType:
         return any(_shallow_isinstance(value, opt) for opt in get_args(expected))
 
     # type[T]

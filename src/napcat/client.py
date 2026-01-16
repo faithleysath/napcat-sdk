@@ -1,5 +1,6 @@
 from types import TracebackType
-from typing import Any, AsyncGenerator, LiteralString, Mapping
+from typing import Any, LiteralString
+from collections.abc import AsyncGenerator, Mapping
 
 from websockets.asyncio.client import connect as ws_connect
 
