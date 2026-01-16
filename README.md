@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./img/logo.png" width="250" height="200" alt="NapCat Logo">
+  <img src="https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/img/logo.png" width="250" height="200" alt="NapCat Logo">
 
   # NapCat-SDK for Python
 
@@ -30,7 +30,7 @@
 
 | **智能 API 补全 + 精准参数提示** | **原生开发体验 + 零心智负担** |
 | :---: | :---: |
-| ![API Completion](./img/api-completion.gif) | ![Native Dev](./img/native-dev.gif) |
+| ![API Completion](https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/img/api-completion.gif) | ![Native Dev](https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/img/native-dev.gif) |
 
 > 👆 真正的 **140+ API** 全量类型覆盖，每一次按键都有 IDE 的守护。
 
@@ -48,7 +48,7 @@
 ## 📸 Quick Look
 
 <div align="center">
-  <img src="./img/code-snapshot.png" alt="Code Example" width="800">
+  <img src="https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/img/code-snapshot.png" alt="Code Example" width="800">
 </div>
 
 <details>
