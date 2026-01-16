@@ -58,6 +58,9 @@ dev = [
     "datamodel-code-generator[ruff]>=0.53.0",
     "pytest>=9.0.2",
 ]
+docs = [
+    "zensical>=0.0.16",
+]
 
 [tool.datamodel-codegen]
 formatters = ["ruff-check", "ruff-format"]
@@ -70,6 +73,3 @@ output-model-type = "typing.TypedDict"
 target-python-version = "3.12"
 use-inline-field-description = true
 use-schema-description = true
-
-[tool.uv.workspace]
-members = ["docs"]
