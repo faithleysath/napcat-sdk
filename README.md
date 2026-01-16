@@ -38,10 +38,12 @@
 
 ## ✨ Features
 
-- 🚀 **完全异步**: 基于 `websockets` + `asyncio`，高并发无压力。
-- 💎 **强类型优先**: 每一个 Event、每一个 MessageSegment 都有严格定义。
-- 🔌 **双模式支持**: Client (正向) / Server (反向) 随意切换。
-- 🛠 **零依赖**: 仅依赖 `websockets` 和 `orjson`，极其轻量。
+- 🔄 **协议自动同步**: 基于 OpenAPI 自动构建，与 NapCat 上游定义零时差同步。
+- 🧘 **原生无框架**: 拒绝框架“黑魔法”，纯粹 Python 语法，零心智负担。
+- 💎 **极致类型**: 100% 类型覆盖，每一个参数都有定义，享受极致 IDE 补全。
+- ⚡ **完全异步**: 基于 `websockets` + `asyncio` 原生开发，无惧高并发。
+- 🔌 **双模支持**: 完美支持正向 (Client) 与反向 (Server) WebSocket 连接。
+- 📦 **极轻量级**: 仅依赖 `websockets` 与 `orjson`，极速安装，拒绝臃肿。
 
 ---
 
