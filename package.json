@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "workspaces": [
+    "NapCatQQ/packages/*"
+  ],
+  "dependencies": {
+    "napcat-onebot": "workspace:*"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
