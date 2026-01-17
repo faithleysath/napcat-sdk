@@ -24,6 +24,14 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    "baseUrl": ".",
+    "paths": {
+      // 这里是为了绕过 exports 限制，直接读取源码
+      "napcat-onebot/action/*": ["./NapCatQQ/packages/napcat-onebot/action/*"],
+      // 保持主入口也能用
+      "napcat-onebot": ["./NapCatQQ/packages/napcat-onebot/index.ts"],
+    }
   }
 }

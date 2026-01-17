@@ -10,7 +10,8 @@
     "napcat-onebot": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "ts-json-schema-generator": "^2.4.0"
   },
   "peerDependencies": {
     "typescript": "^5"
