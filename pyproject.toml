@@ -37,6 +37,7 @@ classifiers = [
 ]
 dependencies = [
     "orjson>=3.11.5",
+    "pydantic>=2.12.5",
     "websockets>=15.0.1",
 ]
 
