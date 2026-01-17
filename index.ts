@@ -25,7 +25,7 @@ console.log('🔍 开始扫描 API...');
 // 3. 遍历 ActionName 枚举里的所有 Key
 Object.values(ActionName).forEach((actionKey) => {
     // 尝试获取该 Action 的实例
-    const actionInstance = get(actionKey as any);
+    const actionInstance = get(actionKey);
 
     if (actionInstance && actionInstance.payloadSchema) {
         // 拿到 TypeBox Schema
