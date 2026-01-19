@@ -25,16 +25,16 @@ jobs:
         run: uv build
       # Check that basic features work and we didn't miss to include crucial files
       - name: Smoke test (wheel) 3.12
-        run: uv run --python 3.12 --isolated --no-project --with dist/*.whl tests/smoke_test.py
+        run: uv run --python 3.12 --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
       - name: Smoke test (source distribution) 3.12
-        run: uv run --python 3.12 --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
+        run: uv run --python 3.12 --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
       - name: Smoke test (wheel) 3.13
-        run: uv run --python 3.13 --isolated --no-project --with dist/*.whl tests/smoke_test.py
+        run: uv run --python 3.13 --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
       - name: Smoke test (source distribution) 3.13
-        run: uv run --python 3.13 --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
+        run: uv run --python 3.13 --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
       - name: Smoke test (wheel)
-        run: uv run --isolated --no-project --with dist/*.whl tests/smoke_test.py
+        run: uv run --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
       - name: Smoke test (source distribution)
-        run: uv run --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
+        run: uv run --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
       - name: Publish
         run: uv publish

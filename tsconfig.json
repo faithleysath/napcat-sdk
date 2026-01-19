@@ -30,69 +30,7 @@
     "paths": {
       // === 核心业务模块 ===
       "napcat-onebot": ["./NapCatQQ/packages/napcat-onebot/index.ts"],
-      "napcat-onebot/*": ["./NapCatQQ/packages/napcat-onebot/*"],
-      
-      "napcat-common": ["./NapCatQQ/packages/napcat-common/index.ts"],
-      "napcat-common/*": ["./NapCatQQ/packages/napcat-common/*"],
-
-      "napcat-core": ["./NapCatQQ/packages/napcat-core/index.ts"],
-      "napcat-core/*": ["./NapCatQQ/packages/napcat-core/*"],
-
-      "napcat-framework": ["./NapCatQQ/packages/napcat-framework/index.ts"],
-      "napcat-framework/*": ["./NapCatQQ/packages/napcat-framework/*"],
-
-      // === 基础能力与工具 ===
-      "napcat-native": ["./NapCatQQ/packages/napcat-native/index.ts"],
-      "napcat-native/*": ["./NapCatQQ/packages/napcat-native/*"],
-
-      "napcat-protobuf": ["./NapCatQQ/packages/napcat-protobuf/index.ts"],
-      "napcat-protobuf/*": ["./NapCatQQ/packages/napcat-protobuf/*"],
-
-      "napcat-universal": ["./NapCatQQ/packages/napcat-universal/index.ts"],
-      "napcat-universal/*": ["./NapCatQQ/packages/napcat-universal/*"],
-
-      "napcat-image-size": ["./NapCatQQ/packages/napcat-image-size/index.ts"],
-      "napcat-image-size/*": ["./NapCatQQ/packages/napcat-image-size/*"],
-      
-      "napcat-qrcode": ["./NapCatQQ/packages/napcat-qrcode/index.ts"],
-      "napcat-qrcode/*": ["./NapCatQQ/packages/napcat-qrcode/*"],
-
-      "napcat-pty": ["./NapCatQQ/packages/napcat-pty/index.ts"],
-      "napcat-pty/*": ["./NapCatQQ/packages/napcat-pty/*"],
-
-      // === 插件相关 ===
-      "napcat-plugin": ["./NapCatQQ/packages/napcat-plugin/index.ts"],
-      "napcat-plugin/*": ["./NapCatQQ/packages/napcat-plugin/*"],
-
-      "napcat-plugin-builtin": ["./NapCatQQ/packages/napcat-plugin-builtin/index.ts"],
-      "napcat-plugin-builtin/*": ["./NapCatQQ/packages/napcat-plugin-builtin/*"],
-
-      // === WebUI 前后端 ===
-      "napcat-webui-backend": ["./NapCatQQ/packages/napcat-webui-backend/index.ts"],
-      "napcat-webui-backend/*": ["./NapCatQQ/packages/napcat-webui-backend/*"],
-
-      "napcat-webui-frontend": ["./NapCatQQ/packages/napcat-webui-frontend/index.ts"],
-      "napcat-webui-frontend/*": ["./NapCatQQ/packages/napcat-webui-frontend/*"],
-
-      // === Shell 与 Loader ===
-      "napcat-shell": ["./NapCatQQ/packages/napcat-shell/index.ts"],
-      "napcat-shell/*": ["./NapCatQQ/packages/napcat-shell/*"],
-
-      "napcat-shell-loader": ["./NapCatQQ/packages/napcat-shell-loader/index.ts"],
-      "napcat-shell-loader/*": ["./NapCatQQ/packages/napcat-shell-loader/*"],
-
-      "napcat-napi-loader": ["./NapCatQQ/packages/napcat-napi-loader/index.ts"],
-      "napcat-napi-loader/*": ["./NapCatQQ/packages/napcat-napi-loader/*"],
-
-      // === 开发、测试与构建 ===
-      "napcat-test": ["./NapCatQQ/packages/napcat-test/index.ts"],
-      "napcat-test/*": ["./NapCatQQ/packages/napcat-test/*"],
-
-      "napcat-develop": ["./NapCatQQ/packages/napcat-develop/index.ts"],
-      "napcat-develop/*": ["./NapCatQQ/packages/napcat-develop/*"],
-      
-      "napcat-vite": ["./NapCatQQ/packages/napcat-vite/index.ts"],
-      "napcat-vite/*": ["./NapCatQQ/packages/napcat-vite/*"]
+      "napcat-onebot/*": ["./NapCatQQ/packages/napcat-onebot/*"]
     }
   }
 }

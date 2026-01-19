@@ -1,4 +1,11 @@
 {
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "bun.lock, bunfig.toml, bun-patch.ts, tsconfig.json",
+    "pyproject.toml": "uv.lock, .python-version",
+    "README.md": "CHANGELOG.md, LICENSE, CONTRIBUTING.md, CLAUDE.md"
+  },
   "yaml.schemas": {
     "https://squidfunk.github.io/mkdocs-material/schema.json": "mkdocs.yml"
   },
