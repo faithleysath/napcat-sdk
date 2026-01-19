@@ -1304,6 +1304,86 @@
         }
       }
     },
+    "/send_private_msg": {
+      "post": {
+        "summary": "SendPrivateMsg",
+        "operationId": "send_private_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "number"
+                    },
+                    "res_id": {
+                      "type": "string"
+                    },
+                    "forward_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message_id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_group_msg": {
+      "post": {
+        "summary": "SendGroupMsg",
+        "operationId": "send_group_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "number"
+                    },
+                    "res_id": {
+                      "type": "string"
+                    },
+                    "forward_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message_id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/send_msg": {
       "post": {
         "summary": "SendMsg",
@@ -11440,6 +11520,146 @@
         }
       }
     },
+    "/get_record": {
+      "post": {
+        "summary": "GetRecord",
+        "operationId": "get_record",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "file_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "file_size": {
+                      "type": "string"
+                    },
+                    "file_name": {
+                      "type": "string"
+                    },
+                    "base64": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_image": {
+      "post": {
+        "summary": "GetImage",
+        "operationId": "get_image",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "file_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "file_size": {
+                      "type": "string"
+                    },
+                    "file_name": {
+                      "type": "string"
+                    },
+                    "base64": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/can_send_image": {
+      "post": {
+        "summary": "CanSendImage",
+        "operationId": "can_send_image",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "yes": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "yes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/can_send_record": {
       "post": {
         "summary": "CanSendRecord",
@@ -11881,6 +12101,86 @@
               "application/json": {
                 "schema": {
                   "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_group_forward_msg": {
+      "post": {
+        "summary": "GoCQHTTPSendGroupForwardMsg",
+        "operationId": "send_group_forward_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "number"
+                    },
+                    "res_id": {
+                      "type": "string"
+                    },
+                    "forward_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message_id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_private_forward_msg": {
+      "post": {
+        "summary": "GoCQHTTPSendPrivateForwardMsg",
+        "operationId": "send_private_forward_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "number"
+                    },
+                    "res_id": {
+                      "type": "string"
+                    },
+                    "forward_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message_id"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -18498,6 +18798,46 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_forward_msg": {
+      "post": {
+        "summary": "GoCQHTTPSendForwardMsg",
+        "operationId": "send_forward_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "number"
+                    },
+                    "res_id": {
+                      "type": "string"
+                    },
+                    "forward_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message_id"
+                  ],
+                  "additionalProperties": false
+                }
               }
             }
           }

@@ -62,6 +62,11 @@ const { get: getActionInstance } = createActionMap(mockProxy, mockProxy);
 const project = new Project({ tsConfigFilePath: CONFIG.tsConfig, skipAddingFilesFromTsConfig: true });
 project.addSourceFilesAtPaths(`${CONFIG.sourceRoot}/**/*.ts`);
 
+// --- 修改后的：递归查找继承链逻辑 (支持跨文件 Import) ---
+/**
+ * 递归查找定义了 Response 泛型的父类
+ * 返回找到的 TypeNode (Response 类型) 和该类型所在的 SourceFile (用于上下文解析)
+ */
 function findRootComponentType(classDec: ClassDeclaration): { responseTypeNode: TypeNode, hostSourceFile: SourceFile } | null {
     const extendsClause = classDec.getHeritageClauses()[0];
     if (!extendsClause) return null;
@@ -70,28 +75,27 @@ function findRootComponentType(classDec: ClassDeclaration): { responseTypeNode: 
     if (typeNodes.length === 0) return null;
 
     const expression = typeNodes[0];
-    const typeArgs = expression.getTypeArguments();
+    const typeArgs = expression!.getTypeArguments();
 
-    // 情况 1: 直接继承了 OneBotAction<Req, Res>，有两个泛型参数
+    // 1. 命中目标：当前类显式继承了带两个泛型参数的父类 (OneBotAction)
     // 我们假设第二个参数总是 Response 类型
     if (typeArgs.length === 2) {
         return {
-            responseTypeNode: typeArgs[1],
+            responseTypeNode: typeArgs[1]!,
             hostSourceFile: classDec.getSourceFile()
         };
     }
 
-    // 情况 2: 间接继承 (如 SendMsg extends SendMsgBase)
-    // 需要解析 SendMsgBase 的定义，然后递归
-    const symbol = expression.getExpression().getSymbol();
-    if (symbol) {
-        const declarations = symbol.getDeclarations();
-        // 找到该符号对应的类声明
-        const baseClassDec = declarations.find(d => Node.isClassDeclaration(d)) as ClassDeclaration | undefined;
-        
-        if (baseClassDec) {
-            return findRootComponentType(baseClassDec);
+    // 2. 递归查找：获取父类定义
+    // 使用 .getBaseClass() 方法，ts-morph 会自动解析 import 路径找到对应的源文件和类定义
+    try {
+        const baseClass = classDec.getBaseClass();
+        if (baseClass) {
+            return findRootComponentType(baseClass);
         }
+    } catch (e) {
+        // 某些极端情况下（如文件未被 Project 包含）可能抛错，忽略即可
+        console.warn(`    ⚠️  Could not resolve base class for ${classDec.getName()}: ${(e as Error).message}`);
     }
 
     return null;
