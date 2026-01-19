@@ -1,4 +1,4 @@
-import { Project, ts } from "ts-morph";
+import { Project, ts, Node, ClassDeclaration, SourceFile, TypeNode } from "ts-morph";
 import { createGenerator, type Config } from "ts-json-schema-generator";
 import { writeFileSync, unlinkSync, existsSync } from "node:fs";
 import * as path from "node:path";
@@ -61,6 +61,41 @@ const mockProxy = new Proxy({}, { get: () => new Proxy({}, { get: () => () => { 
 const { get: getActionInstance } = createActionMap(mockProxy, mockProxy);
 const project = new Project({ tsConfigFilePath: CONFIG.tsConfig, skipAddingFilesFromTsConfig: true });
 project.addSourceFilesAtPaths(`${CONFIG.sourceRoot}/**/*.ts`);
+
+function findRootComponentType(classDec: ClassDeclaration): { responseTypeNode: TypeNode, hostSourceFile: SourceFile } | null {
+    const extendsClause = classDec.getHeritageClauses()[0];
+    if (!extendsClause) return null;
+
+    const typeNodes = extendsClause.getTypeNodes();
+    if (typeNodes.length === 0) return null;
+
+    const expression = typeNodes[0];
+    const typeArgs = expression.getTypeArguments();
+
+    // 情况 1: 直接继承了 OneBotAction<Req, Res>，有两个泛型参数
+    // 我们假设第二个参数总是 Response 类型
+    if (typeArgs.length === 2) {
+        return {
+            responseTypeNode: typeArgs[1],
+            hostSourceFile: classDec.getSourceFile()
+        };
+    }
+
+    // 情况 2: 间接继承 (如 SendMsg extends SendMsgBase)
+    // 需要解析 SendMsgBase 的定义，然后递归
+    const symbol = expression.getExpression().getSymbol();
+    if (symbol) {
+        const declarations = symbol.getDeclarations();
+        // 找到该符号对应的类声明
+        const baseClassDec = declarations.find(d => Node.isClassDeclaration(d)) as ClassDeclaration | undefined;
+        
+        if (baseClassDec) {
+            return findRootComponentType(baseClassDec);
+        }
+    }
+
+    return null;
+}
 
 // --- 提取类型字符串逻辑 ---
 function getCleanTypeString(className: string, importManager: ImportManager): string | null {
