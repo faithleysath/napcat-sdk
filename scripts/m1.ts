@@ -98,16 +98,17 @@ function getCleanTypeString(className: string, importManager: ImportManager): st
 
 // --- 主流程 ---
 async function main() {
-    console.log("🚀 Starting OpenAPI generation (Inline Responses + Shared Components)...");
+    console.log("🚀 Starting OpenAPI generation (Root Interface Pattern)...");
 
     const importManager = new ImportManager();
-    // 存储 ActionKey -> 生成的类型名称 的映射
-    const actionTypeMap: Record<string, string> = {}; 
+    // 1. 新增：用来记录所有处理成功的 Action Key
+    const actionKeys: string[] = []; 
     const actionRequestSchemas: Record<string, any> = {};
     const processedPaths = new Set<string>();
+    
     let typeExportContent = "";
 
-    // 1. 收集所有 Action 的 Response 类型
+    // 2. 收集类型
     for (const actionKey of Object.values(ActionName)) {
         const actionInstance = getActionInstance(actionKey as any);
         if (!actionInstance) continue;
@@ -120,44 +121,54 @@ async function main() {
         const typeStr = getCleanTypeString(className, importManager);
         
         if (typeStr) {
-            // 给每个 API 的响应体起个独立的名字，例如 Api_get_group_info_Response
             const uniqueTypeName = `Api_${actionKey.replace(/[^a-zA-Z0-9]/g, '_')}_Response`;
+            typeExportContent += `export type ${uniqueTypeName} = ${typeStr};\n`;
             
-            typeExportContent += `export type ${uniqueTypeName} = ${typeStr};\n\n`;
-            
-            actionTypeMap[actionKey] = uniqueTypeName;
+            // 记录 key，用于稍后组装 Root 接口
+            actionKeys.push(actionKey); 
             actionRequestSchemas[actionKey] = actionInstance.payloadSchema ? { ...actionInstance.payloadSchema } : {};
             
             console.log(`Collect: ${apiPath} -> ${uniqueTypeName}`);
         }
     }
 
-    // 2. 写入临时文件
+    // 3. 核心修改：构建一个超级接口包含所有 API，强制生成器去解析它们
+    const rootInterfaceContent = `
+export interface OpenApiRoot {
+${actionKeys.map(key => {
+    const typeName = `Api_${key.replace(/[^a-zA-Z0-9]/g, '_')}_Response`;
+    // 注意：这里把每个 API 映射为接口的一个属性
+    return `  "${key}": ${typeName};`;
+}).join('\n')}
+}
+`;
+
+    // 4. 写入临时文件（追加了 OpenApiRoot）
     const importStatements = importManager.generateImportStatements(CONFIG.tempFile);
-    const finalFileContent = `/* eslint-disable */\n// @ts-nocheck\n${importStatements}\n\n${typeExportContent}`;
+    const finalFileContent = `/* eslint-disable */\n// @ts-nocheck\n${importStatements}\n\n${typeExportContent}\n${rootInterfaceContent}`;
     writeFileSync(CONFIG.tempFile, finalFileContent);
 
     try {
-        // 3. 生成完整 Schema
+        // 5. 生成 Schema，指定入口为 OpenApiRoot
         const config: Config = {
             path: CONFIG.tempFile,
             tsconfig: CONFIG.tsConfig,
-            type: "*", 
-            expose: "export", // 生成所有 export 的类型
+            type: "OpenApiRoot", // <--- 关键：只生成这个根类型
+            expose: "none",
             skipTypeCheck: true,
-            topRef: false,
+            topRef: true,        // <--- 关键：保留根定义
             jsDoc: "none"
         };
         
-        // 原始 Schema 生成
         const schema = createGenerator(config).createSchema(config.type);
         
-        // 4. Schema 清洗与重组 (关键步骤)
-        // 将 "#/definitions/" 替换为 "#/components/schemas/"
+        // 6. Schema 清洗：将 ref 路径修正
         let schemaString = JSON.stringify(schema, null, 2).replace(/#\/definitions\//g, "#/components/schemas/");
         const rootSchema = JSON.parse(schemaString);
+        
+        // 获取 definitions (包含 Shared Types 和 OpenApiRoot)
         const definitions = rootSchema.definitions || {};
-
+        
         const openApiDoc: any = {
             openapi: "3.0.0",
             info: { title: "NapCat OneBot 11 API", version: "1.0.0" },
@@ -165,33 +176,21 @@ async function main() {
             components: { schemas: {} }
         };
 
-        // 识别哪些是 API Response，哪些是 Shared Types
-        // 我们通过 actionTypeMap 的 values 来判断
-        const apiResponseParams = new Set(Object.values(actionTypeMap));
-
-        // 4.1 分离 Definitions
+        // 7. 提取 Components (排除 OpenApiRoot 本身)
         for (const [defName, defSchema] of Object.entries(definitions)) {
-            if (apiResponseParams.has(defName)) {
-                // 这是一个 API 的 Response 根节点 -> 之后会放进 paths 里，这里不放 components
-                // (暂时忽略，下面组装 path 时直接取用 defSchema)
-            } else {
-                // 这是一个被引用的 Shared Type (如 OB11User) -> 放进 components
-                openApiDoc.components.schemas[defName] = defSchema;
-            }
+            if (defName === "OpenApiRoot") continue;
+            openApiDoc.components.schemas[defName] = defSchema;
         }
 
-        // 4.2 组装 Paths
-        for (const [actionKey, typeName] of Object.entries(actionTypeMap)) {
+        // 8. 从 OpenApiRoot 的 properties 中提取每个 API 的具体 Schema
+        const rootProps = definitions["OpenApiRoot"]?.properties || {};
+
+        for (const actionKey of actionKeys) {
             const apiPath = `/${actionKey}`;
             const className = getActionInstance(actionKey as any).constructor.name;
             
-            // 从生成的 definitions 中把该 API 的具体 Schema 拿出来
-            const specificResponseSchema = definitions[typeName];
-
-            if (!specificResponseSchema) {
-                console.warn(`⚠️ Warning: Schema for ${typeName} missing.`);
-                continue;
-            }
+            // 直接从 Root 的属性里拿 Schema，这样即使是 inline 的也能拿到
+            const specificResponseSchema = rootProps[actionKey] || {};
 
             openApiDoc.paths[apiPath] = {
                 post: {
@@ -205,9 +204,7 @@ async function main() {
                             description: "Successful response",
                             content: {
                                 "application/json": {
-                                    // ✨ 核心修改：直接把 Schema 对象放这里 (Inline)
-                                    // 里面如果引用了 Shared Type，会自动指向 #/components/schemas/xxx
-                                    schema: specificResponseSchema 
+                                    schema: specificResponseSchema
                                 }
                             }
                         }
