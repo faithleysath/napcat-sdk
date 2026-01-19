@@ -30,7 +30,22 @@
     "paths": {
       // === 核心业务模块 ===
       "napcat-onebot": ["./NapCatQQ/packages/napcat-onebot/index.ts"],
-      "napcat-onebot/*": ["./NapCatQQ/packages/napcat-onebot/*"]
+      "napcat-onebot/*": ["./NapCatQQ/packages/napcat-onebot/*"],
+      
+      "napcat-common": ["./NapCatQQ/packages/napcat-common/index.ts"],
+      "napcat-common/*": ["./NapCatQQ/packages/napcat-common/*"],
+
+      "napcat-core": ["./NapCatQQ/packages/napcat-core/index.ts"],
+      "napcat-core/*": ["./NapCatQQ/packages/napcat-core/*"],
+
+      "napcat-protobuf": ["./NapCatQQ/packages/napcat-protobuf/index.ts"],
+      "napcat-protobuf/*": ["./NapCatQQ/packages/napcat-protobuf/*"],
+
+      "napcat-image-size": ["./NapCatQQ/packages/napcat-image-size/index.ts"],
+      "napcat-image-size/*": ["./NapCatQQ/packages/napcat-image-size/*"],
+
+      "@/napcat-onebot/*": ["./NapCatQQ/packages/napcat-onebot/*"],
+      "@/*": ["./NapCatQQ/packages/*"]
     }
   }
 }

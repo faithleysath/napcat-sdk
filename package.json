@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "ts-json-schema-generator": "^2.4.0"
+    "ts-json-schema-generator": "^2.4.0",
+    "ts-morph": "^27.0.2"
   },
   "peerDependencies": {
     "typescript": "^5"
