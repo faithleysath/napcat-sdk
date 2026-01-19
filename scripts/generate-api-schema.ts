@@ -97,22 +97,33 @@ function findRootComponentType(classDec: ClassDeclaration): { responseTypeNode: 
     return null;
 }
 
-// --- 提取类型字符串逻辑 ---
+// --- 修改后的：提取类型字符串逻辑 ---
 function getCleanTypeString(className: string, importManager: ImportManager): string | null {
+    // 1. 找到对应的源文件和类
     const sourceFile = project.getSourceFiles().find(f => f.getClass(className));
     if (!sourceFile) return null;
 
     const classDec = sourceFile.getClass(className);
-    const extendsClause = classDec?.getHeritageClauses()[0];
-    if (!extendsClause || extendsClause.getTypeNodes()[0]!.getTypeArguments().length < 2) return null;
+    if (!classDec) return null;
 
-    const typeArgs = extendsClause.getTypeNodes()[0]!.getTypeArguments();
-    const rawResponseType = typeArgs[1]!.getText();
-
-    const startPos = sourceFile.getEnd();
-    sourceFile.insertText(startPos, EXPAND_HELPER);
+    // 2. 使用递归函数查找真正的 Response 定义位置
+    const rootTypeInfo = findRootComponentType(classDec);
     
-    const tempTypeAlias = sourceFile.addTypeAlias({
+    // 如果找不到，或者链条断了，返回 null
+    if (!rootTypeInfo) return null;
+
+    const { responseTypeNode, hostSourceFile } = rootTypeInfo;
+    
+    // 3. 获取 Response 类型的文本 (例如 "ReturnDataType")
+    const rawResponseType = responseTypeNode.getText();
+
+    // 4. 重要：我们在找到泛型的那个文件 (hostSourceFile) 里注入 helper
+    // 这样才能保证 ReturnDataType 这种非导出类型在作用域内是可见的
+    const startPos = hostSourceFile.getEnd();
+    hostSourceFile.insertText(startPos, EXPAND_HELPER);
+    
+    // 5. 在该文件中创建一个临时 TypeAlias 进行计算
+    const tempTypeAlias = hostSourceFile.addTypeAlias({
         name: "__TempCalc__",
         type: `ExpandRecursively<${rawResponseType}>`,
         isExported: true
@@ -125,8 +136,9 @@ function getCleanTypeString(className: string, importManager: ImportManager): st
         ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.InTypeAlias | ts.TypeFormatFlags.UseFullyQualifiedType | ts.TypeFormatFlags.WriteTypeArgumentsOfSignature
     );
 
+    // 6. 清理现场
     tempTypeAlias.remove();
-    sourceFile.removeText(startPos, sourceFile.getEnd());
+    hostSourceFile.removeText(startPos, hostSourceFile.getEnd());
 
     return importManager.processTypeString(expandedTypeString);
 }
