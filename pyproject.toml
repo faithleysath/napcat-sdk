@@ -80,8 +80,15 @@ output = "src/napcat/types/schemas.py"
 output-model-type = "typing.TypedDict"
 
 [tool.datamodel-codegen.profiles.message-typedict]
-no-use-closed-typed-dict = true
 input = "schemas/OB11MessageData.schema.json"
 input-file-type = "jsonschema"
-output = "test1.py"
+output = "src/napcat/types/messages/typedict_schemas.py"
 output-model-type = "typing.TypedDict"
+enum-field-as-literal = "all"
+
+[tool.datamodel-codegen.profiles.message-dataclass]
+input = "schemas/OB11MessageData.schema.json"
+input-file-type = "jsonschema"
+output = "src/napcat/types/messages/dataclass_schemas.py"
+output-model-type = "dataclasses.dataclass"
+enum-field-as-literal = "all"
