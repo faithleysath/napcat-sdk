@@ -35,7 +35,7 @@ with open(api_schema_path, "r", encoding="utf-8") as f:
 
 apifox_schema: dict[str, Any] = {}
 try:
-    with open("apifox.openapi.json", "r", encoding="utf-8") as f:
+    with open("schemas/apifox.openapi.json", "r", encoding="utf-8") as f:
         apifox_schema = json.load(f)
 except FileNotFoundError:
     pass

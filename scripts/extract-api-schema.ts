@@ -9,7 +9,7 @@ import { ActionName } from 'napcat-onebot/action/router';
 const CONFIG = {
     tsConfig: "tsconfig.json",
     sourceRoot: "NapCatQQ/packages/napcat-onebot/action",
-    outputFile: "generated.openapi.json",
+    outputFile: "schemas/generated.openapi.json",
     tempFile: path.resolve(process.cwd(), `__temp_schema_gen_${Date.now()}.ts`)
 };
 

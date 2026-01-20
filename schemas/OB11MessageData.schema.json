@@ -1,0 +1,797 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/OB11MessageData",
+  "definitions": {
+    "OB11MessageData": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/OB11MessageText"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageFace"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageMFace"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageAt"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageReply"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageImage"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageRecord"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageFile"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageVideo"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageNode"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageIdMusic"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageCustomMusic"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageJson"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageDice"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageRPS"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageMarkdown"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageForward"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageContext"
+        },
+        {
+          "$ref": "#/definitions/OB11MessagePoke"
+        }
+      ]
+    },
+    "OB11MessageText": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageFace": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "face"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "resultId": {
+              "type": "string"
+            },
+            "chainCount": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageMFace": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "mface"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "emoji_package_id": {
+              "type": "number"
+            },
+            "emoji_id": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "emoji_package_id",
+            "emoji_id",
+            "key",
+            "summary"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageAt": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "at"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "qq": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "qq"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageReply": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "reply"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageImage": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "string"
+            },
+            "sub_type": {
+              "$ref": "#/definitions/PicSubType"
+            },
+            "path": {
+              "type": "string"
+            },
+            "thumb": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "image"
+        }
+      },
+      "required": [
+        "data",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "PicSubType": {
+      "type": "number",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "description": "图片子类型枚举"
+    },
+    "OB11MessageRecord": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "thumb": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "string",
+          "const": "record"
+        }
+      },
+      "required": [
+        "data",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageFile": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "thumb": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "string",
+          "const": "file"
+        }
+      },
+      "required": [
+        "data",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageVideo": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "thumb": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "string",
+          "const": "video"
+        }
+      },
+      "required": [
+        "data",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageNode": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "node"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "user_id": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "uin": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "nickname": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "content": {
+              "$ref": "#/definitions/OB11MessageMixType"
+            },
+            "source": {
+              "type": "string"
+            },
+            "news": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "summary": {
+              "type": "string"
+            },
+            "prompt": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nickname",
+            "content"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageMixType": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OB11MessageData"
+          }
+        },
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/OB11MessageData"
+        }
+      ]
+    },
+    "OB11MessageIdMusic": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "music"
+        },
+        "data": {
+          "$ref": "#/definitions/IdMusicSignPostData"
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "IdMusicSignPostData": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "qq",
+            "163",
+            "kugou",
+            "migu",
+            "kuwo"
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageCustomMusic": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "music"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "content": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "qq",
+                "163",
+                "kugou",
+                "migu",
+                "kuwo",
+                "custom"
+              ]
+            },
+            "id": {
+              "not": {}
+            },
+            "url": {
+              "type": "string"
+            },
+            "audio": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "image": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "image",
+            "type",
+            "url"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageJson": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "json"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "token": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "token"
+              ],
+              "additionalProperties": false
+            },
+            "data": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageDice": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dice"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageRPS": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "rps"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageMarkdown": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "markdown"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "content"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageForward": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "forward"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessageContext": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "contact"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "qq",
+                "group"
+              ]
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OB11MessagePoke": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "poke"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -77,7 +77,7 @@ use-attribute-docstrings = true
 use-field-description-example = true
 
 [tool.datamodel-codegen.profiles.api-typedict]
-input = "generated.openapi.json"
+input = "schemas/generated.openapi.json"
 input-file-type = "openapi"
 openapi-scopes = ["paths"]
 output = "src/napcat/types/schemas.py"
