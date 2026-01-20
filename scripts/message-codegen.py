@@ -4,7 +4,6 @@ import tomllib
 from pathlib import Path
 
 import libcst as cst
-from libcst import matchers as m
 
 # --- 配置与常量 ---
 PROJECT_ROOT = Path(__file__).parents[1]  # 假设脚本在 scripts/ 目录下
@@ -18,6 +17,7 @@ REGEX_REPLACEMENTS = [
         r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?",
         "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n"
     ),
+    (r", closed=True", ""),
     # 基础类型修正
     (r"\bfloat\b", "int"),
     (r", closed=True", ""),
@@ -28,7 +28,7 @@ REGEX_REPLACEMENTS = [
     ),
     # 移除无用导入
     (r"from __future__ import annotations\nfrom dataclasses import dataclass\nfrom typing import Any, Literal", ""),
-    (r"OB11", "")
+    (r"OB11", ""),
 ]
 
 
@@ -110,12 +110,13 @@ class DataclassTransformer(cst.CSTTransformer):
         for stmt in original_node.body.body:
             if isinstance(stmt, cst.SimpleStatementLine):
                 for small_stmt in stmt.body:
-                    if m.matches(small_stmt, m.AnnAssign(target=m.Name("data"))):
-                        # 提取注解 MessageTextData
-                        if isinstance(small_stmt.annotation.annotation, cst.Name):
-                            data_class_name = small_stmt.annotation.annotation.value
+                    if isinstance(small_stmt, cst.AnnAssign):
+                        if isinstance(small_stmt.target, cst.Name) and small_stmt.target.value == "data":
+                            if isinstance(small_stmt.annotation.annotation, cst.Name):
+                                data_class_name = small_stmt.annotation.annotation.value
                         break
-            if data_class_name: break
+            if data_class_name:
+                break
         
         if not data_class_name:
             return node
@@ -193,10 +194,8 @@ def process_typedicts(file_path: Path) -> tuple[str, set[str]]:
     
     # 1. 正则预处理
     for pattern, replacement in REGEX_REPLACEMENTS:
-        if "TypedDict" in pattern or "float" in pattern or "TYPE_CHECKING" in replacement:
+        if "TypedDict" in pattern or "float" in pattern or "TYPE_CHECKING" in replacement or "closed" in pattern:
             content = re.sub(pattern, replacement, content)
-    
-    content = re.sub(r", closed=True", "", content)
     # 2. CST 处理
     module = cst.parse_module(content)
     transformer = TypedDictTransformer()
