@@ -73,7 +73,7 @@ use-root-model-type-alias = true
 use-type-alias = true
 
 [tool.datamodel-codegen.profiles.api-typedict]
-input = "openapi.json"
+input = "generated.openapi.json"
 input-file-type = "openapi"
 openapi-scopes = ["paths"]
 output = "src/napcat/types/schemas.py"

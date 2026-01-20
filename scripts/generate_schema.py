@@ -17,6 +17,7 @@ with open("pyproject.toml", "rb") as f:
 api_schema_code_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedict"]["output"]
 api_schema_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedict"]["input"]
 
+subprocess.run(["bun", "scripts/generate-api-schema.ts"], check=True)
 subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "api-typedict"], check=True)
 
 with open(api_schema_code_path, "r") as f:
