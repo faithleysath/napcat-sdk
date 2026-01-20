@@ -65,7 +65,7 @@ class UnknownEvent(NapCatEvent):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class HeartbeatStatus(TypeValidatorMixin, IgnoreExtraArgsMixin):
     # 对应 NapCatQQ/packages/napcat-onebot/event/meta/OB11HeartbeatEvent.ts
-    online: bool
+    online: bool | None = None
     good: bool
 
 
@@ -121,7 +121,7 @@ class MessageSender(TypeValidatorMixin, IgnoreExtraArgsMixin):
 class MessageEvent(NapCatEvent):
     # 对应 NapCatQQ/packages/napcat-onebot/types/message.ts 中的 OB11Message
     message_id: int
-    user_id: int
+    user_id: int | str
     message_seq: int | None = None
     real_id: int | None = None
     sender: MessageSender
@@ -129,6 +129,10 @@ class MessageEvent(NapCatEvent):
     message: tuple[MessageSegment]
     message_format: Literal["array"] = "array"
     font: int | None = None
+
+    # --- 新增字段 ---
+    real_seq: str | None = None  # 对应 TS real_seq
+    message_sent_type: str | None = None # 对应 TS message_sent_type
     
     # 子类型，对应文档：friend, group (临时), normal (群普通)
     sub_type: Literal["friend", "group", "normal"] | str | None = None
@@ -177,7 +181,7 @@ class MessageEvent(NapCatEvent):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class PrivateMessageEvent(MessageEvent):
     # 对应 message.private
-    target_id: int
+    target_id: int | None = None  # TS 中定义了 target_id?: number
     # 如果是群临时会话 (sub_type='group')，TS 中定义了 temp_source
     temp_source: int | None = None 
     message_type: Literal["private"] = "private"
@@ -187,7 +191,7 @@ class PrivateMessageEvent(MessageEvent):
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_private_msg(
-            user_id=self.user_id,
+            user_id=int(self.user_id),
             message=message
         )
 
@@ -195,7 +199,7 @@ class PrivateMessageEvent(MessageEvent):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GroupMessageEvent(MessageEvent):
     # 对应 message.group
-    group_id: int
+    group_id: int | str
     group_name: str | None = None # TS 中定义了 group_name
     message_type: Literal["group"] = "group"
     sub_type: Literal["normal"] | str | None = None
@@ -204,6 +208,6 @@ class GroupMessageEvent(MessageEvent):
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_group_msg(
-            group_id=self.group_id,
+            group_id=int(self.group_id),
             message=message
         )
