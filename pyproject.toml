@@ -65,10 +65,10 @@ docs = [
 
 [tool.datamodel-codegen]
 formatters = ["ruff-check", "ruff-format"]
-input = "schema.openapi.json"
+input = "openapi.json"
 input-file-type = "openapi"
 naming-strategy = "full-path"
-openapi-scopes = ["schemas", "paths"]
+openapi-scopes = ["paths"]
 output = "src/napcat/types/schemas.py"
 output-model-type = "typing.TypedDict"
 target-python-version = "3.12"
