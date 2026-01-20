@@ -4,7 +4,6 @@
 from collections.abc import Mapping
 from typing import Any, Unpack, Protocol
 from .types.schemas import (
-   CleanStreamTempFilePostRequest,
    CleanStreamTempFilePostResponse,
    TestDownloadStreamPostRequest,
    TestDownloadStreamPostResponse,
@@ -42,9 +41,7 @@ from .types.schemas import (
    GetDoubtFriendsAddRequestPostResponse,
    SetDoubtFriendsAddRequestPostRequest,
    SetDoubtFriendsAddRequestPostResponse,
-   GetRkeyPostRequest,
    GetRkeyPostResponse,
-   GetRkeyServerPostRequest,
    GetRkeyServerPostResponse,
    SetGroupRemarkPostRequest,
    SetGroupRemarkPostResponse,
@@ -52,13 +49,9 @@ from .types.schemas import (
    GetPrivateFileUrlPostResponse,
    ClickInlineKeyboardButtonPostRequest,
    ClickInlineKeyboardButtonPostResponse,
-   GetUnidirectionalFriendListPostRequest,
    GetUnidirectionalFriendListPostResponse,
-   SendPrivateMsgPostRequest,
    SendPrivateMsgPostResponse,
-   SendGroupMsgPostRequest,
    SendGroupMsgPostResponse,
-   SendMsgPostRequest,
    SendMsgPostResponse,
    DeleteMsgPostRequest,
    DeleteMsgPostResponse,
@@ -90,7 +83,6 @@ from .types.schemas import (
    SetFriendRemarkPostResponse,
    SetGroupAddRequestPostRequest,
    SetGroupAddRequestPostResponse,
-   GetLoginInfoPostRequest,
    GetLoginInfoPostResponse,
    GetStrangerInfoPostRequest,
    GetStrangerInfoPostResponse,
@@ -108,7 +100,6 @@ from .types.schemas import (
    GetGroupHonorInfoPostResponse,
    GetCookiesPostRequest,
    GetCookiesPostResponse,
-   GetCsrfTokenPostRequest,
    GetCsrfTokenPostResponse,
    GetCredentialsPostRequest,
    GetCredentialsPostResponse,
@@ -116,35 +107,23 @@ from .types.schemas import (
    GetRecordPostResponse,
    GetImagePostRequest,
    GetImagePostResponse,
-   CanSendImagePostRequest,
    CanSendImagePostResponse,
-   CanSendRecordPostRequest,
    CanSendRecordPostResponse,
-   GetStatusPostRequest,
    GetStatusPostResponse,
-   GetVersionInfoPostRequest,
    GetVersionInfoPostResponse,
-   SetRestartPostRequest,
    SetRestartPostResponse,
-   CleanCachePostRequest,
    CleanCachePostResponse,
-   BotExitPostRequest,
    BotExitPostResponse,
    SetQqProfilePostRequest,
    SetQqProfilePostResponse,
    FieldGetModelShowPostRequest,
    FieldGetModelShowPostResponse,
-   FieldSetModelShowPostRequest,
    FieldSetModelShowPostResponse,
-   GetOnlineClientsPostRequest,
    GetOnlineClientsPostResponse,
    DeleteFriendPostRequest,
    DeleteFriendPostResponse,
-   MarkMsgAsReadPostRequest,
    MarkMsgAsReadPostResponse,
-   SendGroupForwardMsgPostRequest,
    SendGroupForwardMsgPostResponse,
-   SendPrivateForwardMsgPostRequest,
    SendPrivateForwardMsgPostResponse,
    GetGroupMsgHistoryPostRequest,
    GetGroupMsgHistoryPostResponse,
@@ -190,7 +169,6 @@ from .types.schemas import (
    DownloadFilePostResponse,
    CheckUrlSafelyPostRequest,
    CheckUrlSafelyPostResponse,
-   FieldHandleQuickOperationPostRequest,
    FieldHandleQuickOperationPostResponse,
    SetDiyOnlineStatusPostRequest,
    SetDiyOnlineStatusPostResponse,
@@ -202,11 +180,9 @@ from .types.schemas import (
    SendGroupArkSharePostResponse,
    SendArkSharePostRequest,
    SendArkSharePostResponse,
-   GetRobotUinRangePostRequest,
    GetRobotUinRangePostResponse,
    SetOnlineStatusPostRequest,
    SetOnlineStatusPostResponse,
-   GetFriendsWithCategoryPostRequest,
    GetFriendsWithCategoryPostResponse,
    SetQqAvatarPostRequest,
    SetQqAvatarPostResponse,
@@ -220,7 +196,6 @@ from .types.schemas import (
    TranslateEn2zhPostResponse,
    SetMsgEmojiLikePostRequest,
    SetMsgEmojiLikePostResponse,
-   SendForwardMsgPostRequest,
    SendForwardMsgPostResponse,
    MarkPrivateMsgAsReadPostRequest,
    MarkPrivateMsgAsReadPostResponse,
@@ -236,7 +211,6 @@ from .types.schemas import (
    SetSelfLongnickPostResponse,
    GetRecentContactPostRequest,
    GetRecentContactPostResponse,
-   FieldMarkAllAsReadPostRequest,
    FieldMarkAllAsReadPostResponse,
    GetProfileLikePostRequest,
    GetProfileLikePostResponse,
@@ -250,7 +224,6 @@ from .types.schemas import (
    GetGroupInfoExPostResponse,
    GetGroupDetailInfoPostRequest,
    GetGroupDetailInfoPostResponse,
-   GetGroupIgnoreAddRequestPostRequest,
    GetGroupIgnoreAddRequestPostResponse,
    FieldDelGroupNoticePostRequest,
    FieldDelGroupNoticePostResponse,
@@ -258,11 +231,9 @@ from .types.schemas import (
    FriendPokePostResponse,
    GroupPokePostRequest,
    GroupPokePostResponse,
-   NcGetPacketStatusPostRequest,
    NcGetPacketStatusPostResponse,
    NcGetUserStatusPostRequest,
    NcGetUserStatusPostResponse,
-   NcGetRkeyPostRequest,
    NcGetRkeyPostResponse,
    GetGroupShutListPostRequest,
    GetGroupShutListPostResponse,
@@ -272,11 +243,8 @@ from .types.schemas import (
    TransGroupFilePostResponse,
    RenameGroupFilePostRequest,
    RenameGroupFilePostResponse,
-   GetGuildListPostRequest,
    GetGuildListPostResponse,
-   GetGuildServiceProfilePostRequest,
    GetGuildServiceProfilePostResponse,
-   GetGroupIgnoredNotifiesPostRequest,
    GetGroupIgnoredNotifiesPostResponse,
    SetGroupSignPostRequest,
    SetGroupSignPostResponse,
@@ -292,7 +260,6 @@ from .types.schemas import (
    GetAiCharactersPostResponse,
    SendGroupAiRecordPostRequest,
    SendGroupAiRecordPostResponse,
-   GetClientkeyPostRequest,
    GetClientkeyPostResponse,
    SendPokePostRequest,
    SendPokePostResponse,
@@ -311,7 +278,7 @@ class NapCatAPI:
         self._client = client
 
 
-    async def clean_stream_temp_file(self, **kwargs: Unpack[CleanStreamTempFilePostRequest]) -> CleanStreamTempFilePostResponse:
+    async def clean_stream_temp_file(self, **kwargs: Any) -> CleanStreamTempFilePostResponse:
         """
         清理流临时文件
 
@@ -463,7 +430,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("set_doubt_friends_add_request", kwargs)
     
-    async def get_rkey(self, **kwargs: Unpack[GetRkeyPostRequest]) -> GetRkeyPostResponse:
+    async def get_rkey(self, **kwargs: Any) -> GetRkeyPostResponse:
         """
         获取rkey
 
@@ -471,7 +438,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_rkey", kwargs)
     
-    async def get_rkey_server(self, **kwargs: Unpack[GetRkeyServerPostRequest]) -> GetRkeyServerPostResponse:
+    async def get_rkey_server(self, **kwargs: Any) -> GetRkeyServerPostResponse:
         """
         获取rkey服务
 
@@ -503,7 +470,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("click_inline_keyboard_button", kwargs)
     
-    async def get_unidirectional_friend_list(self, **kwargs: Unpack[GetUnidirectionalFriendListPostRequest]) -> GetUnidirectionalFriendListPostResponse:
+    async def get_unidirectional_friend_list(self, **kwargs: Any) -> GetUnidirectionalFriendListPostResponse:
         """
         获取单向好友列表
 
@@ -511,7 +478,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_unidirectional_friend_list", kwargs)
     
-    async def send_private_msg(self, **kwargs: Unpack[SendPrivateMsgPostRequest]) -> SendPrivateMsgPostResponse:
+    async def send_private_msg(self, **kwargs: Any) -> SendPrivateMsgPostResponse:
         """
         send_private_msg
 
@@ -519,7 +486,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_private_msg", kwargs)
     
-    async def send_group_msg(self, **kwargs: Unpack[SendGroupMsgPostRequest]) -> SendGroupMsgPostResponse:
+    async def send_group_msg(self, **kwargs: Any) -> SendGroupMsgPostResponse:
         """
         send_group_msg
 
@@ -527,7 +494,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_group_msg", kwargs)
     
-    async def send_msg(self, **kwargs: Unpack[SendMsgPostRequest]) -> SendMsgPostResponse:
+    async def send_msg(self, **kwargs: Any) -> SendMsgPostResponse:
         """
         send_msg
 
@@ -655,7 +622,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("set_group_add_request", kwargs)
     
-    async def get_login_info(self, **kwargs: Unpack[GetLoginInfoPostRequest]) -> GetLoginInfoPostResponse:
+    async def get_login_info(self, **kwargs: Any) -> GetLoginInfoPostResponse:
         """
         获取登录号信息
 
@@ -727,7 +694,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_cookies", kwargs)
     
-    async def get_csrf_token(self, **kwargs: Unpack[GetCsrfTokenPostRequest]) -> GetCsrfTokenPostResponse:
+    async def get_csrf_token(self, **kwargs: Any) -> GetCsrfTokenPostResponse:
         """
         获取 CSRF Token
 
@@ -759,7 +726,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_image", kwargs)
     
-    async def can_send_image(self, **kwargs: Unpack[CanSendImagePostRequest]) -> CanSendImagePostResponse:
+    async def can_send_image(self, **kwargs: Any) -> CanSendImagePostResponse:
         """
         检查是否可以发送图片
 
@@ -767,7 +734,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("can_send_image", kwargs)
     
-    async def can_send_record(self, **kwargs: Unpack[CanSendRecordPostRequest]) -> CanSendRecordPostResponse:
+    async def can_send_record(self, **kwargs: Any) -> CanSendRecordPostResponse:
         """
         检查是否可以发送语音
 
@@ -775,7 +742,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("can_send_record", kwargs)
     
-    async def get_status(self, **kwargs: Unpack[GetStatusPostRequest]) -> GetStatusPostResponse:
+    async def get_status(self, **kwargs: Any) -> GetStatusPostResponse:
         """
         获取状态
 
@@ -783,7 +750,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_status", kwargs)
     
-    async def get_version_info(self, **kwargs: Unpack[GetVersionInfoPostRequest]) -> GetVersionInfoPostResponse:
+    async def get_version_info(self, **kwargs: Any) -> GetVersionInfoPostResponse:
         """
         获取版本信息
 
@@ -791,13 +758,13 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_version_info", kwargs)
     
-    async def set_restart(self, **kwargs: Unpack[SetRestartPostRequest]) -> SetRestartPostResponse:
+    async def set_restart(self, **kwargs: Any) -> SetRestartPostResponse:
         """
         未提供描述
         """
         return await self._client.call_action("set_restart", kwargs)
     
-    async def clean_cache(self, **kwargs: Unpack[CleanCachePostRequest]) -> CleanCachePostResponse:
+    async def clean_cache(self, **kwargs: Any) -> CleanCachePostResponse:
         """
         清空缓存
 
@@ -805,7 +772,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("clean_cache", kwargs)
     
-    async def bot_exit(self, **kwargs: Unpack[BotExitPostRequest]) -> BotExitPostResponse:
+    async def bot_exit(self, **kwargs: Any) -> BotExitPostResponse:
         """
         账号退出
 
@@ -829,7 +796,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("_get_model_show", kwargs)
     
-    async def _set_model_show(self, **kwargs: Unpack[FieldSetModelShowPostRequest]) -> FieldSetModelShowPostResponse:
+    async def _set_model_show(self, **kwargs: Any) -> FieldSetModelShowPostResponse:
         """
         _设置在线机型
 
@@ -837,7 +804,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("_set_model_show", kwargs)
     
-    async def get_online_clients(self, **kwargs: Unpack[GetOnlineClientsPostRequest]) -> GetOnlineClientsPostResponse:
+    async def get_online_clients(self, **kwargs: Any) -> GetOnlineClientsPostResponse:
         """
         获取当前账号在线客户端列表
 
@@ -853,7 +820,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("delete_friend", kwargs)
     
-    async def mark_msg_as_read(self, **kwargs: Unpack[MarkMsgAsReadPostRequest]) -> MarkMsgAsReadPostResponse:
+    async def mark_msg_as_read(self, **kwargs: Any) -> MarkMsgAsReadPostResponse:
         """
         设置消息已读
 
@@ -861,7 +828,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("mark_msg_as_read", kwargs)
     
-    async def send_group_forward_msg(self, **kwargs: Unpack[SendGroupForwardMsgPostRequest]) -> SendGroupForwardMsgPostResponse:
+    async def send_group_forward_msg(self, **kwargs: Any) -> SendGroupForwardMsgPostResponse:
         """
         发送群合并转发消息
 
@@ -869,7 +836,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_group_forward_msg", kwargs)
     
-    async def send_private_forward_msg(self, **kwargs: Unpack[SendPrivateForwardMsgPostRequest]) -> SendPrivateForwardMsgPostResponse:
+    async def send_private_forward_msg(self, **kwargs: Any) -> SendPrivateForwardMsgPostResponse:
         """
         发送私聊合并转发消息
 
@@ -1053,7 +1020,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("check_url_safely", kwargs)
     
-    async def dot_handle_quick_operation(self, **kwargs: Unpack[FieldHandleQuickOperationPostRequest]) -> FieldHandleQuickOperationPostResponse:
+    async def dot_handle_quick_operation(self, **kwargs: Any) -> FieldHandleQuickOperationPostResponse:
         """
         .对事件执行快速操作
 
@@ -1097,7 +1064,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_ark_share", kwargs)
     
-    async def get_robot_uin_range(self, **kwargs: Unpack[GetRobotUinRangePostRequest]) -> GetRobotUinRangePostResponse:
+    async def get_robot_uin_range(self, **kwargs: Any) -> GetRobotUinRangePostResponse:
         """
         获取机器人账号范围
 
@@ -1113,7 +1080,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("set_online_status", kwargs)
     
-    async def get_friends_with_category(self, **kwargs: Unpack[GetFriendsWithCategoryPostRequest]) -> GetFriendsWithCategoryPostResponse:
+    async def get_friends_with_category(self, **kwargs: Any) -> GetFriendsWithCategoryPostResponse:
         """
         获取好友分组列表
 
@@ -1169,7 +1136,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("set_msg_emoji_like", kwargs)
     
-    async def send_forward_msg(self, **kwargs: Unpack[SendForwardMsgPostRequest]) -> SendForwardMsgPostResponse:
+    async def send_forward_msg(self, **kwargs: Any) -> SendForwardMsgPostResponse:
         """
         发送合并转发消息
 
@@ -1233,7 +1200,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_recent_contact", kwargs)
     
-    async def _mark_all_as_read(self, **kwargs: Unpack[FieldMarkAllAsReadPostRequest]) -> FieldMarkAllAsReadPostResponse:
+    async def _mark_all_as_read(self, **kwargs: Any) -> FieldMarkAllAsReadPostResponse:
         """
         _设置所有消息已读
 
@@ -1289,7 +1256,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_group_detail_info", kwargs)
     
-    async def get_group_ignore_add_request(self, **kwargs: Unpack[GetGroupIgnoreAddRequestPostRequest]) -> GetGroupIgnoreAddRequestPostResponse:
+    async def get_group_ignore_add_request(self, **kwargs: Any) -> GetGroupIgnoreAddRequestPostResponse:
         """
         获取被过滤的加群请求
 
@@ -1321,7 +1288,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("group_poke", kwargs)
     
-    async def nc_get_packet_status(self, **kwargs: Unpack[NcGetPacketStatusPostRequest]) -> NcGetPacketStatusPostResponse:
+    async def nc_get_packet_status(self, **kwargs: Any) -> NcGetPacketStatusPostResponse:
         """
         获取packet状态
 
@@ -1337,7 +1304,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("nc_get_user_status", kwargs)
     
-    async def nc_get_rkey(self, **kwargs: Unpack[NcGetRkeyPostRequest]) -> NcGetRkeyPostResponse:
+    async def nc_get_rkey(self, **kwargs: Any) -> NcGetRkeyPostResponse:
         """
         nc获取rkey
 
@@ -1377,7 +1344,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("rename_group_file", kwargs)
     
-    async def get_guild_list(self, **kwargs: Unpack[GetGuildListPostRequest]) -> GetGuildListPostResponse:
+    async def get_guild_list(self, **kwargs: Any) -> GetGuildListPostResponse:
         """
         get_guild_list
 
@@ -1385,7 +1352,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_guild_list", kwargs)
     
-    async def get_guild_service_profile(self, **kwargs: Unpack[GetGuildServiceProfilePostRequest]) -> GetGuildServiceProfilePostResponse:
+    async def get_guild_service_profile(self, **kwargs: Any) -> GetGuildServiceProfilePostResponse:
         """
         get_guild_service_profile
 
@@ -1393,7 +1360,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("get_guild_service_profile", kwargs)
     
-    async def get_group_ignored_notifies(self, **kwargs: Unpack[GetGroupIgnoredNotifiesPostRequest]) -> GetGroupIgnoredNotifiesPostResponse:
+    async def get_group_ignored_notifies(self, **kwargs: Any) -> GetGroupIgnoredNotifiesPostResponse:
         """
         获取群过滤系统消息
 
@@ -1457,7 +1424,7 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_group_ai_record", kwargs)
     
-    async def get_clientkey(self, **kwargs: Unpack[GetClientkeyPostRequest]) -> GetClientkeyPostResponse:
+    async def get_clientkey(self, **kwargs: Any) -> GetClientkeyPostResponse:
         """
         获取clientkey
 
