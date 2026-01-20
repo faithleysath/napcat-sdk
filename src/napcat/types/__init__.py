@@ -10,17 +10,6 @@ from .events import (
     PrivateMessageEvent,
     UnknownEvent,
 )
-from .messages import (
-    AtMessageSegment,
-    FileMessageSegment,
-    ForwardMessageSegment,
-    ImageMessageSegment,
-    MessageSegment,
-    ReplyMessageSegment,
-    TextMessageSegment,
-    UnknownMessageSegment,
-    VideoMessageSegment,
-)
 
 __all__ = [
     # events (most used)
@@ -33,14 +22,5 @@ __all__ = [
     "LifecycleMetaEvent",
     "UnknownEvent",
     "MessageSender",
-    # message segments (most used)
-    "MessageSegment",
-    "TextMessageSegment",
-    "ReplyMessageSegment",
-    "ImageMessageSegment",
-    "VideoMessageSegment",
-    "FileMessageSegment",
-    "AtMessageSegment",
-    "ForwardMessageSegment",
-    "UnknownMessageSegment",
+    # message segments
 ]
