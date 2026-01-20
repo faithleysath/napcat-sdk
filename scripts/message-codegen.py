@@ -80,29 +80,39 @@ class InjectInitTypeChecking(cst.CSTTransformer):
         # 1. 检查是否继承自 MessageSegment
         is_segment = False
         for base in original_node.bases:
+            # base.value 通常是 Name 节点
             if getattr(base.value, 'value', '') == 'MessageSegment':
                 is_segment = True
                 break
-
+        
         if not is_segment:
             return updated_node
 
         # 2. 查找 'data' 字段的类型注解 (例如: MessageReplyData)
         data_class_name = None
+        
+        # 遍历类体中的每一个语句行
         for statement in original_node.body.body:
-            # 匹配: data: Annotation
-            if isinstance(statement, cst.AnnAssign) and \
-               isinstance(statement.target, cst.Name) and \
-               statement.target.value == 'data':
-                
-                # 提取注解名称
-                annotation = statement.annotation.annotation
-                if isinstance(annotation, cst.Name):
-                    data_class_name = annotation.value
+            # LibCST 中，一行代码通常是 SimpleStatementLine
+            if isinstance(statement, cst.SimpleStatementLine):
+                # SimpleStatementLine 内部可能包含多个小语句（例如用分号隔开），但通常只有一个
+                for small_stmt in statement.body:
+                    # 检查是否是带类型的赋值 (data: Type)
+                    if isinstance(small_stmt, cst.AnnAssign) and \
+                       isinstance(small_stmt.target, cst.Name) and \
+                       small_stmt.target.value == 'data':
+                        
+                        # 提取注解名称
+                        annotation = small_stmt.annotation.annotation
+                        if isinstance(annotation, cst.Name):
+                            data_class_name = annotation.value
+                        break
+            
+            if data_class_name:
                 break
         
-        print(data_class_name)
         if not data_class_name:
+            # 如果没找到 data 字段，直接返回原节点
             return updated_node
 
         # 3. 构建对应的 TypeDict 名称 (例如: MessageReplyDataType)
@@ -113,7 +123,7 @@ class InjectInitTypeChecking(cst.CSTTransformer):
             test=cst.Name("TYPE_CHECKING"),
             body=cst.IndentedBlock(
                 body=[
-                    # 修复点：AnnAssign 必须包裹在 SimpleStatementLine 中
+                    # 修正：必须用 SimpleStatementLine 包裹 AnnAssign
                     cst.SimpleStatementLine(
                         body=[
                             cst.AnnAssign(
@@ -125,8 +135,7 @@ class InjectInitTypeChecking(cst.CSTTransformer):
                             )
                         ]
                     ),
-                    # def __init__(self, **kwargs: Unpack[MessageReplyDataType]): ...
-                    # FunctionDef 是复合语句，可以直接作为 Block 的元素
+                    # FunctionDef 可以直接放在 Block 里
                     cst.FunctionDef(
                         name=cst.Name("__init__"),
                         params=cst.Parameters(
