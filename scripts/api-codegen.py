@@ -40,6 +40,7 @@ docstring_map = {
 
 typemap = {
     "string": "str",
+    "integer": "int",
     "number": "float",
     "boolean": "bool",
     "null": "None",

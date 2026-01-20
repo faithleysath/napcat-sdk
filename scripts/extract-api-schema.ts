@@ -208,7 +208,7 @@ ${actionKeys.map(key => {
             expose: "none",
             skipTypeCheck: true,
             topRef: true,        // <--- 关键：保留根定义
-            jsDoc: "none"
+            jsDoc: "extended"
         };
         
         const schema = createGenerator(config).createSchema(config.type);
