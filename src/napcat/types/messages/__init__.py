@@ -1,17 +1,5 @@
-# src/napcat/types/__init__.py
-from .events import (
-    GroupMessageEvent,
-    HeartbeatEvent,
-    LifecycleMetaEvent,
-    MessageEvent,
-    MessageSender,
-    MetaEvent,
-    NapCatEvent,
-    PrivateMessageEvent,
-    UnknownEvent,
-)
-
-from .messages import (
+from .base import MessageSegment, UnknownMessageSegment
+from .generated import (
     MessageAt,
     MessageContext,
     MessageCustomMusic,
@@ -32,23 +20,10 @@ from .messages import (
     MessageReply,
     MessageText,
     MessageVideo,
-    Model
+    Model,
 )
 
-from .messages import MessageSegment, UnknownMessageSegment
-
 __all__ = [
-    # events (most used)
-    "NapCatEvent",
-    "MetaEvent",
-    "MessageEvent",
-    "PrivateMessageEvent",
-    "GroupMessageEvent",
-    "HeartbeatEvent",
-    "LifecycleMetaEvent",
-    "UnknownEvent",
-    "MessageSender",
-    # message segments
     "MessageSegment",
     "UnknownMessageSegment",
     "MessageAt",

@@ -226,6 +226,46 @@ def process_dataclasses(file_path: Path) -> str:
     
     return modified_module.code
 
+def generate_init_file(content: str):
+    """生成 messages/__init__.py"""
+    init_file = PROJECT_ROOT / "src/napcat/types/messages/__init__.py"
+    
+    # 1. 提取所有继承自 MessageSegment 的类名
+    # 匹配模式: class ClassName(MessageSegment):
+    classes = re.findall(r"class\s+(\w+)\(MessageSegment\):", content)
+    
+    # 2. 提取关键的类型别名 (MessageData, Model)
+    # 匹配模式: type MessageData = ...
+    types = re.findall(r"^type\s+(MessageData|Model)\s+=", content, re.MULTILINE)
+    
+    # 合并并排序，去重
+    generated_exports = sorted(list(set(classes + types)))
+    
+    # 3. 构建文件内容
+    lines = [
+        "from .base import MessageSegment, UnknownMessageSegment",
+        "from .generated import (",
+    ]
+    
+    # 添加 from .generated import ...
+    for name in generated_exports:
+        lines.append(f"    {name},")
+    lines.append(")")
+    
+    lines.append("")
+    
+    # 添加 __all__
+    lines.append("__all__ = [")
+    lines.append('    "MessageSegment",')
+    lines.append('    "UnknownMessageSegment",')
+    for name in generated_exports:
+        lines.append(f'    "{name}",')
+    lines.append("]")
+    
+    # 4. 写入文件
+    init_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Successfully generated: {init_file}")
+
 def main():
     try:
         # 1. 准备路径和运行生成器
@@ -247,6 +287,11 @@ def main():
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT_FILE.write_text(final_content, encoding="utf-8")
         print(f"Successfully generated: {OUTPUT_FILE}")
+
+        # --- 新增：生成 __init__.py ---
+        print("Generating __init__.py...")
+        generate_init_file(final_content)
+        # ---------------------------
         
         # 5. 清理临时文件
         typedict_path.unlink(missing_ok=True)
