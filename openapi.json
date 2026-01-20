@@ -16478,42 +16478,6 @@
         }
       }
     },
-    "/.ocr_image": {
-      "post": {
-        "summary": "IOCRImage",
-        "operationId": ".ocr_image",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "image"
-                ],
-                "properties": {
-                  "image": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "number",
-                  "const": 0
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/get_group_system_msg": {
       "post": {
         "summary": "GetGroupSystemMsg",
@@ -18045,31 +18009,6 @@
                     "level"
                   ],
                   "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/.handle_quick_operation": {
-      "post": {
-        "summary": "GoCQHTTPHandleQuickAction",
-        "operationId": ".handle_quick_operation",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "null"
                 }
               }
             }

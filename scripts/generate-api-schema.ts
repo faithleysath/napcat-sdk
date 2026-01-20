@@ -161,6 +161,10 @@ async function main() {
 
     // 2. 收集类型
     for (const actionKey of Object.values(ActionName)) {
+        if (actionKey.startsWith('.')) {
+            console.log(`Skip invalid action key: ${actionKey}`);
+            continue;
+        }
         const actionInstance = getActionInstance(actionKey as any);
         if (!actionInstance) continue;
 
