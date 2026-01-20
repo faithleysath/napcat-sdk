@@ -28,6 +28,8 @@ pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s
 
 content = re.sub(pattern, "\n", content)
 
+content = content.replace("float", "int")
+
 with open(api_schema_path, "r", encoding="utf-8") as f:
     api_schema = json.load(f)
 

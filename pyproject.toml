@@ -75,7 +75,6 @@ use-schema-description = true
 use-field-description = true
 use-attribute-docstrings = true
 use-field-description-example = true
-type-mappings = ["number=integer"]
 
 [tool.datamodel-codegen.profiles.api-typedict]
 input = "generated.openapi.json"
