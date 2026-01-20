@@ -7,7 +7,6 @@ from typing import (
     ClassVar,
     LiteralString,
     TypedDict,
-    Unpack,
     cast,
     get_type_hints,
 )
@@ -37,16 +36,12 @@ class UnknownDataType(SegmentDataTypeBase):
     raw: dict[str, Any]
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class MessageSegment[
-    T_Type: LiteralString | str,
-    T_Data: SegmentDataBase,
-    T_DataType: SegmentDataTypeBase,
-](ABC):
-    type: T_Type
-    data: T_Data
+class MessageSegment(ABC):
+    type: LiteralString | str
+    data: SegmentDataBase
 
     _data_class: ClassVar[builtins.type[SegmentDataBase]]
-    _registry: ClassVar[dict[str, builtins.type[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]]] = {}
+    _registry: ClassVar[dict[str, builtins.type[MessageSegment]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
         hints = get_type_hints(cls)
@@ -70,7 +65,7 @@ class MessageSegment[
 
         MessageSegment._registry[type_val] = cls
 
-    def __init__(self, **kwargs: Unpack[T_DataType]):  # type: ignore
+    def __init__(self, **kwargs: Any):
         type_field = self.__class__.__dataclass_fields__["type"]
         object.__setattr__(self, "type", type_field.default)
 
@@ -80,11 +75,11 @@ class MessageSegment[
                 f"Class {self.__class__.__name__} missing type hint for 'data'"
             )
 
-        data_inst = data_cls.from_dict(cast(dict[str, Any], kwargs))
+        data_inst = data_cls.from_dict(kwargs)
         object.__setattr__(self, "data", data_inst)
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> MessageSegment[Any, Any, Any]:
+    def from_dict(cls, raw: dict[str, Any]) -> MessageSegment:
         seg_type = raw.get("type")
         if not isinstance(seg_type, str):
             raise ValueError("Invalid or missing 'type' field in message segment")
@@ -104,7 +99,7 @@ class MessageSegment[
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class UnknownMessageSegment(MessageSegment[str, UnknownData, UnknownDataType]):
+class UnknownMessageSegment(MessageSegment):
     """表示未知的消息段"""
 
     type: str  # 这里不再是 Literal，而是动态字符串
