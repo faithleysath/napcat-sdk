@@ -15,7 +15,6 @@ from .messages import (
     FileMessageSegment,
     ForwardMessageSegment,
     ImageMessageSegment,
-    ImageSubType,
     MessageSegment,
     ReplyMessageSegment,
     TextMessageSegment,
@@ -44,6 +43,4 @@ __all__ = [
     "AtMessageSegment",
     "ForwardMessageSegment",
     "UnknownMessageSegment",
-    # misc
-    "ImageSubType",
 ]

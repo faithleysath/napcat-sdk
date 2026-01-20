@@ -1,9 +1,7 @@
 from __future__ import annotations
 import builtins
 from abc import ABC
-import sys
 from dataclasses import dataclass
-from enum import IntEnum
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -19,13 +17,6 @@ from typing import (
 )
 
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
-
-
-class ImageSubType(IntEnum):
-    """图片子类型"""
-
-    NORMAL = 0  # 普通图片
-    MEME = 1  # 表情包/斗图
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -66,19 +57,6 @@ class TextDataType(SegmentDataTypeBase):
 class ReplyData(SegmentDataBase):
     id: int
 
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ReplyData:
-        # 1. 先准备好数据，这样这部分逻辑不用写两遍
-        new_data = data | {"id": int(data["id"])}
-
-        # 2. 根据 Python 版本自动切换
-        if sys.version_info >= (3, 14):
-            # 3.14+: 优雅写法
-            return super().from_dict(new_data)
-        else:
-            # <3.14: 丑陋写法 (兼容 3.12 Bug)
-            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
-
 
 class ReplyDataType(SegmentDataTypeBase):
     id: int
@@ -90,21 +68,9 @@ class ImageData(SegmentDataBase):
         str,
         '如果是接收，则通常是MD5.jpg。如果是发送，"file://D:/a.jpg"、"http://xxx.png"、"base64://xxxxxxxx"',
     ]
-    sub_type: ImageSubType = ImageSubType.NORMAL
+    sub_type: int = 0
     url: Annotated[str | None, "如果是发送，可以省略此项"] = None
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ImageData:
-        new_data = data | {
-            "sub_type": ImageSubType(data.get("sub_type", 0)),
-            "file_size": int(data.get("file_size", 0)),
-        }
-
-        if sys.version_info >= (3, 14):
-            return super().from_dict(new_data)
-        else:
-            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class ImageDataType(SegmentDataTypeBase):
@@ -122,17 +88,6 @@ class VideoData(SegmentDataBase):
     ]
     url: Annotated[str | None, "如果是发送，可以省略此项"] = None
     file_size: Annotated[int | None, "如果是发送，可以省略此项"] = None
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> VideoData:
-        new_data = data | {
-            "file_size": int(data.get("file_size", 0)),
-        }
-
-        if sys.version_info >= (3, 14):
-            return super().from_dict(new_data)
-        else:
-            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
 
 
 class VideoDataType(SegmentDataTypeBase):
@@ -166,18 +121,6 @@ class AtDataType(SegmentDataTypeBase):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class ForwardData(SegmentDataBase):
     id: str
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ForwardData:
-        new_data = data | {
-            "id": str(data.get("id", 0)),
-        }
-
-        if sys.version_info >= (3, 14):
-            return super().from_dict(new_data)
-        else:
-            return IgnoreExtraArgsMixin.from_dict.__func__(cls, new_data)
-
 
 class ForwardDataType(SegmentDataTypeBase):
     id: str
