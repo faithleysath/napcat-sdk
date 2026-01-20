@@ -1425,13 +1425,13 @@ class NapCatAPI:
         """
         return await self._client.call_action("send_packet", kwargs)
     
-    async def get_mini_app_ark(self, **kwargs: Unpack[GetMiniAppArkPostRequest]) -> GetMiniAppArkPostResponse:
+    async def get_mini_app_ark(self, payload: GetMiniAppArkPostRequest) -> GetMiniAppArkPostResponse:
         """
         获取小程序卡片
 
         标签: 账号相关
         """
-        return await self._client.call_action("get_mini_app_ark", kwargs)
+        return await self._client.call_action("get_mini_app_ark", payload)
     
     async def get_ai_record(self, **kwargs: Unpack[GetAiRecordPostRequest]) -> GetAiRecordPostResponse:
         """

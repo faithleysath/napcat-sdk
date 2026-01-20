@@ -20,17 +20,17 @@ api_schema_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedi
 subprocess.run(["bun", "scripts/extract-api-schema.ts"], check=True)
 subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "api-typedict"], check=True)
 
-with open(api_schema_code_path, "r") as f:
+with open(api_schema_code_path, "r", encoding="utf-8") as f:
     content = f.read()
 
 pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?"
 
 content = re.sub(pattern, "\n", content)
 
-with open(api_schema_path, "r") as f:
+with open(api_schema_path, "r", encoding="utf-8") as f:
     api_schema = json.load(f)
 
-with open("apifox.openapi.json", "r") as f:
+with open("apifox.openapi.json", "r", encoding="utf-8") as f:
     apifox_schema = json.load(f)
 
 docstring_map = {
@@ -60,14 +60,29 @@ for endpoint in api_schema["paths"].values():
     operation_id = method.get("operationId", "")
     RequestClassName = snake_to_classname(operation_id) + "PostRequest"
     ResponseClassName = snake_to_classname(operation_id) + "PostResponse"
+    requestSchema = method["requestBody"]["content"]["application/json"]["schema"]
+    is_union_request = "oneOf" in requestSchema or "anyOf" in requestSchema
+
     client_api_code += f"   {RequestClassName},\n   {ResponseClassName},\n"
-    api_func_code += f"""
+    doc_str = docstring_map.get(operation_id, '        \"\"\"\n        未提供描述\n        \"\"\"')
+    # 3. 自适应生成函数签名
+    if is_union_request:
+        # 【模式 A】Payload 模式 (针对 Union 类型)
+        # 函数签名: def func(self, payload: UnionType)
+        api_func_code += f"""
+    async def {operation_id.replace('.', 'dot_')}(self, payload: {RequestClassName}) -> {ResponseClassName}:
+{doc_str}
+        return await self._client.call_action("{operation_id}", payload)
+    """
+    else:
+        # 【模式 B】Unpack kwargs 模式 (针对普通 TypedDict)
+        # 函数签名: def func(self, **kwargs: Unpack[Type])
+        api_func_code += f"""
     async def {operation_id.replace('.', 'dot_')}(self, **kwargs: Unpack[{RequestClassName}]) -> {ResponseClassName}:
-{docstring_map.get(operation_id, '        \"\"\"\n        未提供描述\n        \"\"\"')}
+{doc_str}
         return await self._client.call_action("{operation_id}", kwargs)
     """
 
-    requestSchema = method["requestBody"]["content"]["application/json"]["schema"]
     if not requestSchema:
         content += f"\n\nclass {RequestClassName}(TypedDict):\n    pass\n"
     responseSchema = method["responses"]["200"]["content"]["application/json"]["schema"]
@@ -95,8 +110,8 @@ class NapCatAPI:
 {api_func_code}
 """
 
-with open(api_schema_code_path, "w") as f:
+with open(api_schema_code_path, "w", encoding="utf-8") as f:
     f.write(content)
 
-with open("src/napcat/client_api.py", "w") as f:
+with open("src/napcat/client_api.py", "w", encoding="utf-8") as f:
     f.write(client_api_code)
