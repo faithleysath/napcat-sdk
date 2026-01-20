@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from ...client import NapCatClient
@@ -24,26 +24,50 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
         init=False, repr=False, hash=False, compare=False, default=None
     )
 
+    # --- 自动注册机制 ---
+    _registry: ClassVar[dict[str, type[NapCatEvent]]] = {}
+
+    def __init_subclass__(cls, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+        
+        # 1. 尝试读取子类显式定义的 _post_type (支持字符串或元组)
+        #    这对于一个类处理多个 post_type (如 MessageEvent) 很有用
+        pt: str | tuple[str, ...] | list[str] | None = getattr(cls, "_post_type", None)
+
+        # 2. 如果没有 _post_type，尝试读取 dataclass 字段的默认值 post_type
+        if pt is None:
+            pt = getattr(cls, "post_type", None)
+
+        if not pt:
+            return
+
+        # 3. 注册到注册表
+        if isinstance(pt, str):
+            if pt in NapCatEvent._registry:
+                raise ValueError(f"Duplicate post_type registered: {pt}")
+            NapCatEvent._registry[pt] = cls
+        else:
+            for t in pt:
+                if t in NapCatEvent._registry:
+                    raise ValueError(f"Duplicate post_type registered: {t}")
+                NapCatEvent._registry[t] = cls
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
         try:
             post_type = data.get("post_type")
-            match post_type:
-                case "meta_event":
-                    from .meta import MetaEvent
-                    return MetaEvent.from_dict(data)
-                case "message" | "message_sent":
-                    # message_sent 结构与 message 一致
-                    from .message import MessageEvent
-                    return MessageEvent.from_dict(data)
-                case "request":
-                    from .request import RequestEvent
-                    return RequestEvent.from_dict(data)
-                # 未来在此处添加 notice
-                case _:
-                    # 显式抛出异常以触发兜底逻辑
-                    raise ValueError(f"Unknown post type: {post_type}")
+            if not isinstance(post_type, str):
+                raise ValueError("Missing or invalid 'post_type'")
 
+            # --- 核心变更：从注册表查找类，而不是硬编码 ---
+            target_cls = cls._registry.get(post_type)
+            
+            if target_cls:
+                return target_cls.from_dict(data)
+            
+            # 如果没找到，会在下面抛出或进入兜底逻辑
+            # 这里选择显式 raise 以便进入 except 块处理兜底，或者直接返回 Unknown
+            
         except (ValueError, TypeError, KeyError):
             pass
 

@@ -42,6 +42,7 @@ class MessageEvent(NapCatEvent):
     sub_type: Literal["friend", "group", "normal"] | str | None = None
     
     post_type: Literal["message", "message_sent"]
+    _post_type = ("message", "message_sent")
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PrivateMessageEvent | GroupMessageEvent:
