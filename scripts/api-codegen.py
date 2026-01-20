@@ -17,7 +17,7 @@ with open("pyproject.toml", "rb") as f:
 api_schema_code_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedict"]["output"]
 api_schema_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedict"]["input"]
 
-subprocess.run(["bun", "scripts/generate-api-schema.ts"], check=True)
+subprocess.run(["bun", "scripts/extract-api-schema.ts"], check=True)
 subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "api-typedict"], check=True)
 
 with open(api_schema_code_path, "r") as f:
@@ -51,7 +51,6 @@ client_api_code = """# Auto-generated file. Do not modify directly.
 from collections.abc import Mapping
 from typing import Any, Unpack, Protocol
 from .types.schemas import (
-
 """
 
 api_func_code = ""
@@ -79,7 +78,7 @@ for endpoint in api_schema["paths"].values():
         content += f"\n\ntype {ResponseClassName} = {typemap[responseSchema['type']]}\n"
         continue
 
-client_api_code += """)
+client_api_code += f""")
 # 定义一个 Protocol，避免循环导入 Client 类，同时保证类型提示
 class CallActionProtocol(Protocol):
     async def call_action(self, action: str, params: Mapping[str, Any] | None = None) -> Any: ...
