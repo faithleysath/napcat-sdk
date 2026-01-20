@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 else:
     NapCatClient = Any
 
-from .messages import MessageSegment, TextMessageSegment, ReplyMessageSegment, AtMessageSegment, SegmentDataBase, SegmentDataTypeBase
+from .messages import MessageSegment, MessageText, MessageReply, MessageAt
 from .utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 
 # --- Base ---
@@ -117,7 +117,7 @@ class MessageEvent(NapCatEvent):
     message_id: int
     sender: MessageSender
     raw_message: str
-    message: tuple[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]
+    message: tuple[MessageSegment]
     message_format: Literal["array"] = "array"
     post_type: Literal["message", "message_sent"]
 
@@ -141,14 +141,14 @@ class MessageEvent(NapCatEvent):
 
         raise ValueError(f"Unknown message type: {msg_type}")
     
-    async def send_msg(self, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
         """
         发送消息，返回消息 ID
         子类需要实现此方法
         """
         raise NotImplementedError("send_msg must be implemented in subclasses")
     
-    async def reply(self, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]], at: bool = False) -> int:
+    async def reply(self, message: str | list[MessageSegment], at: bool = False) -> int:
         """
         回复当前消息，返回消息 ID
         """
@@ -156,11 +156,11 @@ class MessageEvent(NapCatEvent):
             raise RuntimeError("Event not bound to a client")
         
         if isinstance(message, str):
-            message = [TextMessageSegment(text=message)]
+            message = [MessageText(text=message)]
 
         return await self.send_msg(
-            [ReplyMessageSegment(id=self.message_id)] + (
-                [AtMessageSegment(qq=self.user_id)] if at else []
+            [MessageReply(id=str(self.message_id))] + (
+                [MessageAt(qq=str(self.user_id))] if at else []
             ) + message
         )
 
@@ -170,7 +170,7 @@ class PrivateMessageEvent(MessageEvent):
     target_id: int
     message_type: Literal["private"] = "private"
 
-    async def send_msg(self, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
         """
         发送私聊消息，返回消息 ID
         """
@@ -187,7 +187,7 @@ class GroupMessageEvent(MessageEvent):
     group_id: int
     message_type: Literal["group"] = "group"
 
-    async def send_msg(self, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
+    async def send_msg(self, message: str | list[MessageSegment]) -> int:
         """
         发送群消息，返回消息 ID
         """
