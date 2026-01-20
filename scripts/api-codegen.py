@@ -2,6 +2,7 @@ import subprocess
 import re
 import tomllib
 import json
+from typing import Any
 
 def snake_to_classname(s: str) -> str:
     if s.startswith("_"):
@@ -30,8 +31,12 @@ content = re.sub(pattern, "\n", content)
 with open(api_schema_path, "r", encoding="utf-8") as f:
     api_schema = json.load(f)
 
-with open("apifox.openapi.json", "r", encoding="utf-8") as f:
-    apifox_schema = json.load(f)
+apifox_schema: dict[str, Any] = {}
+try:
+    with open("apifox.openapi.json", "r", encoding="utf-8") as f:
+        apifox_schema = json.load(f)
+except FileNotFoundError:
+    pass
 
 docstring_map = {
     path.lstrip("/"): f'        """\n        {data.get("post", {}).get("summary", "")}\n\n        标签: {(data.get("post", {}).get("tags") or [""])[0]}\n        """'
