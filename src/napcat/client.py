@@ -42,11 +42,7 @@ class NapCatClient:
         # 2. 获取自身 ID (增加容错处理)
         try:
             resp = await self.api.get_login_info() 
-            # 检查返回码 (OneBot 标准：retcode 0 为成功)
-            if resp.get("status") == "ok" or resp.get("retcode") == 0:
-                self.self_id = int(resp["data"]["user_id"])
-            else:
-                raise RuntimeError(f"Login info fetch failed: {resp}")
+            self.self_id = resp['user_id']
                 
         except Exception as e:
             print(f"Warning: Failed to get self_id: {e}")
@@ -82,13 +78,16 @@ class NapCatClient:
         self,
         action: str,
         params: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> Mapping[str, Any] | None:
         """
         统一调用入口
         """
         if params is None:
             params = {}
-        return await self.send({"action": action, "params": params})
+        resp = await self.send({"action": action, "params": params})
+        if resp.get("status") != "ok" and resp.get("retcode") != 0:
+            raise RuntimeError(f"API call failed: {resp}")
+        return resp.get("data", None)
     
     async def send_private_msg(self, user_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
         """
@@ -100,7 +99,7 @@ class NapCatClient:
             user_id=user_id,
             message=message
         )
-        return int(resp["data"]["message_id"])
+        return int(resp["message_id"])
     
     async def send_group_msg(self, group_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
         """
