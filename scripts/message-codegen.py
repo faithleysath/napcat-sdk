@@ -1,6 +1,7 @@
 import subprocess
 import tomllib
 import re
+import os
 
 import libcst as cst
 
@@ -15,16 +16,16 @@ subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-typedict
 subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-dataclass"], check=True)
 
 with open(typedict_schema_code_path, "r", encoding="utf-8") as f:
-    typedict_content = f.read()
+    gencode_content = f.read()
 
 with open(dataclass_schema_code_path, "r", encoding="utf-8") as f:
     dataclass_content = f.read()
 
 pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?"
 
-typedict_content = re.sub(pattern, "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n", typedict_content)
+gencode_content = re.sub(pattern, "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n", gencode_content)
 
-typedict_content = typedict_content.replace("float", "int").replace(", closed=True", "")
+gencode_content = gencode_content.replace("float", "int").replace(", closed=True", "")
 
 pending_renames: set[str] = set()
 class ChangeToBase(cst.CSTTransformer):
@@ -41,14 +42,14 @@ class ChangeToBase(cst.CSTTransformer):
     def leave_TypeAlias(self, original_node: cst.TypeAlias, updated_node: cst.TypeAlias) -> cst.BaseSmallStatement | cst.FlattenSentinel[cst.BaseSmallStatement] | cst.RemovalSentinel:
         return cst.RemoveFromParent()
 
-module = cst.parse_module(typedict_content)
+module = cst.parse_module(gencode_content)
 transformer = ChangeToBase()
 modified_module = module.visit(transformer)
 
-typedict_content = modified_module.code
+gencode_content = modified_module.code
 
 for name in pending_renames:
-    typedict_content = typedict_content.replace(name+"(", name + "Type(")
+    gencode_content = gencode_content.replace(name+"(", name + "Type(")
 
 dataclass_content = dataclass_content.replace("@dataclass", "@dataclass(slots=True, frozen=True, kw_only=True)")
 dataclass_content = dataclass_content.replace("""from __future__ import annotations
@@ -85,8 +86,11 @@ for i, line in enumerate(lines):
 
 dataclass_content = "\n".join(new_lines)
 
-typedict_content += "\n\n" + dataclass_content
+gencode_content += "\n\n" + dataclass_content
 
-typedict_content = typedict_content.replace("OB11", "")
-with open(typedict_schema_code_path, "w", encoding="utf-8") as f:
-    f.write(typedict_content)
+gencode_content = gencode_content.replace("OB11", "")
+with open("src/napcat/types/messages/generated.py", "w", encoding="utf-8") as f:
+    f.write(gencode_content)
+
+os.remove(typedict_schema_code_path)
+os.remove(dataclass_schema_code_path)
