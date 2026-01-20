@@ -32,7 +32,7 @@ from .messages import (
     MessageReply,
     MessageText,
     MessageVideo,
-    Model
+    MessageSegmentType
 )
 
 from .messages import MessageSegment, UnknownMessageSegment
@@ -71,5 +71,5 @@ __all__ = [
     "MessageReply",
     "MessageText",
     "MessageVideo",
-    "Model",
+    "MessageSegmentType",
 ]

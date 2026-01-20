@@ -20,7 +20,7 @@ from .generated import (
     MessageReply,
     MessageText,
     MessageVideo,
-    Model,
+    Model as MessageSegmentType,
 )
 
 __all__ = [
@@ -46,5 +46,5 @@ __all__ = [
     "MessageReply",
     "MessageText",
     "MessageVideo",
-    "Model",
+    "MessageSegmentType",
 ]

@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator, Mapping
 from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
-from .types import NapCatEvent, MessageSegment, MessageText
+from .types import NapCatEvent, MessageSegmentType, MessageText
 from .client_api import NapCatAPI
 
 
@@ -87,7 +87,7 @@ class NapCatClient:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
     
-    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment]) -> int:
+    async def send_private_msg(self, user_id: int, message: str | list[MessageSegmentType]) -> int:
         """
         发送私聊消息，返回消息 ID
         """
@@ -99,7 +99,7 @@ class NapCatClient:
         )
         return resp["message_id"]
     
-    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment]) -> int:
+    async def send_group_msg(self, group_id: int, message: str | list[MessageSegmentType]) -> int:
         """
         发送群消息，返回消息 ID
         """
