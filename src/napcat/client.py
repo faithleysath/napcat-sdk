@@ -1,13 +1,11 @@
 from types import TracebackType
-from typing import Any, LiteralString
+from typing import Any
 from collections.abc import AsyncGenerator, Mapping
 
 from websockets.asyncio.client import connect as ws_connect
 
-from napcat.types.messages import SegmentDataBase, SegmentDataTypeBase
-
 from .connection import Connection
-from .types import NapCatEvent, MessageSegment, TextMessageSegment
+from .types import NapCatEvent, MessageSegment, MessageText
 from .client_api import NapCatAPI
 
 
@@ -89,24 +87,24 @@ class NapCatClient:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
     
-    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
+    async def send_private_msg(self, user_id: int, message: str | list[MessageSegment]) -> int:
         """
         发送私聊消息，返回消息 ID
         """
         if isinstance(message, str):
-            message = [TextMessageSegment(text=message)]
+            message = [MessageText(text=message)]
         resp = await self.api.send_private_msg(
             user_id=user_id,
             message=message
         )
         return resp["message_id"]
     
-    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
+    async def send_group_msg(self, group_id: int, message: str | list[MessageSegment]) -> int:
         """
         发送群消息，返回消息 ID
         """
         if isinstance(message, str):
-            message = [TextMessageSegment(text=message)]
+            message = [MessageText(text=message)]
         resp = await self.api.send_group_msg(
             group_id=group_id,
             message=message
