@@ -65,10 +65,7 @@ docs = [
 [tool.datamodel-codegen]
 formatters = ["ruff-check", "ruff-format"]
 naming-strategy = "full-path"
-target-python-version = "3.14"
-use-annotated = true
-collapse-root-models = true
-use-root-model-type-alias = true
+target-python-version = "3.12"
 use-type-alias = true
 use-schema-description = true
 use-field-description = true
@@ -80,4 +77,11 @@ input = "schemas/generated.openapi.json"
 input-file-type = "openapi"
 openapi-scopes = ["paths"]
 output = "src/napcat/types/schemas.py"
+output-model-type = "typing.TypedDict"
+
+[tool.datamodel-codegen.profiles.message-typedict]
+no-use-closed-typed-dict = true
+input = "schemas/OB11MessageData.schema.json"
+input-file-type = "jsonschema"
+output = "test1.py"
 output-model-type = "typing.TypedDict"
