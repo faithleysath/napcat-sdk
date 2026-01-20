@@ -36,7 +36,9 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
                 case "message" | "message_sent":
                     # message_sent 结构与 message 一致
                     return MessageEvent.from_dict(data)
-                # 未来在此处添加 notice / request
+                case "request":
+                    return RequestEvent.from_dict(data)
+                # 未来在此处添加 notice
                 case _:
                     # 显式抛出异常以触发兜底逻辑
                     raise ValueError(f"Unknown post type: {post_type}")
@@ -210,4 +212,76 @@ class GroupMessageEvent(MessageEvent):
         return await self._client.send_group_msg(
             group_id=int(self.group_id),
             message=message
+        )
+    
+# --- Request Events ---
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class RequestEvent(NapCatEvent):
+    # 对应 NapCatQQ/packages/napcat-onebot/event/request/OB11BaseRequestEvent.ts
+    post_type: Literal["request"] = "request"
+    request_type: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RequestEvent:
+        req_type = data.get("request_type")
+        if req_type == "friend":
+            return FriendRequestEvent._from_dict(data)
+        elif req_type == "group":
+            return GroupRequestEvent._from_dict(data)
+        
+        # 未知类型的 Request，抛出异常或返回基类/Unknown
+        raise ValueError(f"Unknown request event type: {req_type}")
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class FriendRequestEvent(RequestEvent):
+    # 对应 NapCatQQ/packages/napcat-onebot/event/request/OB11FriendRequest.ts
+    user_id: int
+    comment: str
+    flag: str
+    request_type: Literal["friend"] = "friend"
+
+    async def approve(self, remark: str = "") -> None:
+        """同意好友请求"""
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        await self._client.set_friend_add_request(flag=self.flag, approve=True, remark=remark)
+
+    async def reject(self) -> None:
+        """拒绝好友请求"""
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        await self._client.set_friend_add_request(flag=self.flag, approve=False)
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class GroupRequestEvent(RequestEvent):
+    # 对应 NapCatQQ/packages/napcat-onebot/event/request/OB11GroupRequest.ts
+    group_id: int
+    user_id: int
+    sub_type: Literal["add", "invite"] | str # 对应 TS 中的 generic string，但在 OneBot 中通常为 add(加群) 或 invite(邀请)
+    comment: str
+    flag: str
+    request_type: Literal["group"] = "group"
+
+    async def approve(self) -> None:
+        """同意入群/邀请请求"""
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        await self._client.set_group_add_request(
+            flag=self.flag, 
+            sub_type=self.sub_type, 
+            approve=True
+        )
+
+    async def reject(self, reason: str = "") -> None:
+        """拒绝入群/邀请请求"""
+        if self._client is None:
+            raise RuntimeError("Event not bound to a client")
+        await self._client.set_group_add_request(
+            flag=self.flag, 
+            sub_type=self.sub_type, 
+            approve=False,
+            reason=reason
         )
