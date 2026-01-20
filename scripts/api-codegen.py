@@ -69,7 +69,11 @@ for endpoint in api_schema["paths"].values():
     requestSchema = method["requestBody"]["content"]["application/json"]["schema"]
     is_union_request = "oneOf" in requestSchema or "anyOf" in requestSchema
 
-    client_api_code += f"   {RequestClassName},\n   {ResponseClassName},\n"
+    if not requestSchema:
+        client_api_code += f"   {ResponseClassName},\n"
+    else:
+        client_api_code += f"   {RequestClassName},\n   {ResponseClassName},\n"
+
     doc_str = docstring_map.get(operation_id, '        \"\"\"\n        未提供描述\n        \"\"\"')
     # 3. 自适应生成函数签名
     if is_union_request:
@@ -80,7 +84,7 @@ for endpoint in api_schema["paths"].values():
 {doc_str}
         return await self._client.call_action("{operation_id}", payload)
     """
-    else:
+    elif requestSchema:
         # 【模式 B】Unpack kwargs 模式 (针对普通 TypedDict)
         # 函数签名: def func(self, **kwargs: Unpack[Type])
         api_func_code += f"""
@@ -88,9 +92,14 @@ for endpoint in api_schema["paths"].values():
 {doc_str}
         return await self._client.call_action("{operation_id}", kwargs)
     """
-
-    if not requestSchema:
-        content += f"\n\nclass {RequestClassName}(TypedDict):\n    pass\n"
+    else:
+        # 【模式 C】无参数模式
+        # 函数签名: def func(self)
+        api_func_code += f"""
+    async def {operation_id.replace('.', 'dot_')}(self, **kwargs: Any) -> {ResponseClassName}:
+{doc_str}
+        return await self._client.call_action("{operation_id}", kwargs)
+    """
     responseSchema = method["responses"]["200"]["content"]["application/json"]["schema"]
     if not responseSchema:
         content += f"\n\ntype {ResponseClassName} = Any\n"
