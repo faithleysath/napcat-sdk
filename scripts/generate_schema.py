@@ -1,15 +1,22 @@
 import subprocess
+import re
+import tomllib
 
-subprocess.run(["uv", "run", "datamodel-codegen"], check=True)
+with open("pyproject.toml", "rb") as f:
+    pyproject = tomllib.load(f)
 
-with open("src/napcat/types/schemas.py", "r") as f:
+api_schema_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["api-typedict"]["output"]
+
+subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "api-typedict"], check=True)
+
+with open(api_schema_path, "r") as f:
     content = f.read()
 
-content = content.replace("type Number207C20string = float | str", "")
+pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?"
 
-content = content.replace("Number207C20string", "float | str")
+content = re.sub(pattern, "\n", content)
 
-with open("src/napcat/types/schemas.py", "w") as f:
+
+
+with open(api_schema_path, "w") as f:
     f.write(content)
-
-subprocess.run(["uv", "run", "scripts/generate_client_api.py"], check=True)
