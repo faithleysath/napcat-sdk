@@ -1,129 +1,135 @@
+import re
 import subprocess
 import tomllib
-import re
-import os
+from pathlib import Path
 
 import libcst as cst
+from libcst import matchers as m
 
-with open("pyproject.toml", "rb") as f:
-    pyproject = tomllib.load(f)
+# --- 配置与常量 ---
+PROJECT_ROOT = Path(__file__).parents[1]  # 假设脚本在 scripts/ 目录下
+PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
+OUTPUT_FILE = PROJECT_ROOT / "src/napcat/types/messages/generated.py"
 
-typedict_schema_code_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["message-typedict"]["output"]
-dataclass_schema_code_path = pyproject["tool"]["datamodel-codegen"]["profiles"]["message-dataclass"]["output"]
+# 正则替换规则
+REGEX_REPLACEMENTS = [
+    # 替换 TypedDict 导入
+    (
+        r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?",
+        "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n"
+    ),
+    # 基础类型修正
+    (r"\bfloat\b", "int"),
+    (r", closed=True", ""),
+    # 补充 typing 导入
+    (
+        r"from typing import Any, Literal, NotRequired",
+        "from typing import Any, Literal, NotRequired, TYPE_CHECKING, ClassVar, Unpack"
+    ),
+    # 移除无用导入
+    (r"from __future__ import annotations\nfrom dataclasses import dataclass\nfrom typing import Any, Literal", ""),
+    (r"OB11", "")
+]
 
-subprocess.run(["bun", "scripts/extract-message-schema.ts"], check=True)
-subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-typedict"], check=True)
-subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-dataclass"], check=True)
 
-with open(typedict_schema_code_path, "r", encoding="utf-8") as f:
-    gencode_content = f.read()
+# --- AST 转换器 ---
 
-with open(dataclass_schema_code_path, "r", encoding="utf-8") as f:
-    dataclass_content = f.read()
-
-pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?"
-
-gencode_content = re.sub(pattern, "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n", gencode_content)
-
-gencode_content = gencode_content.replace("float", "int").replace(", closed=True", "")
-gencode_content = gencode_content.replace("from typing import Any, Literal, NotRequired",
-                                            "from typing import Any, Literal, NotRequired, TYPE_CHECKING, ClassVar, Unpack")
-
-pending_renames: set[str] = set()
-class ChangeToBase(cst.CSTTransformer):
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
-        # 如果类名以Data结尾，则修改其基类为 SegmentDataTypeBase
-        if original_node.name.value.endswith("Data"):
-            pending_renames.add(original_node.name.value)
-            new_bases = [
-                cst.Arg(value=cst.Name("SegmentDataTypeBase"))
-            ]
-            return updated_node.with_changes(bases=new_bases)
-        return cst.RemoveFromParent()
+class TypedDictTransformer(cst.CSTTransformer):
+    """处理 TypedDict: 修改基类并收集需要重命名的类"""
     
-    def leave_TypeAlias(self, original_node: cst.TypeAlias, updated_node: cst.TypeAlias) -> cst.BaseSmallStatement | cst.FlattenSentinel[cst.BaseSmallStatement] | cst.RemovalSentinel:
+    def __init__(self):
+        self.renamed_classes: set[str] = set()
+
+    def leave_TypeAlias(self, original_node: cst.TypeAlias, updated_node: cst.TypeAlias) -> cst.BaseSmallStatement | cst.RemovalSentinel:
         return cst.RemoveFromParent()
 
-module = cst.parse_module(gencode_content)
-transformer = ChangeToBase()
-modified_module = module.visit(transformer)
+    def visit_ClassDef(self, node: cst.ClassDef) -> bool:
+        # 如果类名以 Data 结尾，修改基类
+        if node.name.value.endswith("Data"):
+            self.renamed_classes.add(node.name.value)
+            # 在 leave 阶段修改，这里只做标记或直接修改均可，为了逻辑分离放在 leave
+        return True
 
-gencode_content = modified_module.code
-
-for name in pending_renames:
-    gencode_content = gencode_content.replace(name+"(", name + "Type(")
-
-dataclass_content = dataclass_content.replace("@dataclass", "@dataclass(slots=True, frozen=True, kw_only=True)")
-dataclass_content = dataclass_content.replace("""from __future__ import annotations
-from dataclasses import dataclass
-from typing import Any, Literal""", "")
-dataclass_content = dataclass_content.replace("float", "int")
-
-class ChangeToBase2(cst.CSTTransformer):
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
-        # 如果类名以Data结尾，则修改其基类为 SegmentDataBase
+    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement | cst.RemovalSentinel:
         if original_node.name.value.endswith("Data"):
-            new_bases = [
-                cst.Arg(value=cst.Name("SegmentDataBase"))
-            ]
-            return updated_node.with_changes(bases=new_bases)
-        # 如果类名不包含Data，则修改其基类为 MessageSegment
-        elif "Data" not in original_node.name.value:
-            new_bases = [
-                cst.Arg(value=cst.Name("MessageSegment"))
-            ]
-            return updated_node.with_changes(bases=new_bases)
+            return updated_node.with_changes(
+                bases=[cst.Arg(value=cst.Name("SegmentDataTypeBase"))]
+            )
+        return cst.RemoveFromParent()
+
+
+class DataclassTransformer(cst.CSTTransformer):
+    """处理 Dataclass: 修改基类、注入 init 类型检查、修改装饰器"""
+
+    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement | cst.RemovalSentinel:
+        class_name = original_node.name.value
+        is_data_class = class_name.endswith("Data")
+        
+        # 1. 修改继承关系
+        if is_data_class:
+            updated_node = updated_node.with_changes(
+                bases=[cst.Arg(value=cst.Name("SegmentDataBase"))]
+            )
+        elif "Data" not in class_name:
+            # 这是 MessageSegment 的实现类
+            updated_node = updated_node.with_changes(
+                bases=[cst.Arg(value=cst.Name("MessageSegment"))]
+            )
+            # 注入 TYPE_CHECKING 和 Unpack 逻辑
+            updated_node = self._inject_type_checking(updated_node, original_node)
+            # 修改装饰器添加 init=False
+            updated_node = self._update_decorator(updated_node)
+            
         return updated_node
 
-class InjectInitTypeChecking(cst.CSTTransformer):
-    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement:
-        # 1. 检查是否继承自 MessageSegment
-        is_segment = False
-        for base in original_node.bases:
-            # base.value 通常是 Name 节点
-            if getattr(base.value, 'value', '') == 'MessageSegment':
-                is_segment = True
-                break
+    def _update_decorator(self, node: cst.ClassDef) -> cst.ClassDef:
+        """为 MessageSegment 子类添加 init=False 到 @dataclass 装饰器"""
+        # 注意：这里假设只有一个 decorator 且是 @dataclass
+        # 更加稳健的做法是查找名为 dataclass 的 decorator
+        new_decorators: list[cst.Decorator] = []
+        for decorator in node.decorators:
+            if isinstance(decorator.decorator, cst.Call) and isinstance(decorator.decorator.func, cst.Name) and decorator.decorator.func.value == "dataclass":
+                # 复制现有的 args 并添加 init=False
+                new_args = list(decorator.decorator.args)
+                new_args.append(cst.Arg(keyword=cst.Name("init"), value=cst.Name("False")))
+                
+                new_decorators.append(
+                    decorator.with_changes(
+                        decorator=decorator.decorator.with_changes(args=new_args)
+                    )
+                )
+            else:
+                new_decorators.append(decorator)
         
-        if not is_segment:
-            return updated_node
+        return node.with_changes(decorators=new_decorators)
 
-        # 2. 查找 'data' 字段的类型注解 (例如: MessageReplyData)
+    def _inject_type_checking(self, node: cst.ClassDef, original_node: cst.ClassDef) -> cst.ClassDef:
+        """注入 if TYPE_CHECKING 块"""
+        # 查找 data 字段的类型注解
         data_class_name = None
-        
-        # 遍历类体中的每一个语句行
-        for statement in original_node.body.body:
-            # LibCST 中，一行代码通常是 SimpleStatementLine
-            if isinstance(statement, cst.SimpleStatementLine):
-                # SimpleStatementLine 内部可能包含多个小语句（例如用分号隔开），但通常只有一个
-                for small_stmt in statement.body:
-                    # 检查是否是带类型的赋值 (data: Type)
-                    if isinstance(small_stmt, cst.AnnAssign) and \
-                       isinstance(small_stmt.target, cst.Name) and \
-                       small_stmt.target.value == 'data':
-                        
-                        # 提取注解名称
-                        annotation = small_stmt.annotation.annotation
-                        if isinstance(annotation, cst.Name):
-                            data_class_name = annotation.value
+        for stmt in original_node.body.body:
+            if isinstance(stmt, cst.SimpleStatementLine):
+                for small_stmt in stmt.body:
+                    if m.matches(small_stmt, m.AnnAssign(target=m.Name("data"))):
+                        # 提取注解 MessageTextData
+                        if isinstance(small_stmt.annotation.annotation, cst.Name):
+                            data_class_name = small_stmt.annotation.annotation.value
                         break
-            
-            if data_class_name:
-                break
+            if data_class_name: break
         
         if not data_class_name:
-            # 如果没找到 data 字段，直接返回原节点
-            return updated_node
+            return node
 
-        # 3. 构建对应的 TypeDict 名称 (例如: MessageReplyDataType)
         typedict_name = data_class_name + "Type"
-
-        # 4. 构建要注入的 if TYPE_CHECKING 代码块
-        if_type_checking_node = cst.If(
+        
+        # 构建注入的代码块
+        # if TYPE_CHECKING:
+        #     _data_class: ClassVar[type[MessageTextData]]
+        #     def __init__(self, **kwargs: Unpack[MessageTextDataType]): ...
+        type_checking_block = cst.If(
             test=cst.Name("TYPE_CHECKING"),
             body=cst.IndentedBlock(
                 body=[
-                    # 修正：必须用 SimpleStatementLine 包裹 AnnAssign
                     cst.SimpleStatementLine(
                         body=[
                             cst.AnnAssign(
@@ -135,7 +141,6 @@ class InjectInitTypeChecking(cst.CSTTransformer):
                             )
                         ]
                     ),
-                    # FunctionDef 可以直接放在 Block 里
                     cst.FunctionDef(
                         name=cst.Name("__init__"),
                         params=cst.Parameters(
@@ -154,35 +159,107 @@ class InjectInitTypeChecking(cst.CSTTransformer):
                 ]
             )
         )
-
-        # 5. 将新节点追加到类体中
-        new_body_content = list(updated_node.body.body)
-        new_body_content.append(if_type_checking_node)
-
-        return updated_node.with_changes(
-            body=updated_node.body.with_changes(body=new_body_content)
+        
+        # 追加到类体末尾
+        return node.with_changes(
+            body=node.body.with_changes(body=list(node.body.body) + [type_checking_block])
         )
 
-module = cst.parse_module(dataclass_content)
-transformer = ChangeToBase2()
-modified_module = module.visit(transformer)
-transformer_inject = InjectInitTypeChecking()
-modified_module = modified_module.visit(transformer_inject)
-dataclass_content = modified_module.code
 
-lines = dataclass_content.splitlines()
-new_lines = lines.copy()
-for i, line in enumerate(lines):
-    if line.startswith("class ") and "MessageSegment" in line:
-        new_lines[i-1] = "@dataclass(slots=True, frozen=True, kw_only=True, init=False)"
+# --- 核心流程函数 ---
 
-dataclass_content = "\n".join(new_lines)
+def load_config_paths() -> tuple[Path, Path]:
+    with open(PYPROJECT_PATH, "rb") as f:
+        pyproject = tomllib.load(f)
+    
+    profiles = pyproject["tool"]["datamodel-codegen"]["profiles"]
+    return (
+        Path(profiles["message-typedict"]["output"]),
+        Path(profiles["message-dataclass"]["output"])
+    )
 
-gencode_content += "\n\n" + dataclass_content
+def run_codegen_tools():
+    print("Running extract-message-schema.ts...")
+    subprocess.run(["bun", "scripts/extract-message-schema.ts"], check=True)
+    
+    print("Running datamodel-codegen (typedict)...")
+    subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-typedict"], check=True)
+    
+    print("Running datamodel-codegen (dataclass)...")
+    subprocess.run(["uv", "run", "datamodel-codegen", "--profile", "message-dataclass"], check=True)
 
-gencode_content = gencode_content.replace("OB11", "")
-with open("src/napcat/types/messages/generated.py", "w", encoding="utf-8") as f:
-    f.write(gencode_content)
+def process_typedicts(file_path: Path) -> tuple[str, set[str]]:
+    content = file_path.read_text(encoding="utf-8")
+    
+    # 1. 正则预处理
+    for pattern, replacement in REGEX_REPLACEMENTS:
+        if "TypedDict" in pattern or "float" in pattern or "TYPE_CHECKING" in replacement:
+            content = re.sub(pattern, replacement, content)
+    
+    content = re.sub(r", closed=True", "", content)
+    # 2. CST 处理
+    module = cst.parse_module(content)
+    transformer = TypedDictTransformer()
+    modified_module = module.visit(transformer)
+    content = modified_module.code
+    
+    # 3. 字符串后处理 (Pending Renames)
+    for name in transformer.renamed_classes:
+        # 替换类似 MessageTextData( 为 MessageTextDataType(
+        content = content.replace(f"{name}(", f"{name}Type(")
+        
+    return content, transformer.renamed_classes
 
-os.remove(typedict_schema_code_path)
-os.remove(dataclass_schema_code_path)
+def process_dataclasses(file_path: Path) -> str:
+    content = file_path.read_text(encoding="utf-8")
+    
+    # 1. 正则预处理
+    # 统一替换 dataclass 装饰器参数 (不包含 init=False，这部分现在由 AST 处理)
+    content = content.replace("@dataclass", "@dataclass(slots=True, frozen=True, kw_only=True)")
+    
+    for pattern, replacement in REGEX_REPLACEMENTS:
+        if "future" in pattern or "float" in pattern: # 只应用部分规则
+            content = re.sub(pattern, replacement, content)
+
+    # 2. CST 处理 (包含基类修改、Inject TypeChecking 和 添加 init=False)
+    module = cst.parse_module(content)
+    transformer = DataclassTransformer()
+    modified_module = module.visit(transformer)
+    
+    return modified_module.code
+
+def main():
+    try:
+        # 1. 准备路径和运行生成器
+        typedict_path, dataclass_path = load_config_paths()
+        run_codegen_tools()
+        
+        # 2. 处理代码
+        print("Processing TypedDicts...")
+        typedict_code, _ = process_typedicts(typedict_path)
+        
+        print("Processing Dataclasses...")
+        dataclass_code = process_dataclasses(dataclass_path)
+        
+        # 3. 合并与清理
+        final_content = typedict_code + "\n\n" + dataclass_code
+        final_content = final_content.replace("OB11", "")
+        
+        # 4. 写入最终文件
+        OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT_FILE.write_text(final_content, encoding="utf-8")
+        print(f"Successfully generated: {OUTPUT_FILE}")
+        
+        # 5. 清理临时文件
+        typedict_path.unlink(missing_ok=True)
+        dataclass_path.unlink(missing_ok=True)
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Error during codegen execution: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        exit(1)
+
+if __name__ == "__main__":
+    main()
