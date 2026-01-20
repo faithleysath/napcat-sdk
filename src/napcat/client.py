@@ -99,7 +99,7 @@ class NapCatClient:
             user_id=user_id,
             message=message
         )
-        return int(resp["message_id"])
+        return resp["message_id"]
     
     async def send_group_msg(self, group_id: int, message: str | list[MessageSegment[LiteralString | str, SegmentDataBase, SegmentDataTypeBase]]) -> int:
         """
@@ -111,7 +111,7 @@ class NapCatClient:
             group_id=group_id,
             message=message
         )
-        return int(resp["data"]["message_id"])
+        return resp["message_id"]
 
 
     # --- 黑魔法区域 ---
@@ -120,7 +120,7 @@ class NapCatClient:
         if item.startswith("_"):
             raise AttributeError(item)
 
-        async def dynamic_api_call(**kwargs: Any) -> dict[str, Any]:
+        async def dynamic_api_call(**kwargs: Any) -> Mapping[str, Any] | None:
             return await self.call_action(item, kwargs)
 
         return dynamic_api_call
