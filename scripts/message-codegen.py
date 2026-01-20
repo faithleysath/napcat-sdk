@@ -17,7 +17,6 @@ REGEX_REPLACEMENTS = [
         r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s*,?\s*)?(?:\)\s*)?.*?\n?",
         "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n"
     ),
-    (r", closed=True", ""),
     # 基础类型修正
     (r"\bfloat\b", "int"),
     (r", closed=True", ""),
