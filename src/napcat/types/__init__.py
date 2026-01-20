@@ -9,6 +9,10 @@ from .events import (
     NapCatEvent,
     PrivateMessageEvent,
     UnknownEvent,
+    FriendRequestEvent,
+    GroupRequestEvent,
+    RequestEvent,
+    HeartbeatStatus,
 )
 
 from .messages import (
@@ -39,15 +43,23 @@ from .messages import MessageSegment, UnknownMessageSegment
 
 __all__ = [
     # events (most used)
+    # Base
     "NapCatEvent",
+    "UnknownEvent",
+    # Meta Events
     "MetaEvent",
+    "LifecycleMetaEvent",
+    "HeartbeatEvent",
+    "HeartbeatStatus",
+    # Message Events
     "MessageEvent",
     "PrivateMessageEvent",
     "GroupMessageEvent",
-    "HeartbeatEvent",
-    "LifecycleMetaEvent",
-    "UnknownEvent",
     "MessageSender",
+    # Request Events
+    "RequestEvent",
+    "FriendRequestEvent",
+    "GroupRequestEvent",
     # message segments
     "MessageSegment",
     "UnknownMessageSegment",
