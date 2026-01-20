@@ -56,7 +56,6 @@ from dataclasses import dataclass
 from typing import Any, Literal""", "")
 dataclass_content = dataclass_content.replace("float", "int")
 
-pending_renames: set[str] = set()
 class ChangeToBase2(cst.CSTTransformer):
     def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
         # 如果类名以Data结尾，则修改其基类为 SegmentDataBase
@@ -67,7 +66,6 @@ class ChangeToBase2(cst.CSTTransformer):
             return updated_node.with_changes(bases=new_bases)
         # 如果类名不包含Data，则修改其基类为 MessageSegment
         elif "Data" not in original_node.name.value:
-            pending_renames.add(original_node.name.value)
             new_bases = [
                 cst.Arg(value=cst.Name("MessageSegment"))
             ]
@@ -79,9 +77,16 @@ transformer = ChangeToBase2()
 modified_module = module.visit(transformer)
 dataclass_content = modified_module.code
 
-for name in pending_renames:
-    dataclass_content = dataclass_content.replace(name+":", name.lstrip("OB11Message") + "MessageSegment:")
+lines = dataclass_content.splitlines()
+new_lines = lines.copy()
+for i, line in enumerate(lines):
+    if line.startswith("class ") and "MessageSegment" in line:
+        new_lines[i-1] = "@dataclass(slots=True, frozen=True, kw_only=True, init=False)"
+
+dataclass_content = "\n".join(new_lines)
 
 typedict_content += "\n\n" + dataclass_content
+
+typedict_content = typedict_content.replace("OB11", "")
 with open(typedict_schema_code_path, "w", encoding="utf-8") as f:
     f.write(typedict_content)
