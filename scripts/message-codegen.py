@@ -26,6 +26,8 @@ pattern = r"(?m)^\s*from\s+typing_extensions\s+import\s+(?:\(\s*)?TypedDict(?:\s
 gencode_content = re.sub(pattern, "from .base import SegmentDataTypeBase, SegmentDataBase, MessageSegment\nfrom dataclasses import dataclass\n", gencode_content)
 
 gencode_content = gencode_content.replace("float", "int").replace(", closed=True", "")
+gencode_content = gencode_content.replace("from typing import Any, Literal, NotRequired",
+                                            "from typing import Any, Literal, NotRequired, TYPE_CHECKING, ClassVar, Unpack")
 
 pending_renames: set[str] = set()
 class ChangeToBase(cst.CSTTransformer):
@@ -73,9 +75,90 @@ class ChangeToBase2(cst.CSTTransformer):
             return updated_node.with_changes(bases=new_bases)
         return updated_node
 
+class InjectInitTypeChecking(cst.CSTTransformer):
+    def leave_ClassDef(self, original_node: cst.ClassDef, updated_node: cst.ClassDef) -> cst.BaseStatement:
+        # 1. 检查是否继承自 MessageSegment
+        is_segment = False
+        for base in original_node.bases:
+            if getattr(base.value, 'value', '') == 'MessageSegment':
+                is_segment = True
+                break
+
+        if not is_segment:
+            return updated_node
+
+        # 2. 查找 'data' 字段的类型注解 (例如: MessageReplyData)
+        data_class_name = None
+        for statement in original_node.body.body:
+            # 匹配: data: Annotation
+            if isinstance(statement, cst.AnnAssign) and \
+               isinstance(statement.target, cst.Name) and \
+               statement.target.value == 'data':
+                
+                # 提取注解名称
+                annotation = statement.annotation.annotation
+                if isinstance(annotation, cst.Name):
+                    data_class_name = annotation.value
+                break
+        
+        print(data_class_name)
+        if not data_class_name:
+            return updated_node
+
+        # 3. 构建对应的 TypeDict 名称 (例如: MessageReplyDataType)
+        typedict_name = data_class_name + "Type"
+
+        # 4. 构建要注入的 if TYPE_CHECKING 代码块
+        if_type_checking_node = cst.If(
+            test=cst.Name("TYPE_CHECKING"),
+            body=cst.IndentedBlock(
+                body=[
+                    # 修复点：AnnAssign 必须包裹在 SimpleStatementLine 中
+                    cst.SimpleStatementLine(
+                        body=[
+                            cst.AnnAssign(
+                                target=cst.Name("_data_class"),
+                                annotation=cst.Annotation(
+                                    annotation=cst.parse_expression(f"ClassVar[type[{data_class_name}]]")
+                                ),
+                                value=None
+                            )
+                        ]
+                    ),
+                    # def __init__(self, **kwargs: Unpack[MessageReplyDataType]): ...
+                    # FunctionDef 是复合语句，可以直接作为 Block 的元素
+                    cst.FunctionDef(
+                        name=cst.Name("__init__"),
+                        params=cst.Parameters(
+                            params=[cst.Param(name=cst.Name("self"))],
+                            star_kwarg=cst.Param(
+                                name=cst.Name("kwargs"),
+                                annotation=cst.Annotation(
+                                    annotation=cst.parse_expression(f"Unpack[{typedict_name}]")
+                                )
+                            )
+                        ),
+                        body=cst.IndentedBlock(
+                            body=[cst.SimpleStatementLine(body=[cst.Expr(value=cst.Ellipsis())])]
+                        )
+                    )
+                ]
+            )
+        )
+
+        # 5. 将新节点追加到类体中
+        new_body_content = list(updated_node.body.body)
+        new_body_content.append(if_type_checking_node)
+
+        return updated_node.with_changes(
+            body=updated_node.body.with_changes(body=new_body_content)
+        )
+
 module = cst.parse_module(dataclass_content)
 transformer = ChangeToBase2()
 modified_module = module.visit(transformer)
+transformer_inject = InjectInitTypeChecking()
+modified_module = modified_module.visit(transformer_inject)
 dataclass_content = modified_module.code
 
 lines = dataclass_content.splitlines()
