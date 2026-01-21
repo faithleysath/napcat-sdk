@@ -1,7 +1,8 @@
 from __future__ import annotations
 import builtins
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, MISSING
+from functools import lru_cache
 from typing import (
     Any,
     ClassVar,
@@ -15,6 +16,12 @@ from typing import (
 )
 
 from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
+
+
+@lru_cache(maxsize=256)
+def _cached_get_type_hints(cls: type) -> dict[str, Any]:
+    """缓存 get_type_hints 结果，避免重复的反射开销"""
+    return get_type_hints(cls)
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class SegmentDataBase(TypeValidatorMixin, IgnoreExtraArgsMixin):
@@ -48,7 +55,7 @@ class MessageSegment(ABC):
 
     def __init_subclass__(cls, **kwargs: Any):
         # 1. 提取 'data' 字段的类型
-        hints = get_type_hints(cls)
+        hints = _cached_get_type_hints(cls)
         data_cls = hints.get("data")
 
         if not data_cls:
@@ -95,8 +102,30 @@ class MessageSegment(ABC):
         MessageSegment._registry[type_val] = cls
 
     def __init__(self, **kwargs: Any):
-        type_field = self.__class__.__dataclass_fields__["type"]
-        object.__setattr__(self, "type", type_field.default)
+        # 从类型注解的 Literal 中提取 type 值
+        hints = _cached_get_type_hints(self.__class__)
+        type_hint = hints.get("type")
+        type_val = None
+        
+        if type_hint and get_origin(type_hint) is Literal:
+            args = get_args(type_hint)
+            if args and isinstance(args[0], str):
+                type_val = args[0]
+        
+        # 如果无法从 Literal 提取，尝试从字段默认值获取
+        if type_val is None:
+            type_field = self.__class__.__dataclass_fields__["type"]
+            if type_field.default is not MISSING:
+                type_val = type_field.default
+            elif type_field.default_factory is not MISSING:
+                type_val = type_field.default_factory()
+        
+        if type_val is None:
+            raise ValueError(
+                f"Class {self.__class__.__name__} has no default type value"
+            )
+        
+        object.__setattr__(self, "type", type_val)
 
         data_cls = self.__class__._data_class
         if not data_cls:
