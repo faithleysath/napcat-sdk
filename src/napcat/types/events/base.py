@@ -31,10 +31,10 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
         
         # 1. 尝试读取子类显式定义的 _post_type (支持字符串或元组)
         #    这对于一个类处理多个 post_type (如 MessageEvent) 很有用
-        pt: Any = getattr(cls, "_post_type", None)
+        pt: Any = cls.__dict__.get("_post_type")
 
         if pt is None:
-            pt = getattr(cls, "post_type", None)
+            pt = cls.__dict__.get("post_type")
 
         # 2. 运行时卫语句：过滤掉 None 和 member_descriptor (slots)
         if not pt or not isinstance(pt, (str, tuple, list)):

@@ -25,13 +25,13 @@ class NoticeEvent(NapCatEvent):
 
     def __init_subclass__(cls, **kwargs: Any):
         # 1. 获取 notice_type
-        n_type = getattr(cls, "notice_type", None)
+        n_type = cls.__dict__.get("notice_type")
         if not n_type or not isinstance(n_type, str):
             return
 
         # 2. 注册逻辑
         if n_type == "notify":
-            s_type = getattr(cls, "sub_type", None)
+            s_type = cls.__dict__.get("sub_type")
             if s_type and isinstance(s_type, str):
                 NoticeEvent._notify_registry[s_type] = cls
         else:
