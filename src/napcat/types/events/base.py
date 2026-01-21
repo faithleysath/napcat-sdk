@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 if TYPE_CHECKING:
     from ...client import NapCatClient
@@ -31,13 +31,13 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
         
         # 1. 尝试读取子类显式定义的 _post_type (支持字符串或元组)
         #    这对于一个类处理多个 post_type (如 MessageEvent) 很有用
-        pt: str | tuple[str, ...] | list[str] | None = getattr(cls, "_post_type", None)
+        pt: Any = getattr(cls, "_post_type", None)
 
-        # 2. 如果没有 _post_type，尝试读取 dataclass 字段的默认值 post_type
         if pt is None:
             pt = getattr(cls, "post_type", None)
 
-        if not pt:
+        # 2. 运行时卫语句：过滤掉 None 和 member_descriptor (slots)
+        if not pt or not isinstance(pt, (str, tuple, list)):
             return
 
         # 3. 注册到注册表
@@ -46,7 +46,8 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
                 raise ValueError(f"Duplicate post_type registered: {pt}")
             NapCatEvent._registry[pt] = cls
         else:
-            for t in pt:
+            iterable_pt = cast(list[str] | tuple[str, ...], pt)
+            for t in iterable_pt:
                 if t in NapCatEvent._registry:
                     raise ValueError(f"Duplicate post_type registered: {t}")
                 NapCatEvent._registry[t] = cls
