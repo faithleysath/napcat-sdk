@@ -60,7 +60,6 @@ class MessageSegment(ABC):
 
         if not data_cls:
             # 如果没有 data 定义，可能是抽象基类，直接跳过
-            # 原代码是 raise TypeError，为了安全起见这里保留原逻辑，但建议加上 hasattr 检查
             if ABC in cls.__bases__:
                 return
             raise TypeError(f"Class {cls.__name__} missing type hint for 'data'")
@@ -72,6 +71,13 @@ class MessageSegment(ABC):
         
         # 优先尝试直接获取类属性 (type = "text")
         type_val = getattr(cls, "type", _MISSING)
+
+        # =============== 修复开始 ===============
+        # 如果获取到的值存在，但不是字符串（通常是继承自父类 slots 的 member_descriptor），
+        # 我们应该将其视为“未定义”，以便后续逻辑去尝试从 Literal 类型注解中提取。
+        if type_val is not _MISSING and not isinstance(type_val, str):
+            type_val = _MISSING
+        # =============== 修复结束 ===============
 
         # 核心修复 A: 如果类属性不存在，尝试从类型注解 (type: Literal["text"]) 中提取
         if type_val is _MISSING:
