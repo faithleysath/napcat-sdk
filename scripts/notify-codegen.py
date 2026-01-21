@@ -45,18 +45,19 @@ The prefix "OB11" has already been removed from the input code. "OB11GroupBanEve
 1.  **Interfaces**: If the TS file defines an `interface` (e.g., `GroupUploadFile`) used by the main class:
     -   Convert it into a separate `@dataclass`.
     -   Place it **BEFORE** the main event class.
-2.  **Types**: If the TS file defines a `type` alias with a union (e.g., `type X = 'a' | 'b'`):
-    -   Convert it to a Python type alias: `X = Literal['a', 'b']`.
-    -   Place it **BEFORE** the main event class.
+2.  **Types (Inline Strategy)**: 
+    -   If a field uses a defined `type` alias (e.g., `sub_type: GroupDecreaseSubType`), **do NOT** generate a separate Python type alias.
+    -   Instead, find the values of that type and **inline** them directly into the field definition.
+    -   Example: `sub_type: Literal['leave', 'kick', 'kick_me'] = 'leave'`.
 
 **Data Structure & Fields:**
 1.  Use `@dataclass(slots=True, frozen=True, kw_only=True)`.
-2.  **Constructor Handling**: 
-    -   Ignore the *logic* inside the constructor.
-    -   Extract parameters defined in the constructor (e.g., `public id: number`) as fields.
-    -   **Redundancy Check**: Do NOT re-define fields (`group_id`, `user_id`) if they are already present in the parent class (`GroupNoticeEvent`), UNLESS the child class changes their default value or type.
-3.  **Literals**:
-    -   `notice_type` and `sub_type`: MUST use `Literal["value"]`.
+2.  **Field Extraction Rule (STRICT)**: 
+    -   **Source of Truth**: Extract ONLY fields explicitly declared as **properties** in the TypeScript class body (e.g., `operator_id: number;`).
+    -   **Ignore Constructor**: Do NOT extract fields from `constructor` parameters or `this.x = y` assignments inside the constructor. We assume if it's not declared in the class body, it belongs to the parent class.
+    -   **Exception**: If a constructor parameter has `public` / `private` modifier (e.g. `constructor(public id: number)`), treat it as a class property and extract it.
+3.  **Literals & Defaults**:
+    -   `notice_type` and `sub_type`: MUST use `Literal["value"]` (Strict, no `| str`).
     -   Other fields with defaults: Use `Literal["value"] | str` to allow extensibility.
 
 **Output:**
