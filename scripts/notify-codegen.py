@@ -56,9 +56,12 @@ The prefix "OB11" has already been removed from the input code. "OB11GroupBanEve
     -   **Source of Truth**: Extract ONLY fields explicitly declared as **properties** in the TypeScript class body (e.g., `operator_id: number;`).
     -   **Ignore Constructor**: Do NOT extract fields from `constructor` parameters or `this.x = y` assignments inside the constructor. We assume if it's not declared in the class body, it belongs to the parent class.
     -   **Exception**: If a constructor parameter has `public` / `private` modifier (e.g. `constructor(public id: number)`), treat it as a class property and extract it.
-3.  **Literals & Defaults**:
-    -   `notice_type` and `sub_type`: MUST use `Literal["value"]` (Strict, no `| str`).
-    -   Other fields with defaults: Use `Literal["value"] | str` to allow extensibility.
+3.  **Literals & Defaults (CRITICAL)**:
+    -   **Strict Fields**: `notice_type` and `sub_type` MUST use strict `Literal["value"]` (e.g., `notice_type: Literal["group_ban"] = "group_ban"`). Do NOT add `| str`.
+    -   **Open Literals (String Defaults)**: For ANY other string field that has a default value (e.g., `tag = 'BotOfflineEvent'`), you **MUST** use the "Open Literal" pattern:
+        -   **Pattern**: `field_name: Literal['DefaultValue'] | str = 'DefaultValue'`
+        -   **Example**: If TS has `tag = 'MyTag'`, Python output must be `tag: Literal['MyTag'] | str = 'MyTag'`.
+    -   **Reasoning**: This tells type checkers the default is a specific literal, but allows users to override it with any string.
 
 **Output:**
 -   Return **ONLY** the valid Python code.
