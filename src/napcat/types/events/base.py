@@ -29,28 +29,35 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
 
     def __init_subclass__(cls, **kwargs: Any):
         
-        # 1. 尝试读取子类显式定义的 _post_type (支持字符串或元组)
-        #    这对于一个类处理多个 post_type (如 MessageEvent) 很有用
-        pt: Any = cls.__dict__.get("_post_type")
-
+        # 1. 获取定义的类型 (保持之前的修复)
+        pt = cls.__dict__.get("_post_type")
         if pt is None:
             pt = cls.__dict__.get("post_type")
 
-        # 2. 运行时卫语句：过滤掉 None 和 member_descriptor (slots)
         if not pt or not isinstance(pt, (str, tuple, list)):
             return
 
-        # 3. 注册到注册表
+        # 统一转为列表处理
+        pt_list: list[str]
         if isinstance(pt, str):
-            if pt in NapCatEvent._registry:
-                raise ValueError(f"Duplicate post_type registered: {pt}")
-            NapCatEvent._registry[pt] = cls
+            pt_list = [pt]
         else:
-            iterable_pt = cast(list[str] | tuple[str, ...], pt)
-            for t in iterable_pt:
-                if t in NapCatEvent._registry:
-                    raise ValueError(f"Duplicate post_type registered: {t}")
-                NapCatEvent._registry[t] = cls
+            # 显式告知 Pylance 这里是字符串列表/元组
+            pt_list = list(cast(list[str] | tuple[str, ...], pt))
+
+        # 3. 注册逻辑 (带 dataclass slots 兼容)
+        for t in pt_list:
+            if t in NapCatEvent._registry:
+                existing_cls = NapCatEvent._registry[t]
+                # 核心修复：检查是否为同名同模块的类（说明是 dataclass slots 导致的重建）
+                if existing_cls.__name__ == cls.__name__ and existing_cls.__module__ == cls.__module__:
+                    # 允许覆盖（用新的 slotted 类替换旧的）
+                    pass
+                else:
+                    raise ValueError(f"Duplicate post_type registered: {t} (Conflict between {existing_cls} and {cls})")
+            
+            # 写入/更新注册表
+            NapCatEvent._registry[t] = cls
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
