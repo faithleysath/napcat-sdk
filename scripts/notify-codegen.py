@@ -1,0 +1,164 @@
+import os
+import glob
+import re
+import asyncio
+import logging
+from openai import AsyncOpenAI
+
+# --- 配置 ---
+TS_SOURCE_DIR = "./NapCatQQ/packages/napcat-onebot/event/notice"
+PY_OUTPUT_DIR = "./src/napcat/types/events/notice"
+
+IGNORE_FILES = {
+    "OB11BaseNoticeEvent.ts", 
+    "index.ts"
+}
+
+API_BASE = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+API_KEY = os.getenv("OPENAI_API_KEY")
+MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+CONCURRENCY_LIMIT = 10
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
+
+# --- 核心 Prompt (Python 3.12+ 风格) ---
+SYSTEM_PROMPT = """
+You are a Python Transpiler specialized in converting TypeScript definitions to **modern Python 3.12+** dataclasses.
+
+**Python 3.12+ Syntax Rules (STRICT):**
+1.  **Generics**: Use built-in types for generics. 
+    -   Use `list[T]`, `dict[K, V]`, `type[T]`.
+    -   **FORBIDDEN**: Do NOT use `typing.List`, `typing.Dict`, `typing.Type`.
+2.  **Unions**: Use the `|` operator.
+    -   Use `int | str`.
+    -   **FORBIDDEN**: Do NOT use `typing.Union`.
+3.  **Optionals**: Use `| None`.
+    -   Use `str | None = None`.
+    -   **FORBIDDEN**: Do NOT use `typing.Optional`.
+4.  **Imports**:
+    -   ONLY import `Literal`, `Any`, `ClassVar` from `typing`.
+    -   Do NOT import `List`, `Dict`, `Optional`, `Union`.
+
+**Dynamic Inheritance & Imports:**
+1.  If TS class extends `BaseNoticeEvent`:
+    -   Inherit from `NoticeEvent`.
+    -   You should add `from .base import NoticeEvent` at the top.
+2.  If TS class extends `xxxNoticeEvent`:
+    -   Inherit from `xxxNoticeEvent`.
+    -   You should add `from .xxxNoticeEvent import xxxNoticeEvent` at the top.
+
+**Data Structure:**
+1.  Use `@dataclass(slots=True, frozen=True, kw_only=True)`.
+2.  Convert `number` -> `int`, `string` -> `str`, `unknown` -> `Any`, `boolean` -> `bool`.
+3.  Keep `notice_type` and `sub_type` fields exactly as in TS (use `Literal` without | str). Any other fields that has default value should also use `Literal`, but append | str to allow extensibility.
+4.  Ignore `constructor` logic; only define the data schema. All parameters in constructor should be extracted too except the core: NapCatCore.
+
+**Output:**
+-   Return **ONLY** the valid Python code. No markdown, no comments.
+"""
+
+def clean_filename(ts_filename: str) -> str:
+    """OB11GroupBanEvent.ts -> GroupBanEvent.py"""
+    name = ts_filename.replace(".ts", "")
+    if name.startswith("OB11"):
+        name = name[4:]
+    return name + ".py"
+
+async def process_file(client: AsyncOpenAI, sem: asyncio.Semaphore, ts_path: str) -> tuple[str, list[str], str]:
+    filename = os.path.basename(ts_path)
+    async with sem:
+        try:
+            with open(ts_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            content = content.replace("OB11", "")
+            response = await client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"TS File: {filename}\nContent:\n{content}"}
+                ],
+                temperature=0.0
+            )
+            
+            code = response.choices[0].message.content or ""
+            
+            # 清理 Markdown
+            code = re.sub(r'^```python\s*', '', code, flags=re.MULTILINE)
+            code = re.sub(r'^```\s*', '', code, flags=re.MULTILINE).strip()
+            
+            # 提取类名
+            classes = re.findall(r'class\s+(\w+)', code)
+            
+            out_name = clean_filename(filename)
+            return out_name, classes, code
+
+        except Exception as e:
+            logger.error(f"Error processing {filename}: {e}")
+            return "", [], ""
+
+async def main():
+    if not API_KEY:
+        logger.error("Error: Environment variable OPENAI_API_KEY is not set.")
+        return
+
+    client = AsyncOpenAI(api_key=API_KEY, base_url=API_BASE)
+    sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
+
+    ts_files = [
+        f for f in glob.glob(os.path.join(TS_SOURCE_DIR, "*.ts")) 
+        if os.path.basename(f) not in IGNORE_FILES
+    ]
+    
+    logger.info(f"Detected {len(ts_files)} TypeScript files.")
+    
+    tasks = [process_file(client, sem, f) for f in ts_files]
+    results = await asyncio.gather(*tasks)
+
+    if not os.path.exists(PY_OUTPUT_DIR):
+        os.makedirs(PY_OUTPUT_DIR)
+
+    # 准备 __init__.py
+    # 强制导出 base.py 中的核心类
+    init_lines = ["from .base import NoticeEvent, UnknownNoticeEvent"]
+    all_exports = ["NoticeEvent", "UnknownNoticeEvent"]
+
+    for fname, classes, code in results:
+        if not fname or not code:
+            continue
+        
+        out_path = os.path.join(PY_OUTPUT_DIR, fname)
+        with open(out_path, 'w', encoding='utf-8') as f:
+            f.write("# AUTO-GENERATED FILE. DO NOT EDIT.\n")
+            f.write("# Generated by NapCat Python SDK Generator\n\n")
+            f.write("from __future__ import annotations\n")
+            f.write("from dataclasses import dataclass\n")
+            
+            if "typing" not in code:
+                f.write("from typing import Literal, Any, ClassVar\n")
+            
+            f.write("\n")
+            f.write(code)
+        
+        # 收集导出信息
+        mod_name = fname.replace(".py", "")
+        if classes:
+            init_lines.append(f"from .{mod_name} import {', '.join(classes)}")
+            all_exports.extend(classes)
+
+    # 生成 __init__.py
+    init_path = os.path.join(PY_OUTPUT_DIR, "__init__.py")
+    with open(init_path, 'w', encoding='utf-8') as f:
+        f.write("\n".join(init_lines))
+        f.write("\n\n__all__ = [\n")
+        # 去重并排序
+        unique_exports = sorted(list(set(all_exports)))
+        for c in unique_exports:
+            f.write(f"    '{c}',\n")
+        f.write("]\n")
+
+    logger.info(f"Success! Generated {len(results)} files in {PY_OUTPUT_DIR}")
+
+if __name__ == "__main__":
+    asyncio.run(main())

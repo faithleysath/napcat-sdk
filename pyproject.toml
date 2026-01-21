@@ -57,6 +57,7 @@ module-name = "napcat"
 dev = [
     "datamodel-code-generator[ruff]>=0.53.0",
     "libcst>=1.8.6",
+    "openai>=2.15.0",
     "pytest>=9.0.2",
 ]
 docs = [
