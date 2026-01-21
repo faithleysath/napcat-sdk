@@ -24,7 +24,6 @@ class NoticeEvent(NapCatEvent):
     _notify_registry: ClassVar[dict[str, type[NoticeEvent]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
-
         # 1. 获取 notice_type
         n_type = getattr(cls, "notice_type", None)
         if not n_type or not isinstance(n_type, str):
