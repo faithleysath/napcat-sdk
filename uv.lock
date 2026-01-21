@@ -466,6 +466,7 @@ dev = [
     { name = "libcst" },
     { name = "openai" },
     { name = "pytest" },
+    { name = "ruff" },
 ]
 docs = [
     { name = "zensical" },
@@ -483,6 +484,7 @@ dev = [
     { name = "libcst", specifier = ">=1.8.6" },
     { name = "openai", specifier = ">=2.15.0" },
     { name = "pytest", specifier = ">=9.0.2" },
+    { name = "ruff", specifier = ">=0.14.13" },
 ]
 docs = [{ name = "zensical", specifier = ">=0.0.16" }]
 

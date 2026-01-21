@@ -59,6 +59,7 @@ dev = [
     "libcst>=1.8.6",
     "openai>=2.15.0",
     "pytest>=9.0.2",
+    "ruff>=0.14.13",
 ]
 docs = [
     "zensical>=0.0.16",

@@ -1,3 +1,5 @@
+import subprocess
+import shutil
 import os
 import glob
 import re
@@ -16,7 +18,7 @@ IGNORE_FILES = {
 
 API_BASE = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-3.5-turbo")
+MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "google/gemini-3-flash")
 CONCURRENCY_LIMIT = 10
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -109,6 +111,33 @@ async def process_file(client: AsyncOpenAI, sem: asyncio.Semaphore, ts_path: str
             logger.error(f"Error processing {filename}: {e}")
             return "", [], ""
 
+def run_ruff_formatting(target_dir: str):
+    ruff_exe = shutil.which("ruff")
+    if not ruff_exe:
+        logger.warning("⚠️ Ruff not found in PATH. Skipping formatting. (pip install ruff)")
+        return
+
+    logger.info("🧹 Running Ruff to clean imports and format code...")
+
+    try:
+        subprocess.run(
+            [ruff_exe, "check", "--fix", "--select", "I,F401", target_dir],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
+            [ruff_exe, "format", target_dir],
+            check=True,
+            capture_output=True, # 如果不想看Ruff的输出，可以捕获
+            text=True
+        )
+        
+        logger.info("✨ Ruff formatting complete!")
+
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ Ruff failed:\n{e.stderr}")
+
 async def main():
     if not API_KEY:
         logger.error("Error: Environment variable OPENAI_API_KEY is not set.")
@@ -146,7 +175,7 @@ async def main():
             # 统一写入标准头，不再依赖检测代码内容
             f.write("from __future__ import annotations\n")
             f.write("from dataclasses import dataclass\n")
-            f.write("from typing import Literal, Any, ClassVar\n") 
+            f.write("from typing import Literal, Any\n") 
             
             f.write("\n")
             f.write(code)
@@ -167,6 +196,7 @@ async def main():
         f.write("]\n")
 
     logger.info(f"Success! Generated {len(results)} files in {PY_OUTPUT_DIR}")
+    run_ruff_formatting(PY_OUTPUT_DIR)
 
 if __name__ == "__main__":
     asyncio.run(main())
