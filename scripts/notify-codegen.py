@@ -33,12 +33,12 @@ The prefix "OB11" has already been removed from the input code. "OB11GroupBanEve
 1.  **Generics**: Use `list[T]`, `dict[K, V]`, `type[T]`. (NO `typing.List`).
 2.  **Unions**: Use `int | str`. (NO `typing.Union`).
 3.  **Optionals**: Use `str | None = None`. (NO `typing.Optional`).
+4.  **Mapping**: unknown / any -> Any
 
 **Import Strategy:**
 1.  **Standard Libs**: **DO NOT** import `dataclasses`, `typing`, or `__future__`. The wrapper script handles these.
 2.  **Local Imports**:
     -   If extends `BaseNoticeEvent` -> Add `from .base import NoticeEvent` at the top.
-    -   If extends `GroupNoticeEvent` -> Add `from .base import GroupNoticeEvent` at the top (Note: GroupNoticeEvent is in .base).
     -   If extends `xxxNoticeEvent` -> Add `from .xxxNoticeEvent import xxxNoticeEvent`.
 
 **Helper Structures (CRITICAL):**
