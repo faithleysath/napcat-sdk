@@ -28,7 +28,6 @@ class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
     _registry: ClassVar[dict[str, type[NapCatEvent]]] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
-        super().__init_subclass__(**kwargs)
         
         # 1. 尝试读取子类显式定义的 _post_type (支持字符串或元组)
         #    这对于一个类处理多个 post_type (如 MessageEvent) 很有用
