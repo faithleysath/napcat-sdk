@@ -281,7 +281,7 @@ def main():
         
         # 3. 合并与清理
         final_content = typedict_code + "\n\n" + dataclass_code
-        final_content = final_content.replace("OB11", "")
+        final_content = final_content.replace("OB11", "").replace("MessageIdMusic(MessageSegment)", "MessageIdMusic")
         
         # 4. 写入最终文件
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)

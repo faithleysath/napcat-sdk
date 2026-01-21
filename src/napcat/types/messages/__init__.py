@@ -8,7 +8,6 @@ from .generated import (
     MessageFace,
     MessageFile,
     MessageForward,
-    MessageIdMusic,
     MessageImage,
     MessageJson,
     MessageMFace,
@@ -20,7 +19,7 @@ from .generated import (
     MessageReply,
     MessageText,
     MessageVideo,
-    Model as MessageSegmentType,
+    Model,
 )
 
 __all__ = [
@@ -34,7 +33,6 @@ __all__ = [
     "MessageFace",
     "MessageFile",
     "MessageForward",
-    "MessageIdMusic",
     "MessageImage",
     "MessageJson",
     "MessageMFace",
@@ -46,5 +44,5 @@ __all__ = [
     "MessageReply",
     "MessageText",
     "MessageVideo",
-    "MessageSegmentType",
+    "Model",
 ]

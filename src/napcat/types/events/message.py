@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
-from ..messages import MessageSegment, MessageText, MessageReply, MessageAt, MessageSegmentType
+from ..messages import MessageSegment, MessageText, MessageReply, MessageAt, Model as MessageSegmentType
 from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 from .base import NapCatEvent
 

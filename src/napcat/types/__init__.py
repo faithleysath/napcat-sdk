@@ -50,7 +50,6 @@ from .messages import (
     MessageFace,
     MessageFile,
     MessageForward,
-    MessageIdMusic,
     MessageImage,
     MessageJson,
     MessageMFace,
@@ -62,7 +61,7 @@ from .messages import (
     MessageReply,
     MessageText,
     MessageVideo,
-    MessageSegmentType
+    Model as MessageSegmentType,
 )
 
 from .messages import MessageSegment, UnknownMessageSegment
@@ -123,7 +122,6 @@ __all__ = [
     "MessageFace",
     "MessageFile",
     "MessageForward",
-    "MessageIdMusic",
     "MessageImage",
     "MessageJson",
     "MessageMFace",
