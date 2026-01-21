@@ -36,24 +36,31 @@ The prefix "OB11" has already been removed from the input code. "OB11GroupBanEve
 
 **Import Strategy:**
 1.  **Standard Libs**: **DO NOT** import `dataclasses`, `typing`, or `__future__`. The wrapper script handles these.
-2.  **Local Imports (CRITICAL)**:
+2.  **Local Imports**:
     -   If extends `BaseNoticeEvent` -> Add `from .base import NoticeEvent` at the top.
-    -   If extends `xxxNoticeEvent` -> Add `from .xxxNoticeEvent import xxxNoticeEvent` at the top.
-    -   If extends `GroupNoticeEvent` -> Add `from .GroupNoticeEvent import GroupNoticeEvent` at the top.
+    -   If extends `GroupNoticeEvent` -> Add `from .base import GroupNoticeEvent` at the top (Note: GroupNoticeEvent is in .base).
+    -   If extends `xxxNoticeEvent` -> Add `from .xxxNoticeEvent import xxxNoticeEvent`.
+
+**Helper Structures (CRITICAL):**
+1.  **Interfaces**: If the TS file defines an `interface` (e.g., `GroupUploadFile`) used by the main class:
+    -   Convert it into a separate `@dataclass`.
+    -   Place it **BEFORE** the main event class.
+2.  **Types**: If the TS file defines a `type` alias with a union (e.g., `type X = 'a' | 'b'`):
+    -   Convert it to a Python type alias: `X = Literal['a', 'b']`.
+    -   Place it **BEFORE** the main event class.
 
 **Data Structure & Fields:**
 1.  Use `@dataclass(slots=True, frozen=True, kw_only=True)`.
 2.  **Constructor Handling**: 
     -   Ignore the *logic* inside the constructor.
-    -   **CRITICAL**: Extract parameters defined in the constructor (e.g., `constructor(public id: number)`) and define them as class fields.
-    -   Ignore `NapCatCore` parameter.
-3.  **Types**: `number`->`int`, `string`->`str`, `unknown`->`Any`, `boolean`->`bool`.
-4.  **Literals**:
-    -   `notice_type` and `sub_type`: MUST use `Literal["value"]` (Strict, no `| str`).
+    -   Extract parameters defined in the constructor (e.g., `public id: number`) as fields.
+    -   **Redundancy Check**: Do NOT re-define fields (`group_id`, `user_id`) if they are already present in the parent class (`GroupNoticeEvent`), UNLESS the child class changes their default value or type.
+3.  **Literals**:
+    -   `notice_type` and `sub_type`: MUST use `Literal["value"]`.
     -   Other fields with defaults: Use `Literal["value"] | str` to allow extensibility.
 
 **Output:**
--   Return **ONLY** the valid Python code. No markdown.
+-   Return **ONLY** the valid Python code.
 """
 
 def clean_filename(ts_filename: str) -> str:
