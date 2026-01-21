@@ -1,6 +1,6 @@
 [project]
 name = "napcat-sdk"
-version = "0.2.8"
+version = "0.2.9"
 description = "NapCat SDK for Python - Fully typed and async ready"
 readme = "README.md"
 license = { text = "MIT License" }
