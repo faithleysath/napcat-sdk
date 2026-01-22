@@ -1,7 +1,7 @@
 # src/napcat/__init__.py
 
 # 1. 暴露版本号 (可选，建议加)
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 
 # 2. 核心功能组件
 from .client import NapCatClient
