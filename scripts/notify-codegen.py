@@ -19,7 +19,7 @@ IGNORE_FILES = {
 API_BASE = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "google/gemini-3-flash")
-CONCURRENCY_LIMIT = 10
+CONCURRENCY_LIMIT = 2
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)

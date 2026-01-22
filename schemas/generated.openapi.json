@@ -1746,11 +1746,11 @@
                                     "properties": {
                                       "id": {
                                         "type": "string"
+                                      },
+                                      "seq": {
+                                        "type": "number"
                                       }
                                     },
-                                    "required": [
-                                      "id"
-                                    ],
                                     "additionalProperties": false
                                   }
                                 },
@@ -2102,11 +2102,11 @@
                                                 "properties": {
                                                   "id": {
                                                     "type": "string"
+                                                  },
+                                                  "seq": {
+                                                    "type": "number"
                                                   }
                                                 },
-                                                "required": [
-                                                  "id"
-                                                ],
                                                 "additionalProperties": false
                                               }
                                             },
@@ -2604,6 +2604,74 @@
                                             "additionalProperties": false
                                           },
                                           {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "onlinefile"
+                                              },
+                                              "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "msgId": {
+                                                    "type": "string"
+                                                  },
+                                                  "elementId": {
+                                                    "type": "string"
+                                                  },
+                                                  "fileName": {
+                                                    "type": "string"
+                                                  },
+                                                  "fileSize": {
+                                                    "type": "string"
+                                                  },
+                                                  "isDir": {
+                                                    "type": "boolean"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "msgId",
+                                                  "elementId",
+                                                  "fileName",
+                                                  "fileSize",
+                                                  "isDir"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "data"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "flashtransfer"
+                                              },
+                                              "data": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "fileSetId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "fileSetId"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "data"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
                                             "type": "array",
                                             "items": {
                                               "anyOf": [
@@ -2744,11 +2812,11 @@
                                                       "properties": {
                                                         "id": {
                                                           "type": "string"
+                                                        },
+                                                        "seq": {
+                                                          "type": "number"
                                                         }
                                                       },
-                                                      "required": [
-                                                        "id"
-                                                      ],
                                                       "additionalProperties": false
                                                     }
                                                   },
@@ -3244,6 +3312,74 @@
                                                     "data"
                                                   ],
                                                   "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "onlinefile"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "msgId": {
+                                                          "type": "string"
+                                                        },
+                                                        "elementId": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileName": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileSize": {
+                                                          "type": "string"
+                                                        },
+                                                        "isDir": {
+                                                          "type": "boolean"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "msgId",
+                                                        "elementId",
+                                                        "fileName",
+                                                        "fileSize",
+                                                        "isDir"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "flashtransfer"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "fileSetId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "fileSetId"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
                                                 }
                                               ]
                                             }
@@ -3607,6 +3743,74 @@
                                   "data"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "onlinefile"
+                                  },
+                                  "data": {
+                                    "type": "object",
+                                    "properties": {
+                                      "msgId": {
+                                        "type": "string"
+                                      },
+                                      "elementId": {
+                                        "type": "string"
+                                      },
+                                      "fileName": {
+                                        "type": "string"
+                                      },
+                                      "fileSize": {
+                                        "type": "string"
+                                      },
+                                      "isDir": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "msgId",
+                                      "elementId",
+                                      "fileName",
+                                      "fileSize",
+                                      "isDir"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "data"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "flashtransfer"
+                                  },
+                                  "data": {
+                                    "type": "object",
+                                    "properties": {
+                                      "fileSetId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "fileSetId"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "data"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -3910,6 +4114,7 @@
                                   27,
                                   28,
                                   29,
+                                  30,
                                   43,
                                   44
                                 ],
@@ -4941,6 +5146,85 @@
                                 "properties": {
                                   "content": {
                                     "type": "string"
+                                  },
+                                  "style": {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  "processMsg": {
+                                    "type": "string"
+                                  },
+                                  "mdSummary": {
+                                    "type": "string"
+                                  },
+                                  "mdExtType": {
+                                    "type": "number"
+                                  },
+                                  "mdExtInfo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "flashTransferInfo": {
+                                        "type": "object",
+                                        "properties": {
+                                          "filesetId": {
+                                            "type": "string"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "fileSize": {
+                                            "type": "string"
+                                          },
+                                          "thnumbnail": {
+                                            "type": "object",
+                                            "properties": {
+                                              "id": {
+                                                "type": "string"
+                                              },
+                                              "urls": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "spec": {
+                                                      "type": "number"
+                                                    },
+                                                    "url": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "spec",
+                                                    "url"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "localCachePath": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "urls",
+                                              "localCachePath"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "filesetId",
+                                          "name",
+                                          "fileSize",
+                                          "thnumbnail"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "flashTransferInfo"
+                                    ],
+                                    "additionalProperties": false
                                   }
                                 },
                                 "required": [
@@ -5977,11 +6261,11 @@
                                           "properties": {
                                             "id": {
                                               "type": "string"
+                                            },
+                                            "seq": {
+                                              "type": "number"
                                             }
                                           },
-                                          "required": [
-                                            "id"
-                                          ],
                                           "additionalProperties": false
                                         }
                                       },
@@ -6333,11 +6617,11 @@
                                                       "properties": {
                                                         "id": {
                                                           "type": "string"
+                                                        },
+                                                        "seq": {
+                                                          "type": "number"
                                                         }
                                                       },
-                                                      "required": [
-                                                        "id"
-                                                      ],
                                                       "additionalProperties": false
                                                     }
                                                   },
@@ -6835,6 +7119,74 @@
                                                   "additionalProperties": false
                                                 },
                                                 {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "onlinefile"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "msgId": {
+                                                          "type": "string"
+                                                        },
+                                                        "elementId": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileName": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileSize": {
+                                                          "type": "string"
+                                                        },
+                                                        "isDir": {
+                                                          "type": "boolean"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "msgId",
+                                                        "elementId",
+                                                        "fileName",
+                                                        "fileSize",
+                                                        "isDir"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "flashtransfer"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "fileSetId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "fileSetId"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
                                                   "type": "array",
                                                   "items": {
                                                     "anyOf": [
@@ -6975,11 +7327,11 @@
                                                             "properties": {
                                                               "id": {
                                                                 "type": "string"
+                                                              },
+                                                              "seq": {
+                                                                "type": "number"
                                                               }
                                                             },
-                                                            "required": [
-                                                              "id"
-                                                            ],
                                                             "additionalProperties": false
                                                           }
                                                         },
@@ -7475,6 +7827,74 @@
                                                           "data"
                                                         ],
                                                         "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "onlinefile"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "msgId": {
+                                                                "type": "string"
+                                                              },
+                                                              "elementId": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileName": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileSize": {
+                                                                "type": "string"
+                                                              },
+                                                              "isDir": {
+                                                                "type": "boolean"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "msgId",
+                                                              "elementId",
+                                                              "fileName",
+                                                              "fileSize",
+                                                              "isDir"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "flashtransfer"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "fileSetId": {
+                                                                "type": "string"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "fileSetId"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
                                                       }
                                                     ]
                                                   }
@@ -7838,6 +8258,74 @@
                                         "data"
                                       ],
                                       "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "onlinefile"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "msgId": {
+                                              "type": "string"
+                                            },
+                                            "elementId": {
+                                              "type": "string"
+                                            },
+                                            "fileName": {
+                                              "type": "string"
+                                            },
+                                            "fileSize": {
+                                              "type": "string"
+                                            },
+                                            "isDir": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "msgId",
+                                            "elementId",
+                                            "fileName",
+                                            "fileSize",
+                                            "isDir"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "flashtransfer"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "fileSetId": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "fileSetId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -8141,6 +8629,7 @@
                                         27,
                                         28,
                                         29,
+                                        30,
                                         43,
                                         44
                                       ],
@@ -9172,6 +9661,85 @@
                                       "properties": {
                                         "content": {
                                           "type": "string"
+                                        },
+                                        "style": {
+                                          "type": "object",
+                                          "additionalProperties": false
+                                        },
+                                        "processMsg": {
+                                          "type": "string"
+                                        },
+                                        "mdSummary": {
+                                          "type": "string"
+                                        },
+                                        "mdExtType": {
+                                          "type": "number"
+                                        },
+                                        "mdExtInfo": {
+                                          "type": "object",
+                                          "properties": {
+                                            "flashTransferInfo": {
+                                              "type": "object",
+                                              "properties": {
+                                                "filesetId": {
+                                                  "type": "string"
+                                                },
+                                                "name": {
+                                                  "type": "string"
+                                                },
+                                                "fileSize": {
+                                                  "type": "string"
+                                                },
+                                                "thnumbnail": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "id": {
+                                                      "type": "string"
+                                                    },
+                                                    "urls": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "spec": {
+                                                            "type": "number"
+                                                          },
+                                                          "url": {
+                                                            "type": "string"
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "spec",
+                                                          "url"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      }
+                                                    },
+                                                    "localCachePath": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "urls",
+                                                    "localCachePath"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "filesetId",
+                                                "name",
+                                                "fileSize",
+                                                "thnumbnail"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "flashTransferInfo"
+                                          ],
+                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -11931,7 +12499,10 @@
                       "properties": {
                         "result": {
                           "type": "number",
-                          "const": 0
+                          "enum": [
+                            0,
+                            -1
+                          ]
                         },
                         "errMsg": {
                           "type": "string"
@@ -12533,11 +13104,11 @@
                                           "properties": {
                                             "id": {
                                               "type": "string"
+                                            },
+                                            "seq": {
+                                              "type": "number"
                                             }
                                           },
-                                          "required": [
-                                            "id"
-                                          ],
                                           "additionalProperties": false
                                         }
                                       },
@@ -12889,11 +13460,11 @@
                                                       "properties": {
                                                         "id": {
                                                           "type": "string"
+                                                        },
+                                                        "seq": {
+                                                          "type": "number"
                                                         }
                                                       },
-                                                      "required": [
-                                                        "id"
-                                                      ],
                                                       "additionalProperties": false
                                                     }
                                                   },
@@ -13391,6 +13962,74 @@
                                                   "additionalProperties": false
                                                 },
                                                 {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "onlinefile"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "msgId": {
+                                                          "type": "string"
+                                                        },
+                                                        "elementId": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileName": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileSize": {
+                                                          "type": "string"
+                                                        },
+                                                        "isDir": {
+                                                          "type": "boolean"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "msgId",
+                                                        "elementId",
+                                                        "fileName",
+                                                        "fileSize",
+                                                        "isDir"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "flashtransfer"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "fileSetId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "fileSetId"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
                                                   "type": "array",
                                                   "items": {
                                                     "anyOf": [
@@ -13531,11 +14170,11 @@
                                                             "properties": {
                                                               "id": {
                                                                 "type": "string"
+                                                              },
+                                                              "seq": {
+                                                                "type": "number"
                                                               }
                                                             },
-                                                            "required": [
-                                                              "id"
-                                                            ],
                                                             "additionalProperties": false
                                                           }
                                                         },
@@ -14031,6 +14670,74 @@
                                                           "data"
                                                         ],
                                                         "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "onlinefile"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "msgId": {
+                                                                "type": "string"
+                                                              },
+                                                              "elementId": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileName": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileSize": {
+                                                                "type": "string"
+                                                              },
+                                                              "isDir": {
+                                                                "type": "boolean"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "msgId",
+                                                              "elementId",
+                                                              "fileName",
+                                                              "fileSize",
+                                                              "isDir"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "flashtransfer"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "fileSetId": {
+                                                                "type": "string"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "fileSetId"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
                                                       }
                                                     ]
                                                   }
@@ -14394,6 +15101,74 @@
                                         "data"
                                       ],
                                       "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "onlinefile"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "msgId": {
+                                              "type": "string"
+                                            },
+                                            "elementId": {
+                                              "type": "string"
+                                            },
+                                            "fileName": {
+                                              "type": "string"
+                                            },
+                                            "fileSize": {
+                                              "type": "string"
+                                            },
+                                            "isDir": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "msgId",
+                                            "elementId",
+                                            "fileName",
+                                            "fileSize",
+                                            "isDir"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "flashtransfer"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "fileSetId": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "fileSetId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -14697,6 +15472,7 @@
                                         27,
                                         28,
                                         29,
+                                        30,
                                         43,
                                         44
                                       ],
@@ -15728,6 +16504,85 @@
                                       "properties": {
                                         "content": {
                                           "type": "string"
+                                        },
+                                        "style": {
+                                          "type": "object",
+                                          "additionalProperties": false
+                                        },
+                                        "processMsg": {
+                                          "type": "string"
+                                        },
+                                        "mdSummary": {
+                                          "type": "string"
+                                        },
+                                        "mdExtType": {
+                                          "type": "number"
+                                        },
+                                        "mdExtInfo": {
+                                          "type": "object",
+                                          "properties": {
+                                            "flashTransferInfo": {
+                                              "type": "object",
+                                              "properties": {
+                                                "filesetId": {
+                                                  "type": "string"
+                                                },
+                                                "name": {
+                                                  "type": "string"
+                                                },
+                                                "fileSize": {
+                                                  "type": "string"
+                                                },
+                                                "thnumbnail": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "id": {
+                                                      "type": "string"
+                                                    },
+                                                    "urls": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "spec": {
+                                                            "type": "number"
+                                                          },
+                                                          "url": {
+                                                            "type": "string"
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "spec",
+                                                          "url"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      }
+                                                    },
+                                                    "localCachePath": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "urls",
+                                                    "localCachePath"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "filesetId",
+                                                "name",
+                                                "fileSize",
+                                                "thnumbnail"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "flashTransferInfo"
+                                          ],
+                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -16521,7 +17376,10 @@
               "application/json": {
                 "schema": {
                   "type": "number",
-                  "const": 0
+                  "enum": [
+                    0,
+                    -1
+                  ]
                 }
               }
             }
@@ -16557,7 +17415,10 @@
               "application/json": {
                 "schema": {
                   "type": "number",
-                  "const": 0
+                  "enum": [
+                    0,
+                    -1
+                  ]
                 }
               }
             }
@@ -16883,7 +17744,10 @@
                   "properties": {
                     "result": {
                       "type": "number",
-                      "const": 0
+                      "enum": [
+                        0,
+                        -1
+                      ]
                     },
                     "errMsg": {
                       "type": "string"
@@ -17361,7 +18225,10 @@
                   "properties": {
                     "result": {
                       "type": "number",
-                      "const": 0
+                      "enum": [
+                        0,
+                        -1
+                      ]
                     },
                     "errMsg": {
                       "type": "string"
@@ -18239,7 +19106,10 @@
                   "properties": {
                     "result": {
                       "type": "number",
-                      "const": 0
+                      "enum": [
+                        0,
+                        -1
+                      ]
                     },
                     "errMsg": {
                       "type": "string"
@@ -18399,7 +19269,10 @@
                   "properties": {
                     "result": {
                       "type": "number",
-                      "const": 0
+                      "enum": [
+                        0,
+                        -1
+                      ]
                     },
                     "errMsg": {
                       "type": "string"
@@ -19324,11 +20197,11 @@
                                           "properties": {
                                             "id": {
                                               "type": "string"
+                                            },
+                                            "seq": {
+                                              "type": "number"
                                             }
                                           },
-                                          "required": [
-                                            "id"
-                                          ],
                                           "additionalProperties": false
                                         }
                                       },
@@ -19680,11 +20553,11 @@
                                                       "properties": {
                                                         "id": {
                                                           "type": "string"
+                                                        },
+                                                        "seq": {
+                                                          "type": "number"
                                                         }
                                                       },
-                                                      "required": [
-                                                        "id"
-                                                      ],
                                                       "additionalProperties": false
                                                     }
                                                   },
@@ -20182,6 +21055,74 @@
                                                   "additionalProperties": false
                                                 },
                                                 {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "onlinefile"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "msgId": {
+                                                          "type": "string"
+                                                        },
+                                                        "elementId": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileName": {
+                                                          "type": "string"
+                                                        },
+                                                        "fileSize": {
+                                                          "type": "string"
+                                                        },
+                                                        "isDir": {
+                                                          "type": "boolean"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "msgId",
+                                                        "elementId",
+                                                        "fileName",
+                                                        "fileSize",
+                                                        "isDir"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "flashtransfer"
+                                                    },
+                                                    "data": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "fileSetId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "fileSetId"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "data"
+                                                  ],
+                                                  "additionalProperties": false
+                                                },
+                                                {
                                                   "type": "array",
                                                   "items": {
                                                     "anyOf": [
@@ -20322,11 +21263,11 @@
                                                             "properties": {
                                                               "id": {
                                                                 "type": "string"
+                                                              },
+                                                              "seq": {
+                                                                "type": "number"
                                                               }
                                                             },
-                                                            "required": [
-                                                              "id"
-                                                            ],
                                                             "additionalProperties": false
                                                           }
                                                         },
@@ -20822,6 +21763,74 @@
                                                           "data"
                                                         ],
                                                         "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "onlinefile"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "msgId": {
+                                                                "type": "string"
+                                                              },
+                                                              "elementId": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileName": {
+                                                                "type": "string"
+                                                              },
+                                                              "fileSize": {
+                                                                "type": "string"
+                                                              },
+                                                              "isDir": {
+                                                                "type": "boolean"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "msgId",
+                                                              "elementId",
+                                                              "fileName",
+                                                              "fileSize",
+                                                              "isDir"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      },
+                                                      {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "type": {
+                                                            "type": "string",
+                                                            "const": "flashtransfer"
+                                                          },
+                                                          "data": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "fileSetId": {
+                                                                "type": "string"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "fileSetId"
+                                                            ],
+                                                            "additionalProperties": false
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "type",
+                                                          "data"
+                                                        ],
+                                                        "additionalProperties": false
                                                       }
                                                     ]
                                                   }
@@ -21185,6 +22194,74 @@
                                         "data"
                                       ],
                                       "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "onlinefile"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "msgId": {
+                                              "type": "string"
+                                            },
+                                            "elementId": {
+                                              "type": "string"
+                                            },
+                                            "fileName": {
+                                              "type": "string"
+                                            },
+                                            "fileSize": {
+                                              "type": "string"
+                                            },
+                                            "isDir": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "msgId",
+                                            "elementId",
+                                            "fileName",
+                                            "fileSize",
+                                            "isDir"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "flashtransfer"
+                                        },
+                                        "data": {
+                                          "type": "object",
+                                          "properties": {
+                                            "fileSetId": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "fileSetId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "data"
+                                      ],
+                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -21488,6 +22565,7 @@
                                         27,
                                         28,
                                         29,
+                                        30,
                                         43,
                                         44
                                       ],
@@ -22519,6 +23597,85 @@
                                       "properties": {
                                         "content": {
                                           "type": "string"
+                                        },
+                                        "style": {
+                                          "type": "object",
+                                          "additionalProperties": false
+                                        },
+                                        "processMsg": {
+                                          "type": "string"
+                                        },
+                                        "mdSummary": {
+                                          "type": "string"
+                                        },
+                                        "mdExtType": {
+                                          "type": "number"
+                                        },
+                                        "mdExtInfo": {
+                                          "type": "object",
+                                          "properties": {
+                                            "flashTransferInfo": {
+                                              "type": "object",
+                                              "properties": {
+                                                "filesetId": {
+                                                  "type": "string"
+                                                },
+                                                "name": {
+                                                  "type": "string"
+                                                },
+                                                "fileSize": {
+                                                  "type": "string"
+                                                },
+                                                "thnumbnail": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "id": {
+                                                      "type": "string"
+                                                    },
+                                                    "urls": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                          "spec": {
+                                                            "type": "number"
+                                                          },
+                                                          "url": {
+                                                            "type": "string"
+                                                          }
+                                                        },
+                                                        "required": [
+                                                          "spec",
+                                                          "url"
+                                                        ],
+                                                        "additionalProperties": false
+                                                      }
+                                                    },
+                                                    "localCachePath": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "urls",
+                                                    "localCachePath"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "filesetId",
+                                                "name",
+                                                "fileSize",
+                                                "thnumbnail"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "flashTransferInfo"
+                                          ],
+                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -23371,7 +24528,10 @@
                   "properties": {
                     "result": {
                       "type": "number",
-                      "const": 0
+                      "enum": [
+                        0,
+                        -1
+                      ]
                     },
                     "errMsg": {
                       "type": "string"
@@ -25994,6 +27154,580 @@
                 "schema": {
                   "type": "null"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/create_flash_task": {
+      "post": {
+        "summary": "CreateFlashTask",
+        "operationId": "create_flash_task",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "files"
+                ],
+                "properties": {
+                  "files": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_flash_msg": {
+      "post": {
+        "summary": "SendFlashMsg",
+        "operationId": "send_flash_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  },
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "group_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_share_link": {
+      "post": {
+        "summary": "GetShareLink",
+        "operationId": "get_share_link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/download_fileset": {
+      "post": {
+        "summary": "DownloadFileset",
+        "operationId": "download_fileset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_fileset_info": {
+      "post": {
+        "summary": "GetFilesetInfo",
+        "operationId": "get_fileset_info",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_flash_file_list": {
+      "post": {
+        "summary": "GetFlashFileList",
+        "operationId": "get_flash_file_list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_flash_file_url": {
+      "post": {
+        "summary": "GetFlashFileUrl",
+        "operationId": "get_flash_file_url",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileset_id"
+                ],
+                "properties": {
+                  "fileset_id": {
+                    "type": "string"
+                  },
+                  "file_name": {
+                    "type": "string"
+                  },
+                  "file_index": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_fileset_id": {
+      "post": {
+        "summary": "GetFilesetId",
+        "operationId": "get_fileset_id",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "share_code"
+                ],
+                "properties": {
+                  "share_code": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_online_file": {
+      "post": {
+        "summary": "SendOnlineFile",
+        "operationId": "send_online_file",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "file_path"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "file_path": {
+                    "type": "string"
+                  },
+                  "file_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send_online_folder": {
+      "post": {
+        "summary": "SendOnlineFolder",
+        "operationId": "send_online_folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "folder_path"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "folder_path": {
+                    "type": "string"
+                  },
+                  "folder_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_online_file_msg": {
+      "post": {
+        "summary": "GetOnlineFileMessages",
+        "operationId": "get_online_file_msg",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/receive_online_file": {
+      "post": {
+        "summary": "ReceiveOnlineFile",
+        "operationId": "receive_online_file",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "msg_id",
+                  "element_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "msg_id": {
+                    "type": "string"
+                  },
+                  "element_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refuse_online_file": {
+      "post": {
+        "summary": "RefuseOnlineFile",
+        "operationId": "refuse_online_file",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "msg_id",
+                  "element_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "msg_id": {
+                    "type": "string"
+                  },
+                  "element_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cancel_online_file": {
+      "post": {
+        "summary": "CancelOnlineFile",
+        "operationId": "cancel_online_file",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "msg_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "msg_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }

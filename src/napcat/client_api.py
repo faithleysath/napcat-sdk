@@ -263,6 +263,34 @@ from .types.schemas import (
    GetClientkeyPostResponse,
    SendPokePostRequest,
    SendPokePostResponse,
+   CreateFlashTaskPostRequest,
+   CreateFlashTaskPostResponse,
+   SendFlashMsgPostRequest,
+   SendFlashMsgPostResponse,
+   GetShareLinkPostRequest,
+   GetShareLinkPostResponse,
+   DownloadFilesetPostRequest,
+   DownloadFilesetPostResponse,
+   GetFilesetInfoPostRequest,
+   GetFilesetInfoPostResponse,
+   GetFlashFileListPostRequest,
+   GetFlashFileListPostResponse,
+   GetFlashFileUrlPostRequest,
+   GetFlashFileUrlPostResponse,
+   GetFilesetIdPostRequest,
+   GetFilesetIdPostResponse,
+   SendOnlineFilePostRequest,
+   SendOnlineFilePostResponse,
+   SendOnlineFolderPostRequest,
+   SendOnlineFolderPostResponse,
+   GetOnlineFileMsgPostRequest,
+   GetOnlineFileMsgPostResponse,
+   ReceiveOnlineFilePostRequest,
+   ReceiveOnlineFilePostResponse,
+   RefuseOnlineFilePostRequest,
+   RefuseOnlineFilePostResponse,
+   CancelOnlineFilePostRequest,
+   CancelOnlineFilePostResponse,
 )
 # 定义一个 Protocol，避免循环导入 Client 类，同时保证类型提示
 class CallActionProtocol(Protocol):
@@ -1439,4 +1467,88 @@ class NapCatAPI:
         标签: 消息相关
         """
         return await self._client.call_action("send_poke", kwargs)
+    
+    async def create_flash_task(self, **kwargs: Unpack[CreateFlashTaskPostRequest]) -> CreateFlashTaskPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("create_flash_task", kwargs)
+    
+    async def send_flash_msg(self, **kwargs: Unpack[SendFlashMsgPostRequest]) -> SendFlashMsgPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("send_flash_msg", kwargs)
+    
+    async def get_share_link(self, **kwargs: Unpack[GetShareLinkPostRequest]) -> GetShareLinkPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_share_link", kwargs)
+    
+    async def download_fileset(self, **kwargs: Unpack[DownloadFilesetPostRequest]) -> DownloadFilesetPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("download_fileset", kwargs)
+    
+    async def get_fileset_info(self, **kwargs: Unpack[GetFilesetInfoPostRequest]) -> GetFilesetInfoPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_fileset_info", kwargs)
+    
+    async def get_flash_file_list(self, **kwargs: Unpack[GetFlashFileListPostRequest]) -> GetFlashFileListPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_flash_file_list", kwargs)
+    
+    async def get_flash_file_url(self, **kwargs: Unpack[GetFlashFileUrlPostRequest]) -> GetFlashFileUrlPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_flash_file_url", kwargs)
+    
+    async def get_fileset_id(self, **kwargs: Unpack[GetFilesetIdPostRequest]) -> GetFilesetIdPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_fileset_id", kwargs)
+    
+    async def send_online_file(self, **kwargs: Unpack[SendOnlineFilePostRequest]) -> SendOnlineFilePostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("send_online_file", kwargs)
+    
+    async def send_online_folder(self, **kwargs: Unpack[SendOnlineFolderPostRequest]) -> SendOnlineFolderPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("send_online_folder", kwargs)
+    
+    async def get_online_file_msg(self, **kwargs: Unpack[GetOnlineFileMsgPostRequest]) -> GetOnlineFileMsgPostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("get_online_file_msg", kwargs)
+    
+    async def receive_online_file(self, **kwargs: Unpack[ReceiveOnlineFilePostRequest]) -> ReceiveOnlineFilePostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("receive_online_file", kwargs)
+    
+    async def refuse_online_file(self, **kwargs: Unpack[RefuseOnlineFilePostRequest]) -> RefuseOnlineFilePostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("refuse_online_file", kwargs)
+    
+    async def cancel_online_file(self, **kwargs: Unpack[CancelOnlineFilePostRequest]) -> CancelOnlineFilePostResponse:
+        """
+        未提供描述
+        """
+        return await self._client.call_action("cancel_online_file", kwargs)
     

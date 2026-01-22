@@ -16,6 +16,9 @@ from .GroupTitleEvent import GroupTitleEvent
 from .GroupUploadNoticeEvent import GroupUploadFile, GroupUploadNoticeEvent
 from .InputStatusEvent import InputStatusEvent
 from .MsgEmojiLikeEvent import GroupMsgEmojiLikeEvent, MsgEmojiLike
+from .OnlineFileNoticeEvent import OnlineFileNoticeEvent
+from .OnlineFileReceiveEvent import OnlineFileReceiveEvent
+from .OnlineFileSendEvent import OnlineFileSendEvent
 from .PokeEvent import FriendPokeEvent, GroupPokeEvent, PokeEvent
 from .ProfileLikeEvent import ProfileLikeEvent
 
@@ -42,6 +45,9 @@ __all__ = [
     "InputStatusEvent",
     "MsgEmojiLike",
     "NoticeEvent",
+    "OnlineFileNoticeEvent",
+    "OnlineFileReceiveEvent",
+    "OnlineFileSendEvent",
     "PokeEvent",
     "ProfileLikeEvent",
     "UnknownNoticeEvent",

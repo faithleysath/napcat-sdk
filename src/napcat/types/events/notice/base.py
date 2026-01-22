@@ -26,22 +26,31 @@ class NoticeEvent(NapCatEvent):
     def __init_subclass__(cls, **kwargs: Any):
         # 1. 获取 notice_type (仅限当前类定义，不查找父类)
         n_type = cls.__dict__.get("notice_type")
-        
+
         # 如果当前类没有显式定义 notice_type，直接跳过注册
         # 这完美解决了 PokeEvent 子类重复注册的问题
         if not n_type or not isinstance(n_type, str):
             return
 
         # 定义一个内部 helper 来处理注册和冲突检查 (兼容 slots)
-        def register_safely(registry: dict[str, type[NoticeEvent]], key: str, value_cls: type[NoticeEvent]):
+        def register_safely(
+            registry: dict[str, type[NoticeEvent]],
+            key: str,
+            value_cls: type[NoticeEvent],
+        ):
             if key in registry:
                 existing = registry[key]
                 # 核心修复：检查是否为同名同模块的类（dataclass slots 重建导致的）
-                if existing.__name__ == value_cls.__name__ and existing.__module__ == value_cls.__module__:
-                    pass # 允许覆盖
+                if (
+                    existing.__name__ == value_cls.__name__
+                    and existing.__module__ == value_cls.__module__
+                ):
+                    pass  # 允许覆盖
                 else:
-                    raise ValueError(f"Duplicate notice type registered: {key} (Conflict between {existing} and {value_cls})")
-            
+                    raise ValueError(
+                        f"Duplicate notice type registered: {key} (Conflict between {existing} and {value_cls})"
+                    )
+
             registry[key] = value_cls
 
         # 2. 注册逻辑
