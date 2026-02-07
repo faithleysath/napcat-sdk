@@ -1,45 +1,158 @@
 # src/napcat/__init__.py
 
-# 1. 暴露版本号 (可选，建议加)
 __version__ = "0.3.4"
 
-# 2. 核心功能组件
 from .client import NapCatClient
 from .server import ReverseWebSocketServer
 
-# 3. 常用类型快捷导入
-# 用户经常需要判断事件类型或构建消息，直接放在顶层很方便
+# 统一透传 types 的全量导出（自动更新）
 from .types import (
-    # 事件基类与常用事件
+    # >>> AUTO-GENERATED: TYPES IMPORTS START
     NapCatEvent,
-    MessageEvent,
-    GroupMessageEvent,
-    PrivateMessageEvent,
+    UnknownEvent,
     MetaEvent,
-    # 消息段构造器
+    LifecycleMetaEvent,
+    HeartbeatEvent,
+    HeartbeatStatus,
+    MessageEvent,
+    PrivateMessageEvent,
+    GroupMessageEvent,
+    MessageSender,
+    RequestEvent,
+    FriendRequestEvent,
+    GroupRequestEvent,
+    BotOfflineEvent,
+    FriendAddNoticeEvent,
+    FriendPokeEvent,
+    FriendRecallNoticeEvent,
+    GroupAdminNoticeEvent,
+    GroupBanEvent,
+    GroupCardEvent,
+    GroupDecreaseEvent,
+    GroupEssenceEvent,
+    GroupGrayTipEvent,
+    GroupIncreaseEvent,
+    GroupMsgEmojiLikeEvent,
+    GroupNameEvent,
+    GroupNoticeEvent,
+    GroupPokeEvent,
+    GroupRecallNoticeEvent,
+    GroupTitleEvent,
+    GroupUploadFile,
+    GroupUploadNoticeEvent,
+    InputStatusEvent,
+    MsgEmojiLike,
+    NoticeEvent,
+    OnlineFileNoticeEvent,
+    OnlineFileReceiveEvent,
+    OnlineFileSendEvent,
+    PokeEvent,
+    ProfileLikeEvent,
+    UnknownNoticeEvent,
     MessageSegment,
+    UnknownMessageSegment,
+    At,
+    Contact,
+    CustomMusic,
+    Dice,
+    Face,
+    File,
+    FlashTransfer,
+    Forward,
+    IdMusic,
+    Image,
+    Json,
+    Location,
+    MFace,
+    Markdown,
+    Message,
+    MiniApp,
+    Node,
+    OnlineFile,
+    Poke,
+    RPS,
+    Record,
+    Reply,
+    Text,
+    Video,
+    Xml,
+    # <<< AUTO-GENERATED: TYPES IMPORTS END
 )
 
-# 4. 如果用户需要更深层的类型，可以保留 types 模块本身
 from . import types
 
-# 5. 定义 __all__ 控制 `from napcat import *` 的行为
-# 这对 IDE 的代码提示也非常友好
 __all__ = [
-    # Core
     "NapCatClient",
     "ReverseWebSocketServer",
-    
-    # Common Events
+    # >>> AUTO-GENERATED: TYPES EXPORTS START
     "NapCatEvent",
-    "MessageEvent",
-    "GroupMessageEvent",
-    "PrivateMessageEvent",
+    "UnknownEvent",
     "MetaEvent",
-    
-    # Messaging
+    "LifecycleMetaEvent",
+    "HeartbeatEvent",
+    "HeartbeatStatus",
+    "MessageEvent",
+    "PrivateMessageEvent",
+    "GroupMessageEvent",
+    "MessageSender",
+    "RequestEvent",
+    "FriendRequestEvent",
+    "GroupRequestEvent",
+    "BotOfflineEvent",
+    "FriendAddNoticeEvent",
+    "FriendPokeEvent",
+    "FriendRecallNoticeEvent",
+    "GroupAdminNoticeEvent",
+    "GroupBanEvent",
+    "GroupCardEvent",
+    "GroupDecreaseEvent",
+    "GroupEssenceEvent",
+    "GroupGrayTipEvent",
+    "GroupIncreaseEvent",
+    "GroupMsgEmojiLikeEvent",
+    "GroupNameEvent",
+    "GroupNoticeEvent",
+    "GroupPokeEvent",
+    "GroupRecallNoticeEvent",
+    "GroupTitleEvent",
+    "GroupUploadFile",
+    "GroupUploadNoticeEvent",
+    "InputStatusEvent",
+    "MsgEmojiLike",
+    "NoticeEvent",
+    "OnlineFileNoticeEvent",
+    "OnlineFileReceiveEvent",
+    "OnlineFileSendEvent",
+    "PokeEvent",
+    "ProfileLikeEvent",
+    "UnknownNoticeEvent",
     "MessageSegment",
-    
-    # Modules
+    "UnknownMessageSegment",
+    "At",
+    "Contact",
+    "CustomMusic",
+    "Dice",
+    "Face",
+    "File",
+    "FlashTransfer",
+    "Forward",
+    "IdMusic",
+    "Image",
+    "Json",
+    "Location",
+    "MFace",
+    "Markdown",
+    "Message",
+    "MiniApp",
+    "Node",
+    "OnlineFile",
+    "Poke",
+    "RPS",
+    "Record",
+    "Reply",
+    "Text",
+    "Video",
+    "Xml",
+    # <<< AUTO-GENERATED: TYPES EXPORTS END
     "types",
 ]

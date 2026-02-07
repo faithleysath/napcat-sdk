@@ -160,10 +160,14 @@ class CodegenConfig:
     generated_output_path: str = "src/napcat/types/messages/generated.py"
     schemas_output_path: str = "src/napcat/types/schemas.py"
     messages_init_output_path: str = "src/napcat/types/messages/__init__.py"
+    events_init_output_path: str = "src/napcat/types/events/__init__.py"
+    types_init_output_path: str = "src/napcat/types/__init__.py"
     client_api_output_path: str = "src/napcat/client_api.py"
     openapi_input_path: str = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
     client_api_codegen_script_path: str = "scripts/client-api-codegen.py"
+    update_init_script_path: str = "scripts/update-init.py"
     run_client_api_codegen_after_pipeline: bool = True
+    run_update_init_after_pipeline: bool = True
 
     # 是否在主流程前先构建 openapi.json
     run_openapi_codegen_before_pipeline: bool = True
@@ -476,6 +480,29 @@ def run_client_api_codegen(
     if stderr:
         for line in stderr.splitlines():
             logger.warning("[client-api-codegen] %s", line)
+
+
+def run_update_init_codegen(*, script_path: str | os.PathLike[str]) -> None:
+    """Update aggregate __init__.py files from generated notice/messages exports."""
+    script = str(script_path)
+
+    logger.info("🛠️  Running update-init: %s", script)
+    completed = subprocess.run(
+        [sys.executable, script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    stdout = (completed.stdout or "").strip()
+    if stdout:
+        for line in stdout.splitlines():
+            logger.info("%s", line)
+
+    stderr = (completed.stderr or "").strip()
+    if stderr:
+        for line in stderr.splitlines():
+            logger.warning("[update-init] %s", line)
 
 
 def cleanup_codegen_input_files(paths: Sequence[str | os.PathLike[str]]) -> list[str]:
@@ -1429,6 +1456,14 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
         final_generated_source,
     )
 
+    if cfg.run_update_init_after_pipeline:
+        run_update_init_codegen(script_path=cfg.update_init_script_path)
+        logger.info(
+            "✅ Updated aggregate init modules: %s, %s",
+            cfg.events_init_output_path,
+            cfg.types_init_output_path,
+        )
+
     # Generate client_api.py from OpenAPI + schemas.py
     if cfg.run_client_api_codegen_after_pipeline:
         run_client_api_codegen(
@@ -1447,6 +1482,8 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
                     cfg.generated_output_path,
                     cfg.schemas_output_path,
                     cfg.messages_init_output_path,
+                    cfg.events_init_output_path,
+                    cfg.types_init_output_path,
                     cfg.client_api_output_path,
                 ],
                 ruff_runner=cfg.ruff_runner,
@@ -1510,6 +1547,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
     )
 
     parser.add_argument("--no-ruff", action="store_true", help="Do not run ruff formatting")
+    parser.add_argument("--no-update-init", action="store_true", help="Do not run update-init after pipeline")
     parser.add_argument("--ignore-ruff-errors", action="store_true", help="Ignore ruff failures (do not fail pipeline)")
     parser.add_argument(
         "--no-openapi-pre-codegen",
@@ -1539,6 +1577,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
         run_openapi_codegen_before_pipeline=not ns.no_openapi_pre_codegen,
         run_datamodel_codegen_before_pipeline=not ns.no_pre_codegen,
         cleanup_codegen_inputs_after_pipeline=not ns.no_cleanup_inputs,
+        run_update_init_after_pipeline=not ns.no_update_init,
         format_with_ruff=not ns.no_ruff,
         ignore_ruff_errors=bool(ns.ignore_ruff_errors),
     )

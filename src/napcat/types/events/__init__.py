@@ -7,6 +7,7 @@ from .meta import MetaEvent, LifecycleMetaEvent, HeartbeatEvent, HeartbeatStatus
 from .message import MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSender
 from .request import RequestEvent, FriendRequestEvent, GroupRequestEvent
 from .notice import (
+    # >>> AUTO-GENERATED: NOTICE IMPORTS START
     BotOfflineEvent,
     FriendAddNoticeEvent,
     FriendPokeEvent,
@@ -35,6 +36,7 @@ from .notice import (
     PokeEvent,
     ProfileLikeEvent,
     UnknownNoticeEvent,
+    # <<< AUTO-GENERATED: NOTICE IMPORTS END
 )
 
 __all__ = [
@@ -56,6 +58,7 @@ __all__ = [
     "FriendRequestEvent",
     "GroupRequestEvent",
     # Notice Events
+    # >>> AUTO-GENERATED: NOTICE EXPORTS START
     "BotOfflineEvent",
     "FriendAddNoticeEvent",
     "FriendPokeEvent",
@@ -84,4 +87,5 @@ __all__ = [
     "PokeEvent",
     "ProfileLikeEvent",
     "UnknownNoticeEvent",
+    # <<< AUTO-GENERATED: NOTICE EXPORTS END
 ]

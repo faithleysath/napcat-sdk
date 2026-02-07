@@ -1,19 +1,27 @@
 # src/napcat/types/__init__.py
+
+"""Top-level typed exports.
+
+This file should expose the most complete public surface:
+- all events (from .events.__all__)
+- all message segments (from .messages.__all__)
+"""
+
 from .events import (
-    GroupMessageEvent,
-    HeartbeatEvent,
-    LifecycleMetaEvent,
-    MessageEvent,
-    MessageSender,
-    MetaEvent,
+    # >>> AUTO-GENERATED: EVENTS IMPORTS START
     NapCatEvent,
-    PrivateMessageEvent,
     UnknownEvent,
+    MetaEvent,
+    LifecycleMetaEvent,
+    HeartbeatEvent,
+    HeartbeatStatus,
+    MessageEvent,
+    PrivateMessageEvent,
+    GroupMessageEvent,
+    MessageSender,
+    RequestEvent,
     FriendRequestEvent,
     GroupRequestEvent,
-    RequestEvent,
-    HeartbeatStatus,
-    # Notice Events
     BotOfflineEvent,
     FriendAddNoticeEvent,
     FriendPokeEvent,
@@ -36,12 +44,19 @@ from .events import (
     InputStatusEvent,
     MsgEmojiLike,
     NoticeEvent,
+    OnlineFileNoticeEvent,
+    OnlineFileReceiveEvent,
+    OnlineFileSendEvent,
     PokeEvent,
     ProfileLikeEvent,
     UnknownNoticeEvent,
+    # <<< AUTO-GENERATED: EVENTS IMPORTS END
 )
 
 from .messages import (
+    # >>> AUTO-GENERATED: MESSAGE IMPORTS START
+    MessageSegment,
+    UnknownMessageSegment,
     At,
     Contact,
     CustomMusic,
@@ -66,31 +81,25 @@ from .messages import (
     Reply,
     Text,
     Video,
-    Xml
+    Xml,
+    # <<< AUTO-GENERATED: MESSAGE IMPORTS END
 )
 
-from .messages import MessageSegment, UnknownMessageSegment
-
 __all__ = [
-    # events (most used)
-    # Base
+    # >>> AUTO-GENERATED: EVENTS EXPORTS START
     "NapCatEvent",
     "UnknownEvent",
-    # Meta Events
     "MetaEvent",
     "LifecycleMetaEvent",
     "HeartbeatEvent",
     "HeartbeatStatus",
-    # Message Events
     "MessageEvent",
     "PrivateMessageEvent",
     "GroupMessageEvent",
     "MessageSender",
-    # Request Events
     "RequestEvent",
     "FriendRequestEvent",
     "GroupRequestEvent",
-    # Notice Events
     "BotOfflineEvent",
     "FriendAddNoticeEvent",
     "FriendPokeEvent",
@@ -113,10 +122,14 @@ __all__ = [
     "InputStatusEvent",
     "MsgEmojiLike",
     "NoticeEvent",
+    "OnlineFileNoticeEvent",
+    "OnlineFileReceiveEvent",
+    "OnlineFileSendEvent",
     "PokeEvent",
     "ProfileLikeEvent",
     "UnknownNoticeEvent",
-    # message segments
+    # <<< AUTO-GENERATED: EVENTS EXPORTS END
+    # >>> AUTO-GENERATED: MESSAGE EXPORTS START
     "MessageSegment",
     "UnknownMessageSegment",
     "At",
@@ -144,4 +157,5 @@ __all__ = [
     "Text",
     "Video",
     "Xml",
+    # <<< AUTO-GENERATED: MESSAGE EXPORTS END
 ]
