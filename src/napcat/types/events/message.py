@@ -66,10 +66,10 @@ class MessageEvent(NapCatEvent):
 
         raise ValueError(f"Unknown message type: {msg_type}")
     
-    async def send_msg(self, message: str | list[Message]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> str:
         raise NotImplementedError("send_msg must be implemented in subclasses")
     
-    async def reply(self, message: str | list[Message], at: bool = False) -> int:
+    async def reply(self, message: str | list[Message], at: bool = False) -> str:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         
@@ -92,11 +92,11 @@ class PrivateMessageEvent(MessageEvent):
     message_type: Literal["private"] = "private"
     sub_type: Literal["friend", "group"] | str | None = None
 
-    async def send_msg(self, message: str | list[Message]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> str:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_private_msg(
-            user_id=int(self.user_id),
+            user_id=str(self.user_id),
             message=message
         )
 
@@ -104,15 +104,15 @@ class PrivateMessageEvent(MessageEvent):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GroupMessageEvent(MessageEvent):
     # 对应 message.group
-    group_id: int | str
+    group_id: str
     group_name: str | None = None # TS 中定义了 group_name
     message_type: Literal["group"] = "group"
     sub_type: Literal["normal"] | str | None = None
 
-    async def send_msg(self, message: str | list[Message]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> str:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_group_msg(
-            group_id=int(self.group_id),
+            group_id=self.group_id,
             message=message
         )
