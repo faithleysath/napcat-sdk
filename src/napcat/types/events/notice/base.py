@@ -91,6 +91,18 @@ class NoticeEvent(NapCatEvent):
         if n_type == "notify":
             sub_type = data.get("sub_type")
             if isinstance(sub_type, str):
+                # 与上游运行时语义对齐：
+                # 上游会在构造阶段直接区分 FriendPoke / GroupPoke。
+                # Python 侧在统一反序列化入口根据 payload 特征恢复这一语义。
+                if sub_type == "poke":
+                    from .PokeEvent import FriendPokeEvent, GroupPokeEvent
+
+                    if data.get("group_id") is not None:
+                        return GroupPokeEvent._from_dict(data)
+
+                    if data.get("sender_id") is not None:
+                        return FriendPokeEvent._from_dict(data)
+
                 target = cls._notify_registry.get(sub_type)
                 if target:
                     return target._from_dict(data)

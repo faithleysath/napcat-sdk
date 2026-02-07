@@ -65,13 +65,13 @@ class MessageEvent(NapCatEvent):
     # 对应 NapCatQQ/packages/napcat-onebot/types/message.ts 中的 OB11Message
     message_id: int
     user_id: int | str
-    message_seq: int | None = None
-    real_id: int | None = None
+    message_seq: int
+    real_id: int
     sender: MessageSender
     raw_message: str
     message: tuple[Message | UnknownMessageSegment, ...] | str
     message_format: Literal["array", "string"] | str = "array"
-    font: int | None = None
+    font: int = 14
 
     # --- 新增字段 ---
     real_seq: str | None = None  # 对应 TS real_seq
