@@ -20,7 +20,7 @@ class MessageSenderPayload(TypedDict):
     title: NotRequired[str]
 
 
-class OB11MessageEmojiLikesListItemPayload(TypedDict):
+class EmojiLikeItemPayload(TypedDict):
     emoji_id: str
     emoji_type: str
     likes_cnt: str
@@ -42,21 +42,11 @@ class MessageSender:
 
     @classmethod
     def from_dict(cls, data: MessageSenderPayload) -> MessageSender:
-        return cls(
-            user_id=data["user_id"],
-            nickname=data["nickname"],
-            card=data.get("card"),
-            role=data.get("role"),
-            sex=data.get("sex"),
-            age=data.get("age"),
-            area=data.get("area"),
-            level=data.get("level"),
-            title=data.get("title"),
-        )
+        return cls(**data)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class OB11MessageEmojiLikesListItem:
+class EmojiLikeItem:
     """对应 OB11Message.emoji_likes_list 的单项结构"""
 
     emoji_id: str
@@ -65,13 +55,9 @@ class OB11MessageEmojiLikesListItem:
 
     @classmethod
     def from_dict(
-        cls, data: OB11MessageEmojiLikesListItemPayload
-    ) -> OB11MessageEmojiLikesListItem:
-        return cls(
-            emoji_id=data["emoji_id"],
-            emoji_type=data["emoji_type"],
-            likes_cnt=data["likes_cnt"],
-        )
+        cls, data: EmojiLikeItemPayload
+    ) -> EmojiLikeItem:
+        return cls(**data)
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageEvent(NapCatEvent):
@@ -97,7 +83,7 @@ class MessageEvent(NapCatEvent):
     raw: Any | None = None
 
     # 消息表情点赞列表（部分路径如 get_msg/get_history 可能返回）
-    emoji_likes_list: list[OB11MessageEmojiLikesListItem] | None = None
+    emoji_likes_list: list[EmojiLikeItem] | None = None
     
     post_type: Literal["message", "message_sent"] | tuple[str, str] = ("message", "message_sent")
 
@@ -118,19 +104,19 @@ class MessageEvent(NapCatEvent):
         else:
             parsed_message = ()
 
-        parsed_sender: MessageSender | Any
+        parsed_sender: MessageSender
         if isinstance(raw_sender, dict) and "user_id" in raw_sender and "nickname" in raw_sender:
             parsed_sender = MessageSender.from_dict(
                 cast(MessageSenderPayload, raw_sender)
             )
         else:
-            parsed_sender = cast(Any, raw_sender)
+            raise ValueError("Invalid sender data in message event")
 
-        parsed_emoji_likes_list: list[OB11MessageEmojiLikesListItem] | None
+        parsed_emoji_likes_list: list[EmojiLikeItem] | None
         if isinstance(raw_emoji_likes_list, list):
             parsed_emoji_likes_list = [
-                OB11MessageEmojiLikesListItem.from_dict(
-                    cast(OB11MessageEmojiLikesListItemPayload, raw_item)
+                EmojiLikeItem.from_dict(
+                    cast(EmojiLikeItemPayload, raw_item)
                 )
                 for raw_item in cast(list[Any], raw_emoji_likes_list)
                 if isinstance(raw_item, dict)
