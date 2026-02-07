@@ -159,6 +159,19 @@ class CodegenConfig:
 
     generated_output_path: str = "src/napcat/types/messages/generated.py"
     schemas_output_path: str = "src/napcat/types/schemas.py"
+    messages_init_output_path: str = "src/napcat/types/messages/__init__.py"
+
+    # 是否在主流程前先调用 datamodel-codegen 生成输入文件
+    run_datamodel_codegen_before_pipeline: bool = True
+
+    # datamodel-codegen 调用命令（默认使用 `uv run datamodel-codegen`）
+    datamodel_codegen_runner: tuple[str, ...] = ("uv", "run", "datamodel-codegen")
+
+    # 预生成使用的 profiles（按顺序执行）
+    datamodel_codegen_profiles: tuple[str, ...] = ("api-typedict", "api-dataclass")
+
+    # 主流程结束后是否清理预生成输入文件（api_typedict.py / api_dataclass.py）
+    cleanup_codegen_inputs_after_pipeline: bool = True
 
     # 是否在最后调用 Ruff 自动修复 + 格式化
     format_with_ruff: bool = True
@@ -367,6 +380,87 @@ def format_generated_files_with_ruff(
     subprocess.run([*ruff_runner, "format", *str_paths], check=True)
 
     logger.info("✨ Formatted generated files with Ruff: %s", ", ".join(str_paths))
+
+
+def run_datamodel_codegen_profiles(
+    profiles: Sequence[str],
+    *,
+    runner: Sequence[str] = ("uv", "run", "datamodel-codegen"),
+) -> None:
+    """Run datamodel-codegen for each configured profile."""
+    for profile in profiles:
+        logger.info("🛠️  Running datamodel-codegen profile: %s", profile)
+        subprocess.run([*runner, "--profile", profile], check=True)
+
+
+def cleanup_codegen_input_files(paths: Sequence[str | os.PathLike[str]]) -> list[str]:
+    """Delete temporary codegen input files if they exist."""
+    removed: list[str] = []
+    for path in paths:
+        p = Path(path)
+        if not p.exists():
+            continue
+        p.unlink()
+        removed.append(str(p))
+    return removed
+
+
+def _arg_base_is_message_segment(base: cst.Arg) -> bool:
+    return isinstance(base.value, cst.Name) and base.value.value == "MessageSegment"
+
+
+def collect_generated_exports_for_messages_init(source: str) -> list[str]:
+    """Collect exports for `messages/__init__.py` from generated.py source."""
+    module = cst.parse_module(source)
+    exports: set[str] = set()
+
+    for stmt in module.body:
+        if isinstance(stmt, cst.ClassDef):
+            if any(_arg_base_is_message_segment(base) for base in stmt.bases):
+                exports.add(stmt.name.value)
+            continue
+
+        if isinstance(stmt, cst.SimpleStatementLine):
+            for small_stmt in stmt.body:
+                if not isinstance(small_stmt, cst.TypeAlias):
+                    continue
+                if small_stmt.name.value in {"Message", "MessageData", "Model"}:
+                    exports.add(small_stmt.name.value)
+
+    return sorted(exports)
+
+
+def build_messages_init_content(exports: Sequence[str]) -> str:
+    """Build `src/napcat/types/messages/__init__.py` content."""
+    lines = [
+        "from .base import MessageSegment, UnknownMessageSegment",
+    ]
+
+    if exports:
+        lines.append("from .generated import (")
+        lines.extend(f"    {name}," for name in exports)
+        lines.append(")")
+
+    lines.append("")
+    lines.append("__all__ = [")
+    lines.append('    "MessageSegment",')
+    lines.append('    "UnknownMessageSegment",')
+    lines.extend(f'    "{name}",' for name in exports)
+    lines.append("]")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_messages_init_file(
+    path: str | os.PathLike[str],
+    generated_source: str,
+) -> list[str]:
+    """Generate and write `messages/__init__.py` from generated.py content."""
+    exports = collect_generated_exports_for_messages_init(generated_source)
+    content = build_messages_init_content(exports)
+    write_text(path, content)
+    logger.info("✅ Wrote messages __init__ to: %s (exports %d symbols)", path, len(exports))
+    return exports
 
 
 # ============================================================================
@@ -677,7 +771,7 @@ class ResponseFlattener(cst.CSTTransformer):
 
         data_annotation: cst.BaseExpression | None = None
         data_field_pattern = m.SimpleStatementLine(
-            body=[m.AnnAssign(target=m.Name(value="data"))]
+            body=[m.AnnAssign(target=m.Name("data"))]
         )
 
         for stmt in original_node.body.body:
@@ -918,6 +1012,18 @@ def transform_message_segment_class(
         new_body.extend(block)
 
     return class_node.with_changes(
+        decorators=[
+            cst.Decorator(
+                decorator=cst.Call(
+                    func=cst.Name("dataclass"),
+                    args=[
+                        cst.Arg(keyword=cst.Name("slots"), value=cst.Name("True")),
+                        cst.Arg(keyword=cst.Name("frozen"), value=cst.Name("True")),
+                        cst.Arg(keyword=cst.Name("kw_only"), value=cst.Name("True")),
+                    ],
+                )
+            )
+        ],
         bases=[cst.Arg(value=cst.Name("MessageSegment"))],
         body=cst.IndentedBlock(body=new_body),
     )
@@ -1101,6 +1207,23 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     logger.info("🚀 Start codegen pipeline")
     logger.debug("Config: %s", cfg)
 
+    # Pre-generate api input files from pyproject profiles
+    if cfg.run_datamodel_codegen_before_pipeline:
+        try:
+            run_datamodel_codegen_profiles(
+                cfg.datamodel_codegen_profiles,
+                runner=cfg.datamodel_codegen_runner,
+            )
+        except FileNotFoundError:
+            logger.error(
+                "datamodel-codegen runner not found. "
+                "Install uv/datamodel-codegen or disable with run_datamodel_codegen_before_pipeline=False.",
+            )
+            raise
+        except subprocess.CalledProcessError:
+            logger.error("datamodel-codegen failed before pipeline. See error above.")
+            raise
+
     typedict_source = read_text(cfg.typedict_input_path)
     dataclass_source = read_text(cfg.dataclass_input_path)
 
@@ -1162,11 +1285,22 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     generated_rename_map = postprocess_generated_file(cfg.generated_output_path)
     postprocess_schemas_file(cfg.schemas_output_path, generated_rename_map)
 
+    # Assemble messages/__init__.py from final generated output
+    final_generated_source = read_text(cfg.generated_output_path)
+    write_messages_init_file(
+        cfg.messages_init_output_path,
+        final_generated_source,
+    )
+
     # Format with Ruff
     if cfg.format_with_ruff:
         try:
             format_generated_files_with_ruff(
-                [cfg.generated_output_path, cfg.schemas_output_path],
+                [
+                    cfg.generated_output_path,
+                    cfg.schemas_output_path,
+                    cfg.messages_init_output_path,
+                ],
                 ruff_runner=cfg.ruff_runner,
             )
         except FileNotFoundError as _:
@@ -1188,6 +1322,13 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
                 raise
     else:
         logger.info("ℹ️  Skip formatting (format_with_ruff=False)")
+
+    # Cleanup temporary generated input files
+    if cfg.cleanup_codegen_inputs_after_pipeline:
+        removed_files = cleanup_codegen_input_files(
+            [cfg.typedict_input_path, cfg.dataclass_input_path]
+        )
+        logger.info("🧽 Cleaned up codegen inputs: %s", ", ".join(removed_files) if removed_files else "none")
 
     logger.info("🎉 Done")
 
@@ -1214,9 +1355,24 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
     parser.add_argument("--dataclass", default=CodegenConfig.dataclass_input_path, help="Path to api_dataclass.py")
     parser.add_argument("--out-generated", default=CodegenConfig.generated_output_path, help="Output path for generated.py")
     parser.add_argument("--out-schemas", default=CodegenConfig.schemas_output_path, help="Output path for schemas.py")
+    parser.add_argument(
+        "--out-messages-init",
+        default=CodegenConfig.messages_init_output_path,
+        help="Output path for messages/__init__.py",
+    )
 
     parser.add_argument("--no-ruff", action="store_true", help="Do not run ruff formatting")
     parser.add_argument("--ignore-ruff-errors", action="store_true", help="Ignore ruff failures (do not fail pipeline)")
+    parser.add_argument(
+        "--no-pre-codegen",
+        action="store_true",
+        help="Skip running datamodel-codegen profiles before pipeline",
+    )
+    parser.add_argument(
+        "--no-cleanup-inputs",
+        action="store_true",
+        help="Do not delete codegen input files after pipeline",
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable debug logs")
 
     ns = parser.parse_args(argv)
@@ -1226,6 +1382,9 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
         dataclass_input_path=ns.dataclass,
         generated_output_path=ns.out_generated,
         schemas_output_path=ns.out_schemas,
+        messages_init_output_path=ns.out_messages_init,
+        run_datamodel_codegen_before_pipeline=not ns.no_pre_codegen,
+        cleanup_codegen_inputs_after_pipeline=not ns.no_cleanup_inputs,
         format_with_ruff=not ns.no_ruff,
         ignore_ruff_errors=bool(ns.ignore_ruff_errors),
     )

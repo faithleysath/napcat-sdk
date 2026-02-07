@@ -18,7 +18,7 @@ class NodeDataNew(TypedDict):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class At(MessageSegment):
     """
     @消息段
@@ -35,7 +35,7 @@ class At(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Contact(MessageSegment):
     """
     联系人消息段
@@ -52,7 +52,7 @@ class Contact(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class CustomMusic(MessageSegment):
     """
     自定义音乐消息段
@@ -86,7 +86,7 @@ class CustomMusic(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Dice(MessageSegment):
     """
     骰子消息段
@@ -99,7 +99,7 @@ class Dice(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Face(MessageSegment):
     """
     QQ表情消息段
@@ -120,7 +120,7 @@ class Face(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class File(MessageSegment):
     """
     文件消息段
@@ -150,7 +150,7 @@ class File(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class FlashTransfer(MessageSegment):
     """
     QQ闪传消息段
@@ -163,7 +163,7 @@ class FlashTransfer(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Forward(MessageSegment):
     """
     合并转发消息段
@@ -180,7 +180,7 @@ class Forward(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class IdMusic(MessageSegment):
     """
     ID音乐消息段
@@ -197,7 +197,7 @@ class IdMusic(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Image(MessageSegment):
     """
     图片消息段
@@ -235,7 +235,7 @@ class Image(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Json(MessageSegment):
     """
     JSON消息段
@@ -249,7 +249,7 @@ class Json(MessageSegment):
     config: JsonDataConfig | None = None
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Location(MessageSegment):
     """
     位置消息段
@@ -274,7 +274,7 @@ class Location(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class MFace(MessageSegment):
     """
     商城表情消息段
@@ -299,7 +299,7 @@ class MFace(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Markdown(MessageSegment):
     """
     Markdown消息段
@@ -312,7 +312,7 @@ class Markdown(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class MiniApp(MessageSegment):
     """
     小程序消息段
@@ -325,7 +325,7 @@ class MiniApp(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Node(MessageSegment):
     """
     合并转发消息节点
@@ -375,7 +375,7 @@ class Node(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class OnlineFile(MessageSegment):
     """
     在线文件消息段
@@ -404,7 +404,7 @@ class OnlineFile(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Poke(MessageSegment):
     """
     戳一戳消息段
@@ -421,7 +421,7 @@ class Poke(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class RPS(MessageSegment):
     """
     猜拳消息段
@@ -434,7 +434,7 @@ class RPS(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Record(MessageSegment):
     """
     语音消息段
@@ -464,7 +464,7 @@ class Record(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Reply(MessageSegment):
     """
     回复消息段
@@ -481,7 +481,7 @@ class Reply(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Text(MessageSegment):
     """
     纯文本消息段
@@ -494,7 +494,7 @@ class Text(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Video(MessageSegment):
     """
     视频消息段
@@ -524,7 +524,7 @@ class Video(MessageSegment):
     """
 
 
-@dataclass
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Xml(MessageSegment):
     """
     XML消息段
