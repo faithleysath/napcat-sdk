@@ -73,25 +73,19 @@ use-type-alias = true
 use-schema-description = true
 use-field-description = true
 use-attribute-docstrings = true
-use-field-description-example = true
 
 [tool.datamodel-codegen.profiles.api-typedict]
-input = "schemas/generated.openapi.json"
+input = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
 input-file-type = "openapi"
-openapi-scopes = ["paths"]
-output = "src/napcat/types/schemas.py"
-output-model-type = "typing.TypedDict"
-
-[tool.datamodel-codegen.profiles.message-typedict]
-input = "schemas/OB11MessageData.schema.json"
-input-file-type = "jsonschema"
-output = "src/napcat/types/messages/typedict_schemas.py"
+openapi-scopes = ["paths", "schemas"]
+output = "api_typedict.py"
 output-model-type = "typing.TypedDict"
 enum-field-as-literal = "all"
 
-[tool.datamodel-codegen.profiles.message-dataclass]
-input = "schemas/OB11MessageData.schema.json"
-input-file-type = "jsonschema"
-output = "src/napcat/types/messages/dataclass_schemas.py"
+[tool.datamodel-codegen.profiles.api-dataclass]
+input = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
+input-file-type = "openapi"
+openapi-scopes = ["schemas"]
+output = "api_dataclass.py"
 output-model-type = "dataclasses.dataclass"
 enum-field-as-literal = "all"
