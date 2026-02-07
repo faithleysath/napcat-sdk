@@ -1,7 +1,9 @@
 from __future__ import annotations
-from .base import MessageSegment
+
 from dataclasses import dataclass
-from typing import Any, Literal, ClassVar, TypedDict
+from typing import Any, ClassVar, Literal, TypedDict
+
+from .base import MessageSegment
 
 
 class JsonDataConfig(TypedDict):

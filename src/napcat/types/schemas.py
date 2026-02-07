@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Any, Literal, NotRequired, TypedDict
+
 from .messages.generated import (
     Message,
 )

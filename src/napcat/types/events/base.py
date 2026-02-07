@@ -1,9 +1,10 @@
 # src/napcat/types/events/base.py
 
 from __future__ import annotations
+
+import logging
 from abc import ABC
 from dataclasses import dataclass, field, is_dataclass
-import logging
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from ..utils import FromDictMixin
@@ -76,7 +77,7 @@ class NapCatEvent(FromDictMixin, ABC):
         for t in pt_list:
             if t in NapCatEvent._registry:
                 raise ValueError(f"Duplicate segment type registered: '{t}' by {cls.__name__}")
-            
+
             # 写入/更新注册表
             NapCatEvent._registry[t] = cls
 

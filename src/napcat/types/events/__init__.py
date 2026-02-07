@@ -3,9 +3,8 @@
 """统一导出所有事件类"""
 
 from .base import NapCatEvent, UnknownEvent
-from .meta import MetaEvent, LifecycleMetaEvent, HeartbeatEvent, HeartbeatStatus
-from .message import MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSender
-from .request import RequestEvent, FriendRequestEvent, GroupRequestEvent
+from .message import GroupMessageEvent, MessageEvent, MessageSender, PrivateMessageEvent
+from .meta import HeartbeatEvent, HeartbeatStatus, LifecycleMetaEvent, MetaEvent
 from .notice import (
     # >>> AUTO-GENERATED: NOTICE IMPORTS START
     BotOfflineEvent,
@@ -38,6 +37,7 @@ from .notice import (
     UnknownNoticeEvent,
     # <<< AUTO-GENERATED: NOTICE IMPORTS END
 )
+from .request import FriendRequestEvent, GroupRequestEvent, RequestEvent
 
 __all__ = [
     # Base

@@ -58,6 +58,7 @@ dev = [
     "datamodel-code-generator[ruff]>=0.53.0",
     "libcst>=1.8.6",
     "openai>=2.15.0",
+    "pyright>=1.1.408",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
 ]
@@ -89,3 +90,14 @@ openapi-scopes = ["schemas"]
 output = "api_dataclass.py"
 output-model-type = "dataclasses.dataclass"
 enum-field-as-literal = "all"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+include = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]

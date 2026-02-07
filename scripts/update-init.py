@@ -16,7 +16,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-
 NOTICE_INIT = Path("src/napcat/types/events/notice/__init__.py")
 MESSAGES_INIT = Path("src/napcat/types/messages/__init__.py")
 EVENTS_INIT = Path("src/napcat/types/events/__init__.py")

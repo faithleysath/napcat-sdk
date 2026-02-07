@@ -1,13 +1,13 @@
 # src/napcat/types/events/meta.py
 
 from __future__ import annotations
-from dataclasses import dataclass
+
 import logging
+from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 from ..utils import FromDictMixin
 from .base import NapCatEvent
-
 
 logger = logging.getLogger("napcat.events")
 

@@ -1,13 +1,13 @@
+from collections.abc import AsyncGenerator, Mapping
 from types import TracebackType
 from typing import Any
-from collections.abc import AsyncGenerator, Mapping
 
 from websockets.asyncio.client import connect as ws_connect
 
+from .client_api import NapCatAPI
 from .connection import Connection
 from .types import NapCatEvent
 from .types.messages import Message
-from .client_api import NapCatAPI
 
 
 class NapCatClient:
@@ -40,9 +40,9 @@ class NapCatClient:
             raise ValueError("Invalid Client: No URL and no existing connection")
         # 2. 获取自身 ID (增加容错处理)
         try:
-            resp = await self.api.get_login_info() 
+            resp = await self.api.get_login_info()
             self.self_id = resp['user_id']
-                
+
         except Exception as e:
             print(f"Warning: Failed to get self_id: {e}")
             self.self_id = -1
@@ -87,7 +87,7 @@ class NapCatClient:
         if resp.get("status") != "ok" and resp.get("retcode") != 0:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
-    
+
     async def send_private_msg(self, user_id: int, message: str | list[Message] | Message) -> int:
         """
         发送私聊消息，返回消息 ID
@@ -97,7 +97,7 @@ class NapCatClient:
             message=message
         )
         return resp["message_id"]
-    
+
     async def send_group_msg(self, group_id: int, message: str | list[Message] | Message) -> int:
         """
         发送群消息，返回消息 ID

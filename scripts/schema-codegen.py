@@ -41,11 +41,10 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
-
-from collections.abc import Sequence
 
 try:
     import libcst as cst

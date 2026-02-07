@@ -1,12 +1,11 @@
 # src/napcat/types/events/notice/base.py
 from __future__ import annotations
 
-from dataclasses import dataclass, is_dataclass
 import logging
+from dataclasses import dataclass, is_dataclass
 from typing import Any, ClassVar, Literal, cast
 
 from ..base import NapCatEvent
-
 
 logger = logging.getLogger("napcat.events")
 

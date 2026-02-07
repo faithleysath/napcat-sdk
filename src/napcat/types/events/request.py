@@ -1,6 +1,7 @@
 # src/napcat/types/events/request.py
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -20,7 +21,7 @@ class RequestEvent(NapCatEvent):
             return FriendRequestEvent._from_dict(data)
         elif req_type == "group":
             return GroupRequestEvent._from_dict(data)
-        
+
         # 未知类型的 Request，抛出异常或返回基类/Unknown
         raise ValueError(f"Unknown request event type: {req_type}")
 
@@ -61,7 +62,7 @@ class GroupRequestEvent(RequestEvent):
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         await self._client.api.set_group_add_request(
-            flag=self.flag, 
+            flag=self.flag,
             approve=True
         )
 
@@ -70,7 +71,7 @@ class GroupRequestEvent(RequestEvent):
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         await self._client.api.set_group_add_request(
-            flag=self.flag, 
+            flag=self.flag,
             approve=False,
             reason=reason
         )

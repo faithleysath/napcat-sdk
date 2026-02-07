@@ -2,9 +2,9 @@ import asyncio
 import itertools
 import logging
 from asyncio import Future, Queue, Task
+from collections.abc import AsyncGenerator
 from types import TracebackType
 from typing import Any, cast
-from collections.abc import AsyncGenerator
 
 import orjson
 from websockets.asyncio.client import ClientConnection

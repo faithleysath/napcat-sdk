@@ -1,11 +1,12 @@
 # src/napcat/types/events/message.py
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
+from ..messages import At, Message, MessageSegment, Reply, Text, UnknownMessageSegment
 from ..utils import FromDictMixin
-from ..messages import MessageSegment, Text, Reply, At, Message, UnknownMessageSegment
 from .base import NapCatEvent
 
 
@@ -76,7 +77,7 @@ class MessageEvent(NapCatEvent):
     # --- 新增字段 ---
     real_seq: str | None = None  # 对应 TS real_seq
     message_sent_type: str | None = None # 对应 TS message_sent_type
-    
+
     # 子类型，对应文档：friend, group (临时), normal (群普通)
     sub_type: Literal["friend", "group", "normal"] | str | None = None
 
@@ -85,7 +86,7 @@ class MessageEvent(NapCatEvent):
 
     # 消息表情点赞列表（部分路径如 get_msg/get_history 可能返回）
     emoji_likes_list: list[EmojiLikeItem] | None = None
-    
+
     post_type: Literal["message", "message_sent"] | tuple[str, str] = ("message", "message_sent")
 
     @classmethod
@@ -141,14 +142,14 @@ class MessageEvent(NapCatEvent):
             return PrivateMessageEvent._from_dict(new_data)
 
         raise ValueError(f"Unknown message type: {msg_type}")
-    
+
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         raise NotImplementedError("send_msg must be implemented in subclasses")
-    
+
     async def reply(self, message: str | list[Message] | Message, at: bool = False) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        
+
         if isinstance(message, str):
             message = Text(text=message)
 
@@ -159,7 +160,7 @@ class MessageEvent(NapCatEvent):
 
         if at:
             segments.append(At(qq=str(self.user_id)))
-        
+
         return await self.send_msg(segments + message)
 
 
@@ -168,7 +169,7 @@ class PrivateMessageEvent(MessageEvent):
     # 对应 message.private
     target_id: int | None = None  # TS 中定义了 target_id?: number
     # 如果是群临时会话 (sub_type='group')，TS 中定义了 temp_source
-    temp_source: int | None = None 
+    temp_source: int | None = None
     # 临时会话私聊上报里可能携带 group_id
     group_id: int | str | None = None
     message_type: Literal["private"] = "private"

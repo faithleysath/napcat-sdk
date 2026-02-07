@@ -18,7 +18,6 @@ import re
 from pathlib import Path
 from typing import Any, cast
 
-
 DEFAULT_OPENAPI = Path("NapCatQQ/packages/napcat-schema/dist/openapi.json")
 DEFAULT_SCHEMAS = Path("src/napcat/types/schemas.py")
 DEFAULT_OUTPUT = Path("src/napcat/client_api.py")

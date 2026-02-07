@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from abc import ABC
-from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, ClassVar, cast, TYPE_CHECKING
 from collections.abc import Iterator
+from dataclasses import dataclass, fields, is_dataclass
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 if TYPE_CHECKING:
     from .generated import Message
@@ -34,9 +35,9 @@ class MessageSegment(ABC):
             # Skip that early phase and let the dataclass-processed class handle
             # registration and field cache initialization.
             return
-        
+
         cls._valid_fields = {
-            f.name for f in fields(cls) 
+            f.name for f in fields(cls)
             if not f.name.startswith("_")
         }
 
@@ -51,7 +52,7 @@ class MessageSegment(ABC):
                 raise ValueError(f"Duplicate segment type registered: '{cls._type}' by {cls.__name__}")
             MessageSegment._registry[cls._type] = cast(type[Message], cls)
             return
-        
+
         raise TypeError(f"Class {cls.__name__} must define '_type' ClassVar or inherit from ABC.")
 
     @classmethod
@@ -68,9 +69,9 @@ class MessageSegment(ABC):
                     if k in target_cls._valid_fields
                 }
                 return target_cls(**filtered_data)
-        
+
         return UnknownMessageSegment(raw_type=seg_type, raw_data=data_payload)
-    
+
     def __iter__(self) -> Iterator[tuple[str, str | dict[str, Any]]]:
         yield "type", self._type
         yield "data", { name: getattr(self, name) for name in self._valid_fields }

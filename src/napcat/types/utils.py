@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import fields, is_dataclass
 import logging
+from dataclasses import fields, is_dataclass
 from typing import Any, ClassVar
-
 
 logger = logging.getLogger("napcat.from_dict")
 

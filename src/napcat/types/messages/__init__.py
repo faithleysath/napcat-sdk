@@ -1,5 +1,6 @@
 from .base import MessageSegment, UnknownMessageSegment
 from .generated import (
+    RPS,
     At,
     Contact,
     CustomMusic,
@@ -12,14 +13,13 @@ from .generated import (
     Image,
     Json,
     Location,
-    MFace,
     Markdown,
     Message,
+    MFace,
     MiniApp,
     Node,
     OnlineFile,
     Poke,
-    RPS,
     Record,
     Reply,
     Text,
