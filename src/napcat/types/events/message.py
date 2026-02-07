@@ -7,18 +7,7 @@ from typing import Any, Literal, cast
 from ..messages import MessageSegment, Text, Reply, At, Message
 from .base import NapCatEvent
 
-
-@dataclass(slots=True, frozen=True, kw_only=True)
-class MessageSender:
-    # 对应 NapCatQQ/packages/napcat-onebot/types/data.ts 中的 OB11Sender
-    user_id: int
-    nickname: str
-    sex: Literal["male", "female", "unknown"] | None = None
-    age: int | None = None
-    card: str | None = None
-    level: str | None = None  # TS定义为string
-    role: Literal["owner", "admin", "member"] | None = None
-
+from ..schemas import OB11Sender as MessageSender
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageEvent(NapCatEvent):
@@ -40,8 +29,7 @@ class MessageEvent(NapCatEvent):
     # 子类型，对应文档：friend, group (临时), normal (群普通)
     sub_type: Literal["friend", "group", "normal"] | str | None = None
     
-    post_type: Literal["message", "message_sent"]
-    _post_type = ("message", "message_sent")
+    post_type: Literal["message", "message_sent"] | tuple[str, str] = ("message", "message_sent")
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PrivateMessageEvent | GroupMessageEvent:
@@ -54,14 +42,13 @@ class MessageEvent(NapCatEvent):
 
         # 构建基础数据
         new_data = data | {
-            "message": tuple(MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments)),
-            "sender": MessageSender.from_dict(data.get("sender", {})),
+            "message": tuple(MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments))
         }
 
         if msg_type == "group":
-            return GroupMessageEvent._from_dict(new_data)
+            return GroupMessageEvent(**new_data)
         elif msg_type == "private":
-            return PrivateMessageEvent._from_dict(new_data)
+            return PrivateMessageEvent(**new_data)
 
         raise ValueError(f"Unknown message type: {msg_type}")
     

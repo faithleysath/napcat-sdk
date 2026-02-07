@@ -1,7 +1,8 @@
 # src/napcat/types/events/base.py
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from abc import ABC
+from dataclasses import dataclass, field, is_dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 if TYPE_CHECKING:
@@ -10,26 +11,49 @@ else:
     NapCatClient = Any
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class NapCatEvent:
+class NapCatEvent(ABC):
     """
     对应 NapCatQQ/packages/napcat-onebot/event/OneBotEvent.ts
     """
     time: int
     self_id: int
-    post_type: str
+    post_type: str | tuple[str, ...]
     _client: NapCatClient | None = field(
         init=False, repr=False, hash=False, compare=False, default=None
     )
 
     # --- 自动注册机制 ---
     _registry: ClassVar[dict[str, type[NapCatEvent]]] = {}
+    __event_register__: ClassVar[bool]
 
-    def __init_subclass__(cls, **kwargs: Any):
-        
-        # 1. 获取定义的类型 (保持之前的修复)
-        pt = cls.__dict__.get("_post_type")
-        if pt is None:
-            pt = cls.__dict__.get("post_type")
+    def __init_subclass__(cls: type[NapCatEvent], register: bool = True, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+
+        # Persist the explicit `register=` decision across potential class
+        # recreation by @dataclass(slots=True, ...).
+        saved_register = cls.__dict__.get("__event_register__")
+        if saved_register is None:
+            cls.__event_register__ = register
+            effective_register = register
+        else:
+            effective_register = bool(saved_register)
+
+        # NOTE:
+        # dataclass(slots=True, ...) may recreate the class object, causing
+        # __init_subclass__ to be called once before @dataclass is applied.
+        # Skip that early phase and let the dataclass-processed class handle
+        # registration.
+        if not is_dataclass(cls):
+            return
+
+        if not effective_register:
+            return
+
+        if ABC in cls.__bases__:
+            return
+
+        # 1. 仅从 post_type 读取注册键
+        pt = cls.__dict__.get("post_type")
 
         if not pt or not isinstance(pt, (str, tuple, list)):
             return
@@ -45,13 +69,7 @@ class NapCatEvent:
         # 3. 注册逻辑 (带 dataclass slots 兼容)
         for t in pt_list:
             if t in NapCatEvent._registry:
-                existing_cls = NapCatEvent._registry[t]
-                # 核心修复：检查是否为同名同模块的类（说明是 dataclass slots 导致的重建）
-                if existing_cls.__name__ == cls.__name__ and existing_cls.__module__ == cls.__module__:
-                    # 允许覆盖（用新的 slotted 类替换旧的）
-                    pass
-                else:
-                    raise ValueError(f"Duplicate post_type registered: {t} (Conflict between {existing_cls} and {cls})")
+                raise ValueError(f"Duplicate segment type registered: '{t}' by {cls.__name__}")
             
             # 写入/更新注册表
             NapCatEvent._registry[t] = cls
@@ -64,13 +82,10 @@ class NapCatEvent:
                 raise ValueError("Missing or invalid 'post_type'")
 
             # --- 核心变更：从注册表查找类，而不是硬编码 ---
-            target_cls = cls._registry.get(post_type)
+            target_cls = NapCatEvent._registry.get(post_type)
             
             if target_cls:
                 return target_cls.from_dict(data)
-            
-            # 如果没找到，会在下面抛出或进入兜底逻辑
-            # 这里选择显式 raise 以便进入 except 块处理兜底，或者直接返回 Unknown
             
         except (ValueError, TypeError, KeyError):
             pass
@@ -85,7 +100,7 @@ class NapCatEvent:
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class UnknownEvent(NapCatEvent):
+class UnknownEvent(NapCatEvent, register=False):
     """万能兜底事件"""
     raw_data: dict[str, Any]
     post_type: str = "unknown"

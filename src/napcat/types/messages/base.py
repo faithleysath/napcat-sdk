@@ -43,9 +43,9 @@ class MessageSegment(ABC):
             return
 
         if hasattr(cls, "_type"):
-            if cls._type in cls._registry:
+            if cls._type in MessageSegment._registry:
                 raise ValueError(f"Duplicate segment type registered: '{cls._type}' by {cls.__name__}")
-            cls._registry[cls._type] = cls
+            MessageSegment._registry[cls._type] = cls
             return
         
         raise TypeError(f"Class {cls.__name__} must define '_type' ClassVar or inherit from ABC.")
@@ -55,7 +55,7 @@ class MessageSegment(ABC):
         seg_type = raw.get("type", "unknown")
         data_payload = raw.get("data", {})
 
-        target_cls = cls._registry.get(seg_type)
+        target_cls = MessageSegment._registry.get(seg_type)
 
         if target_cls:
             if isinstance(data_payload, dict):

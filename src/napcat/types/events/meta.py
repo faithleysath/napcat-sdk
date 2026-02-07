@@ -4,12 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 from .base import NapCatEvent
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class HeartbeatStatus(TypeValidatorMixin, IgnoreExtraArgsMixin):
+class HeartbeatStatus:
     # 对应 NapCatQQ/packages/napcat-onebot/event/meta/OB11HeartbeatEvent.ts
     online: bool | None = None
     good: bool
@@ -25,10 +24,10 @@ class MetaEvent(NapCatEvent):
     def from_dict(cls, data: dict[str, Any]) -> MetaEvent:
         meta_type = data.get("meta_event_type")
         if meta_type == "lifecycle":
-            return LifecycleMetaEvent._from_dict(data)
+            return LifecycleMetaEvent(**data)
         elif meta_type == "heartbeat":
-            return HeartbeatEvent._from_dict(
-                data | {"status": HeartbeatStatus.from_dict(data["status"])}
+            return HeartbeatEvent(
+                **(data | {"status": HeartbeatStatus(**data["status"])})
             )
         raise ValueError(f"Unknown meta event type: {meta_type}")
 
