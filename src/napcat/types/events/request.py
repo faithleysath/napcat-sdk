@@ -17,9 +17,9 @@ class RequestEvent(NapCatEvent):
     def from_dict(cls, data: dict[str, Any]) -> RequestEvent:
         req_type = data.get("request_type")
         if req_type == "friend":
-            return FriendRequestEvent(**data)
+            return FriendRequestEvent._from_dict(data)
         elif req_type == "group":
-            return GroupRequestEvent(**data)
+            return GroupRequestEvent._from_dict(data)
         
         # 未知类型的 Request，抛出异常或返回基类/Unknown
         raise ValueError(f"Unknown request event type: {req_type}")

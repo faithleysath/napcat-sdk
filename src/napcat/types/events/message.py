@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
+from ..utils import FromDictMixin
 from ..messages import MessageSegment, Text, Reply, At, Message, UnknownMessageSegment
 from .base import NapCatEvent
 
@@ -27,7 +28,7 @@ class EmojiLikeItemPayload(TypedDict):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class MessageSender:
+class MessageSender(FromDictMixin):
     """对应 NapCatQQ/packages/napcat-onebot/types/message.ts 中的 OB11Sender"""
 
     user_id: int | str
@@ -42,11 +43,11 @@ class MessageSender:
 
     @classmethod
     def from_dict(cls, data: MessageSenderPayload) -> MessageSender:
-        return cls(**data)
+        return cls._from_dict(cast(dict[str, Any], data))
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class EmojiLikeItem:
+class EmojiLikeItem(FromDictMixin):
     """对应 OB11Message.emoji_likes_list 的单项结构"""
 
     emoji_id: str
@@ -57,7 +58,7 @@ class EmojiLikeItem:
     def from_dict(
         cls, data: EmojiLikeItemPayload
     ) -> EmojiLikeItem:
-        return cls(**data)
+        return cls._from_dict(cast(dict[str, Any], data))
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageEvent(NapCatEvent):
@@ -135,9 +136,9 @@ class MessageEvent(NapCatEvent):
         }
 
         if msg_type == "group":
-            return GroupMessageEvent(**new_data)
+            return GroupMessageEvent._from_dict(new_data)
         elif msg_type == "private":
-            return PrivateMessageEvent(**new_data)
+            return PrivateMessageEvent._from_dict(new_data)
 
         raise ValueError(f"Unknown message type: {msg_type}")
     

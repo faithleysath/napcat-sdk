@@ -3,15 +3,21 @@
 from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, field, is_dataclass
+import logging
 from typing import TYPE_CHECKING, Any, ClassVar, cast
+
+from ..utils import FromDictMixin
 
 if TYPE_CHECKING:
     from ...client import NapCatClient
 else:
     NapCatClient = Any
 
+
+logger = logging.getLogger("napcat.events")
+
 @dataclass(slots=True, frozen=True, kw_only=True)
-class NapCatEvent(ABC):
+class NapCatEvent(FromDictMixin, ABC):
     """
     对应 NapCatQQ/packages/napcat-onebot/event/OneBotEvent.ts
     """
@@ -76,19 +82,43 @@ class NapCatEvent(ABC):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NapCatEvent:
-        try:
-            post_type = data.get("post_type")
-            if not isinstance(post_type, str):
-                raise ValueError("Missing or invalid 'post_type'")
+        post_type = data.get("post_type")
 
-            # --- 核心变更：从注册表查找类，而不是硬编码 ---
-            target_cls = NapCatEvent._registry.get(post_type)
-            
-            if target_cls:
-                return target_cls.from_dict(data)
-            
-        except (ValueError, TypeError, KeyError):
-            pass
+        if not isinstance(post_type, str):
+            logger.error(
+                "Fallback to UnknownEvent: invalid post_type, payload_keys=%s",
+                sorted(data.keys()),
+            )
+            return UnknownEvent(
+                time=int(data.get("time", 0)),
+                self_id=int(data.get("self_id", 0)),
+                post_type=str(data.get("post_type", "unknown")),
+                raw_data=data,
+            )
+
+        target_cls = NapCatEvent._registry.get(post_type)
+        if target_cls is None:
+            logger.error(
+                "Fallback to UnknownEvent: unregistered post_type=%r, payload_keys=%s",
+                post_type,
+                sorted(data.keys()),
+            )
+            return UnknownEvent(
+                time=int(data.get("time", 0)),
+                self_id=int(data.get("self_id", 0)),
+                post_type=str(data.get("post_type", "unknown")),
+                raw_data=data,
+            )
+
+        try:
+            return target_cls.from_dict(data)
+        except Exception:
+            logger.error(
+                "Fallback to UnknownEvent: %s.from_dict failed for post_type=%r",
+                target_cls.__name__,
+                post_type,
+                exc_info=True,
+            )
 
         # --- 兜底逻辑 ---
         return UnknownEvent(

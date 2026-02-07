@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Literal
+import logging
+from typing import Any, Literal, cast
 
+from ..utils import FromDictMixin
 from .base import NapCatEvent
 
 
+logger = logging.getLogger("napcat.events")
+
+
 @dataclass(slots=True, frozen=True, kw_only=True)
-class HeartbeatStatus:
+class HeartbeatStatus(FromDictMixin):
     # 对应 NapCatQQ/packages/napcat-onebot/event/meta/OB11HeartbeatEvent.ts
     online: bool | None = None
     good: bool
@@ -24,11 +29,19 @@ class MetaEvent(NapCatEvent):
     def from_dict(cls, data: dict[str, Any]) -> MetaEvent:
         meta_type = data.get("meta_event_type")
         if meta_type == "lifecycle":
-            return LifecycleMetaEvent(**data)
+            return LifecycleMetaEvent._from_dict(data)
         elif meta_type == "heartbeat":
-            return HeartbeatEvent(
-                **(data | {"status": HeartbeatStatus(**data["status"])})
-            )
+            raw_status = data.get("status")
+            if not isinstance(raw_status, dict):
+                raise ValueError("Invalid heartbeat status")
+            status = HeartbeatStatus._from_dict(cast(dict[str, Any], raw_status))
+            return HeartbeatEvent._from_dict(data | {"status": status})
+
+        logger.error(
+            "Unknown meta event type, downgrade by base dispatcher: meta_event_type=%r payload_keys=%s",
+            meta_type,
+            sorted(data.keys()),
+        )
         raise ValueError(f"Unknown meta event type: {meta_type}")
 
 
