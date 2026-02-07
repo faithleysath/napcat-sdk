@@ -21,6 +21,10 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.12
         run: uv python install 3.12
+      - name: Install dev dependencies
+        run: uv sync --frozen --group dev
+      - name: Static checks (ruff + pyright)
+        run: uv run pytest -q src/tests/test_static_checks.py
       - name: Build
         run: uv build
       # Check that basic features work and we didn't miss to include crucial files
