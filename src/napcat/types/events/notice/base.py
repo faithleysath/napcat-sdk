@@ -1,11 +1,14 @@
 # src/napcat/types/events/notice/base.py
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, ClassVar, Literal
+from dataclasses import dataclass, is_dataclass
+import logging
+from typing import Any, ClassVar, Literal, cast
 
-# 假设上层架构
 from ..base import NapCatEvent
+
+
+logger = logging.getLogger("napcat.events")
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -22,8 +25,27 @@ class NoticeEvent(NapCatEvent):
     _post_type: ClassVar[str] = "notice"
     _notice_registry: ClassVar[dict[str, type[NoticeEvent]]] = {}
     _notify_registry: ClassVar[dict[str, type[NoticeEvent]]] = {}
+    __notice_register__: ClassVar[bool]
 
-    def __init_subclass__(cls, **kwargs: Any):
+    def __init_subclass__(cls, register: bool = True, **kwargs: Any):
+        super().__init_subclass__(**kwargs)
+
+        # Persist explicit register decision across dataclass(slots=True) class recreation.
+        saved_register = cls.__dict__.get("__notice_register__")
+        if saved_register is None:
+            cls.__notice_register__ = register
+            effective_register = register
+        else:
+            effective_register = bool(saved_register)
+
+        # dataclass(slots=True, ...) may trigger an early __init_subclass__ call
+        # before dataclass processing; skip early phase to avoid duplicate registration.
+        if not is_dataclass(cls):
+            return
+
+        if not effective_register:
+            return
+
         # 1. 获取 notice_type (仅限当前类定义，不查找父类)
         n_type = cls.__dict__.get("notice_type")
 
@@ -39,17 +61,9 @@ class NoticeEvent(NapCatEvent):
             value_cls: type[NoticeEvent],
         ):
             if key in registry:
-                existing = registry[key]
-                # 核心修复：检查是否为同名同模块的类（dataclass slots 重建导致的）
-                if (
-                    existing.__name__ == value_cls.__name__
-                    and existing.__module__ == value_cls.__module__
-                ):
-                    pass  # 允许覆盖
-                else:
-                    raise ValueError(
-                        f"Duplicate notice type registered: {key} (Conflict between {existing} and {value_cls})"
-                    )
+                raise ValueError(
+                    f"Duplicate notice type registered: '{key}' by {value_cls.__name__}"
+                )
 
             registry[key] = value_cls
 
@@ -58,9 +72,17 @@ class NoticeEvent(NapCatEvent):
             # 同样仅限当前类定义的 sub_type
             s_type = cls.__dict__.get("sub_type")
             if s_type and isinstance(s_type, str):
-                register_safely(NoticeEvent._notify_registry, s_type, cls)
+                register_safely(
+                    NoticeEvent._notify_registry,
+                    s_type,
+                    cast(type[NoticeEvent], cls),
+                )
         else:
-            register_safely(NoticeEvent._notice_registry, n_type, cls)
+            register_safely(
+                NoticeEvent._notice_registry,
+                n_type,
+                cast(type[NoticeEvent], cls),
+            )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> NoticeEvent:
@@ -72,10 +94,32 @@ class NoticeEvent(NapCatEvent):
                 target = cls._notify_registry.get(sub_type)
                 if target:
                     return target._from_dict(data)
+                logger.error(
+                    "Fallback to UnknownNoticeEvent: unregistered notify sub_type=%r, payload_keys=%s",
+                    sub_type,
+                    sorted(data.keys()),
+                )
+            else:
+                logger.error(
+                    "Fallback to UnknownNoticeEvent: invalid notify sub_type=%r, payload_keys=%s",
+                    sub_type,
+                    sorted(data.keys()),
+                )
         elif isinstance(n_type, str):
             target = cls._notice_registry.get(n_type)
             if target:
                 return target._from_dict(data)
+            logger.error(
+                "Fallback to UnknownNoticeEvent: unregistered notice_type=%r, payload_keys=%s",
+                n_type,
+                sorted(data.keys()),
+            )
+        else:
+            logger.error(
+                "Fallback to UnknownNoticeEvent: invalid notice_type=%r, payload_keys=%s",
+                n_type,
+                sorted(data.keys()),
+            )
 
         # 3. 兜底
         return UnknownNoticeEvent(
@@ -87,7 +131,7 @@ class NoticeEvent(NapCatEvent):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class UnknownNoticeEvent(NoticeEvent):
+class UnknownNoticeEvent(NoticeEvent, register=False):
     """兜底未知事件"""
 
     raw_data: dict[str, Any]
