@@ -9,22 +9,34 @@ class MessageSegment(ABC):
     _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
     _type: ClassVar[str]
     _valid_fields: ClassVar[set[str]]
+    __segment_register__: ClassVar[bool]
 
     def __init_subclass__(cls, register: bool = True, **kwargs: Any):
         super().__init_subclass__(**kwargs)
 
+        # Persist the explicit `register=` decision across potential class
+        # recreation by @dataclass(slots=True, ...).
+        saved_register = cls.__dict__.get("__segment_register__")
+        if saved_register is None:
+            cls.__segment_register__ = register
+            effective_register = register
+        else:
+            effective_register = bool(saved_register)
+
         if not is_dataclass(cls):
-            raise TypeError(
-                f"Class '{cls.__name__}' must be decorated with @dataclass "
-                f"to inherit from {MessageSegment.__name__}."
-            )
+            # NOTE:
+            # dataclass(slots=True, ...) may recreate the class object, causing
+            # __init_subclass__ to be called once before @dataclass is applied.
+            # Skip that early phase and let the dataclass-processed class handle
+            # registration and field cache initialization.
+            return
         
         cls._valid_fields = {
             f.name for f in fields(cls) 
             if not f.name.startswith("_")
         }
 
-        if not register:
+        if not effective_register:
             return
 
         if ABC in cls.__bases__:
