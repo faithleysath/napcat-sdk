@@ -160,6 +160,10 @@ class CodegenConfig:
     generated_output_path: str = "src/napcat/types/messages/generated.py"
     schemas_output_path: str = "src/napcat/types/schemas.py"
     messages_init_output_path: str = "src/napcat/types/messages/__init__.py"
+    client_api_output_path: str = "src/napcat/client_api.py"
+    openapi_input_path: str = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
+    client_api_codegen_script_path: str = "scripts/client-api-codegen.py"
+    run_client_api_codegen_after_pipeline: bool = True
 
     # 是否在主流程前先调用 datamodel-codegen 生成输入文件
     run_datamodel_codegen_before_pipeline: bool = True
@@ -391,6 +395,38 @@ def run_datamodel_codegen_profiles(
     for profile in profiles:
         logger.info("🛠️  Running datamodel-codegen profile: %s", profile)
         subprocess.run([*runner, "--profile", profile], check=True)
+
+
+def run_client_api_codegen(
+    *,
+    script_path: str | os.PathLike[str],
+    openapi_path: str | os.PathLike[str],
+    schemas_path: str | os.PathLike[str],
+    output_path: str | os.PathLike[str],
+) -> None:
+    """Generate src/napcat/client_api.py from openapi + schemas.py."""
+    script = str(script_path)
+    openapi = str(openapi_path)
+    schemas = str(schemas_path)
+    out = str(output_path)
+
+    logger.info("🛠️  Running client API codegen: %s", script)
+    completed = subprocess.run(
+        [sys.executable, script, "--openapi", openapi, "--schemas", schemas, "--out", out],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    stdout = (completed.stdout or "").strip()
+    if stdout:
+        for line in stdout.splitlines():
+            logger.info("%s", line)
+
+    stderr = (completed.stderr or "").strip()
+    if stderr:
+        for line in stderr.splitlines():
+            logger.warning("[client-api-codegen] %s", line)
 
 
 def cleanup_codegen_input_files(paths: Sequence[str | os.PathLike[str]]) -> list[str]:
@@ -1299,6 +1335,16 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
         final_generated_source,
     )
 
+    # Generate client_api.py from OpenAPI + schemas.py
+    if cfg.run_client_api_codegen_after_pipeline:
+        run_client_api_codegen(
+            script_path=cfg.client_api_codegen_script_path,
+            openapi_path=cfg.openapi_input_path,
+            schemas_path=cfg.schemas_output_path,
+            output_path=cfg.client_api_output_path,
+        )
+        logger.info("✅ Wrote client API module to: %s", cfg.client_api_output_path)
+
     # Format with Ruff
     if cfg.format_with_ruff:
         try:
@@ -1307,6 +1353,7 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
                     cfg.generated_output_path,
                     cfg.schemas_output_path,
                     cfg.messages_init_output_path,
+                    cfg.client_api_output_path,
                 ],
                 ruff_runner=cfg.ruff_runner,
             )
