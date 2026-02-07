@@ -1,33 +1,9 @@
 from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 from .messages.generated import (
-    OB11MessageAt,
-    OB11MessageContact,
-    OB11MessageCustomMusic,
-    OB11MessageData,
-    OB11MessageDice,
-    OB11MessageFace,
-    OB11MessageFile,
-    OB11MessageFlashTransfer,
-    OB11MessageForward,
-    OB11MessageIdMusic,
-    OB11MessageImage,
-    OB11MessageJson,
-    OB11MessageJsonDataConfig,
-    OB11MessageLocation,
-    OB11MessageMFace,
-    OB11MessageMarkdown,
-    OB11MessageMiniApp,
-    OB11MessageNode,
-    OB11MessageNodeDataNew,
-    OB11MessageOnlineFile,
-    OB11MessagePoke,
-    OB11MessageRPS,
-    OB11MessageRecord,
-    OB11MessageReply,
-    OB11MessageText,
-    OB11MessageVideo,
-    OB11MessageXml,
+    Message,
+    JsonDataConfig,
+    NodeDataNew,
 )
 
 
@@ -212,7 +188,7 @@ class OB11MessageJsonData(TypedDict):
     """
     JSON数据
     """
-    config: NotRequired[OB11MessageJsonDataConfig]
+    config: NotRequired[JsonDataConfig]
 
 
 class OB11MessageLocationData(TypedDict):
@@ -296,7 +272,7 @@ class OB11MessageNodeData(TypedDict):
     """
     消息来源
     """
-    news: NotRequired[list[OB11MessageNodeDataNew]]
+    news: NotRequired[list[NodeDataNew]]
     summary: NotRequired[str]
     """
     摘要
@@ -1031,7 +1007,6 @@ class GetGroupDetailInfoPostRequest(TypedDict):
 
 
 class GetGroupDetailInfoPostResponse(TypedDict):
-
     group_id: float
     """
     群号
@@ -1203,7 +1178,6 @@ class GetRkeyServerPostRequest(TypedDict):
 
 
 class GetRkeyServerPostResponse(TypedDict):
-
     private_rkey: NotRequired[str]
     """
     私聊 RKey
@@ -1285,7 +1259,6 @@ class Data3EmojiLikesListItem(TypedDict):
 
 
 class FetchEmojiLikePostResponse(TypedDict):
-
     emojiLikesList: list[Data3EmojiLikesListItem]
     """
     表情回应列表
@@ -1347,7 +1320,6 @@ class Data4EmojiLikeListItem(TypedDict):
 
 
 class GetEmojiLikesPostResponse(TypedDict):
-
     emoji_like_list: list[Data4EmojiLikeListItem]
     """
     表情回应列表
@@ -1366,7 +1338,6 @@ class GetFilePostRequest(TypedDict):
 
 
 class GetFilePostResponse(TypedDict):
-
     file: NotRequired[str]
     """
     本地路径
@@ -1577,7 +1548,6 @@ class TranslateEn2zhPostRequest(TypedDict):
 
 
 class TranslateEn2zhPostResponse(TypedDict):
-
     words: list[str]
     """
     翻译结果列表
@@ -1596,7 +1566,6 @@ class GetGroupRootFilesPostRequest(TypedDict):
 
 
 class GetGroupRootFilesPostResponse(TypedDict):
-
     files: list[Any]
     """
     文件列表
@@ -1632,7 +1601,6 @@ class GetClientkeyPostRequest(TypedDict):
 
 
 class GetClientkeyPostResponse(TypedDict):
-
     clientkey: NotRequired[str]
     """
     客户端Key
@@ -1659,7 +1627,6 @@ class MoveGroupFilePostRequest(TypedDict):
 
 
 class MoveGroupFilePostResponse(TypedDict):
-
     ok: bool
     """
     是否成功
@@ -1686,7 +1653,6 @@ class RenameGroupFilePostRequest(TypedDict):
 
 
 class RenameGroupFilePostResponse(TypedDict):
-
     ok: bool
     """
     是否成功
@@ -1705,7 +1671,6 @@ class TransGroupFilePostRequest(TypedDict):
 
 
 class TransGroupFilePostResponse(TypedDict):
-
     ok: bool
     """
     是否成功
@@ -1734,7 +1699,6 @@ class GetMsgPostRequest(TypedDict):
 
 
 class GetMsgPostResponse(TypedDict):
-
     time: float
     """
     发送时间
@@ -1859,7 +1823,6 @@ class SendGroupMsgPostRequestNew(TypedDict):
 
 
 class SendGroupMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -1879,7 +1842,6 @@ class SendPrivateMsgPostRequestNew(TypedDict):
 
 
 class SendPrivateMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -1899,7 +1861,6 @@ class SendMsgPostRequestNew(TypedDict):
 
 
 class SendMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -1983,7 +1944,6 @@ class GetVersionInfoPostRequest(TypedDict):
 
 
 class GetVersionInfoPostResponse(TypedDict):
-
     app_name: str
     """
     应用名称
@@ -2003,7 +1963,6 @@ class CanSendRecordPostRequest(TypedDict):
 
 
 class CanSendRecordPostResponse(TypedDict):
-
     yes: bool
     """
     是否可以发送
@@ -2015,7 +1974,6 @@ class CanSendImagePostRequest(TypedDict):
 
 
 class CanSendImagePostResponse(TypedDict):
-
     yes: bool
     """
     是否可以发送
@@ -2027,7 +1985,6 @@ class GetStatusPostRequest(TypedDict):
 
 
 class GetStatusPostResponse(TypedDict):
-
     online: bool
     """
     是否在线
@@ -2154,7 +2111,6 @@ class GetImagePostRequest(TypedDict):
 
 
 class GetImagePostResponse(TypedDict):
-
     file: NotRequired[str]
     """
     本地路径
@@ -2193,7 +2149,6 @@ class GetRecordPostRequest(TypedDict):
 
 
 class GetRecordPostResponse(TypedDict):
-
     file: NotRequired[str]
     """
     本地路径
@@ -2242,7 +2197,6 @@ class GetCookiesPostRequest(TypedDict):
 
 
 class GetCookiesPostResponse(TypedDict):
-
     cookies: str
     """
     Cookies
@@ -2334,7 +2288,6 @@ class CheckUrlSafelyPostRequest(TypedDict):
 
 
 class CheckUrlSafelyPostResponse(TypedDict):
-
     level: float
     """
     安全等级 (1: 安全, 2: 未知, 3: 危险)
@@ -2384,7 +2337,6 @@ class GetGroupHonorInfoPostRequest(TypedDict):
 
 
 class GetGroupHonorInfoPostResponse(TypedDict):
-
     group_id: float
     """
     群号
@@ -2566,7 +2518,6 @@ class GetGroupAtAllRemainPostRequest(TypedDict):
 
 
 class GetGroupAtAllRemainPostResponse(TypedDict):
-
     can_at_all: bool
     """
     是否可以艾特全体
@@ -2586,7 +2537,6 @@ class SendForwardMsgPostRequestNew(TypedDict):
 
 
 class SendForwardMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -2606,7 +2556,6 @@ class SendGroupForwardMsgPostRequestNew(TypedDict):
 
 
 class SendGroupForwardMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -2626,7 +2575,6 @@ class SendPrivateForwardMsgPostRequestNew(TypedDict):
 
 
 class SendPrivateForwardMsgPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -2653,7 +2601,6 @@ class GetStrangerInfoPostRequest(TypedDict):
 
 
 class GetStrangerInfoPostResponse(TypedDict):
-
     user_id: float
     """
     用户QQ
@@ -2736,7 +2683,6 @@ class DownloadFilePostRequest(TypedDict):
 
 
 class DownloadFilePostResponse(TypedDict):
-
     file: str
     """
     文件路径
@@ -2796,7 +2742,6 @@ class UploadGroupFilePostRequest(TypedDict):
 
 
 class UploadGroupFilePostResponse(TypedDict):
-
     file_id: str | None
     """
     文件 ID
@@ -2839,7 +2784,6 @@ class GetGroupMsgHistoryPostRequest(TypedDict):
 
 
 class GetGroupMsgHistoryPostResponse(TypedDict):
-
     messages: list[Any]
     """
     消息列表
@@ -2858,7 +2802,6 @@ class GetForwardMsgPostRequest(TypedDict):
 
 
 class GetForwardMsgPostResponse(TypedDict):
-
     messages: NotRequired[list[Any]]
     """
     消息列表
@@ -2901,7 +2844,6 @@ class GetFriendMsgHistoryPostRequest(TypedDict):
 
 
 class GetFriendMsgHistoryPostResponse(TypedDict):
-
     messages: list[Any]
     """
     消息列表
@@ -3079,7 +3021,6 @@ class GetGroupIgnoredNotifiesPostRequest(TypedDict):
 
 
 class GetGroupIgnoredNotifiesPostResponse(TypedDict):
-
     invited_requests: list[Any]
     """
     邀请请求列表
@@ -3240,7 +3181,6 @@ class Data36VoteInfo(TypedDict):
 
 
 class GetProfileLikePostResponse(TypedDict):
-
     uid: str
     """
     用户UID
@@ -3265,7 +3205,6 @@ class SetGroupPortraitPostRequest(TypedDict):
 
 
 class SetGroupPortraitPostResponse(TypedDict):
-
     result: float
     errMsg: str
 
@@ -3300,7 +3239,6 @@ class UploadPrivateFilePostRequest(TypedDict):
 
 
 class UploadPrivateFilePostResponse(TypedDict):
-
     file_id: str | None
     """
     文件 ID
@@ -3365,7 +3303,6 @@ class GetCsrfTokenPostRequest(TypedDict):
 
 
 class GetCsrfTokenPostResponse(TypedDict):
-
     token: float
     """
     CSRF Token
@@ -3380,7 +3317,6 @@ class GetCredentialsPostRequest(TypedDict):
 
 
 class GetCredentialsPostResponse(TypedDict):
-
     cookies: str
     """
     Cookies
@@ -3435,7 +3371,6 @@ class CreateGroupFileFolderPostRequest(TypedDict):
 
 
 class CreateGroupFileFolderPostResponse(TypedDict):
-
     result: dict[str, Any]
     """
     操作结果
@@ -3472,7 +3407,6 @@ class GetGroupFileSystemInfoPostRequest(TypedDict):
 
 
 class GetGroupFileSystemInfoPostResponse(TypedDict):
-
     file_count: float
     """
     文件总数
@@ -3511,7 +3445,6 @@ class GetGroupFilesByFolderPostRequest(TypedDict):
 
 
 class GetGroupFilesByFolderPostResponse(TypedDict):
-
     files: list[Any]
     """
     文件列表
@@ -3580,7 +3513,6 @@ class NcGetUserStatusPostRequest(TypedDict):
 
 
 class NcGetUserStatusPostResponse(TypedDict):
-
     status: float
     """
     在线状态
@@ -3656,7 +3588,6 @@ class GetGroupFileUrlPostRequest(TypedDict):
 
 
 class GetGroupFileUrlPostResponse(TypedDict):
-
     url: NotRequired[str]
     """
     文件下载链接
@@ -3779,7 +3710,6 @@ type GetMiniAppArkPostRequest = (
 
 
 class GetMiniAppArkPostResponse(TypedDict):
-
     data: dict[str, Any]
     """
     Ark数据
@@ -3820,7 +3750,6 @@ class SendGroupAiRecordPostRequest(TypedDict):
 
 
 class SendGroupAiRecordPostResponse(TypedDict):
-
     message_id: float
     """
     消息ID
@@ -3911,7 +3840,6 @@ class GetGroupSystemMsgPostRequest(TypedDict):
 
 
 class GetGroupSystemMsgPostResponse(TypedDict):
-
     invited_requests: list[OB11Notify]
     """
     进群邀请列表
@@ -3967,7 +3895,6 @@ class GetPrivateFileUrlPostRequest(TypedDict):
 
 
 class GetPrivateFileUrlPostResponse(TypedDict):
-
     url: NotRequired[str]
     """
     文件下载链接
@@ -4269,17 +4196,18 @@ class GetFilesetIdPostRequest(TypedDict):
 
 
 class GetFilesetIdPostResponse(TypedDict):
-
     fileset_id: str
     """
     文件集 ID
     """
+
+
 """
 OneBot 11 消息段
 """
 
 
-type OB11MessageMixType = list[OB11MessageData] | str | OB11MessageData
+type OB11MessageMixType = list[Message] | str | Message
 """
 OneBot 11 消息混合类型
 """
@@ -4347,7 +4275,7 @@ class OB11Message(TypedDict):
     消息子类型
     """
     sender: OB11Sender
-    message: list[OB11MessageData] | str
+    message: list[Message] | str
     """
     消息内容
     """

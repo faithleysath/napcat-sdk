@@ -2,7 +2,13 @@ import libcst as cst
 
 from .assemble import build_generated_message_module, build_schemas_module
 from .collectors import ClassCollector
-from .io import postprocess_generated_files, read_text, write_text
+from .io import (
+    format_generated_files_with_ruff,
+    postprocess_generated_file,
+    postprocess_schemas_file,
+    read_text,
+    write_text,
+)
 from .models import CodegenConfig
 from .transforms_message import collect_generated_message_classes
 from .transforms_typedict import FlattenedClassRemover, ResponseFlattener
@@ -70,11 +76,17 @@ def run_pipeline(config: CodegenConfig | None = None) -> None:
         f"{config.schemas_output_path} with {len(generated_definition_names)} generated imports."
     )
 
-    # postprocess_generated_files(
-    #     [
-    #         config.generated_output_path,
-    #         config.schemas_output_path,
-    #     ]
-    # )
+    generated_rename_map = postprocess_generated_file(config.generated_output_path)
+    postprocess_schemas_file(
+        config.schemas_output_path,
+        generated_rename_map,
+    )
 
-    
+    format_generated_files_with_ruff(
+        [
+            config.generated_output_path,
+            config.schemas_output_path,
+        ]
+    )
+
+
