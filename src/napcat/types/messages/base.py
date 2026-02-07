@@ -1,12 +1,14 @@
 from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, cast, TYPE_CHECKING
 from collections.abc import Iterator
 
+if TYPE_CHECKING:
+    from .generated import Message
 
 class MessageSegment(ABC):
-    _registry: ClassVar[dict[str, type[MessageSegment]]] = {}
+    _registry: ClassVar[dict[str, type[Message]]] = {}
     _type: ClassVar[str]
     _valid_fields: ClassVar[set[str]]
     __segment_register__: ClassVar[bool]
@@ -45,13 +47,13 @@ class MessageSegment(ABC):
         if hasattr(cls, "_type"):
             if cls._type in MessageSegment._registry:
                 raise ValueError(f"Duplicate segment type registered: '{cls._type}' by {cls.__name__}")
-            MessageSegment._registry[cls._type] = cls
+            MessageSegment._registry[cls._type] = cast(type[Message], cls)
             return
         
         raise TypeError(f"Class {cls.__name__} must define '_type' ClassVar or inherit from ABC.")
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> MessageSegment:
+    def from_dict(cls, raw: dict[str, Any]) -> Message | UnknownMessageSegment:
         seg_type = raw.get("type", "unknown")
         data_payload = raw.get("data", {})
 
@@ -64,7 +66,6 @@ class MessageSegment(ABC):
                     if k in target_cls._valid_fields
                 }
                 return target_cls(**filtered_data)
-            return target_cls()
         
         return UnknownMessageSegment(raw_type=seg_type, raw_data=data_payload)
     

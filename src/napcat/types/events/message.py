@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
-from ..messages import MessageSegment, Text, Reply, At, Message
+from ..messages import MessageSegment, Text, Reply, At, Message, UnknownMessageSegment
 from .base import NapCatEvent
 
 from ..schemas import OB11Sender as MessageSender
@@ -18,8 +18,8 @@ class MessageEvent(NapCatEvent):
     real_id: int | None = None
     sender: MessageSender
     raw_message: str
-    message: tuple[Message]
-    message_format: Literal["array"] = "array"
+    message: tuple[Message | UnknownMessageSegment, ...] | str
+    message_format: Literal["array", "string"] | str = "array"
     font: int | None = None
 
     # --- 新增字段 ---
@@ -28,22 +28,29 @@ class MessageEvent(NapCatEvent):
     
     # 子类型，对应文档：friend, group (临时), normal (群普通)
     sub_type: Literal["friend", "group", "normal"] | str | None = None
+
+    # debug=true 时，NapCat 会在上报里注入原始 RawMessage
+    raw: Any | None = None
     
     post_type: Literal["message", "message_sent"] | tuple[str, str] = ("message", "message_sent")
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PrivateMessageEvent | GroupMessageEvent:
         msg_type = data.get("message_type")
-        raw_segments = data.get("message", [])
-        
-        if not isinstance(raw_segments, list):
-            # 容错处理：如果 format 是 string，可能这里还是 string，虽然 OneBot11 推荐 array
-            raw_segments = [] 
+        raw_message = data.get("message", [])
+
+        if isinstance(raw_message, str):
+            parsed_message: tuple[Message | UnknownMessageSegment, ...] | str = raw_message
+        elif isinstance(raw_message, list):
+            parsed_message = tuple(
+                MessageSegment.from_dict(seg)
+                for seg in cast(list[dict[str, Any]], raw_message)
+            )
+        else:
+            parsed_message = ()
 
         # 构建基础数据
-        new_data = data | {
-            "message": tuple(MessageSegment.from_dict(seg) for seg in cast(list[dict[str, Any]], raw_segments))
-        }
+        new_data = data | {"message": parsed_message}
 
         if msg_type == "group":
             return GroupMessageEvent(**new_data)
@@ -79,6 +86,8 @@ class PrivateMessageEvent(MessageEvent):
     target_id: int | None = None  # TS 中定义了 target_id?: number
     # 如果是群临时会话 (sub_type='group')，TS 中定义了 temp_source
     temp_source: int | None = None 
+    # 临时会话私聊上报里可能携带 group_id
+    group_id: int | str | None = None
     message_type: Literal["private"] = "private"
     sub_type: Literal["friend", "group"] | str | None = None
 
@@ -96,6 +105,8 @@ class GroupMessageEvent(MessageEvent):
     # 对应 message.group
     group_id: int
     group_name: str | None = None # TS 中定义了 group_name
+    # 自发群消息上报里可能携带 target_id
+    target_id: int | None = None
     message_type: Literal["group"] = "group"
     sub_type: Literal["normal"] | str | None = None
 
