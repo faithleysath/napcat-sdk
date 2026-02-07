@@ -9,11 +9,8 @@ if TYPE_CHECKING:
 else:
     NapCatClient = Any
 
-from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
-
-
 @dataclass(slots=True, frozen=True, kw_only=True)
-class NapCatEvent(TypeValidatorMixin, IgnoreExtraArgsMixin):
+class NapCatEvent:
     """
     对应 NapCatQQ/packages/napcat-onebot/event/OneBotEvent.ts
     """

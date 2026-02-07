@@ -5,12 +5,11 @@ from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 from ..messages import MessageSegment, Text, Reply, At, Message
-from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 from .base import NapCatEvent
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class MessageSender(TypeValidatorMixin, IgnoreExtraArgsMixin):
+class MessageSender:
     # 对应 NapCatQQ/packages/napcat-onebot/types/data.ts 中的 OB11Sender
     user_id: int
     nickname: str
