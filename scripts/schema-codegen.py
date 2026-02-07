@@ -165,6 +165,13 @@ class CodegenConfig:
     client_api_codegen_script_path: str = "scripts/client-api-codegen.py"
     run_client_api_codegen_after_pipeline: bool = True
 
+    # 是否在主流程前先构建 openapi.json
+    run_openapi_codegen_before_pipeline: bool = True
+
+    # openapi 预生成命令（默认对应 NapCatQQ/package.json 的 build:openapi）
+    openapi_codegen_runner: tuple[str, ...] = ("pnpm", "run", "build:openapi")
+    openapi_codegen_cwd: str = "NapCatQQ"
+
     # 是否在主流程前先调用 datamodel-codegen 生成输入文件
     run_datamodel_codegen_before_pipeline: bool = True
 
@@ -395,6 +402,16 @@ def run_datamodel_codegen_profiles(
     for profile in profiles:
         logger.info("🛠️  Running datamodel-codegen profile: %s", profile)
         subprocess.run([*runner, "--profile", profile], check=True)
+
+
+def run_openapi_codegen(
+    *,
+    runner: Sequence[str] = ("pnpm", "run", "build:openapi"),
+    cwd: str | os.PathLike[str] = "NapCatQQ",
+) -> None:
+    """Build OpenAPI artifact (openapi.json) in NapCat workspace."""
+    logger.info("🛠️  Running OpenAPI codegen: %s (cwd=%s)", " ".join(runner), cwd)
+    subprocess.run([*runner], check=True, cwd=str(cwd))
 
 
 def run_client_api_codegen(
@@ -1250,6 +1267,23 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     logger.info("🚀 Start codegen pipeline")
     logger.debug("Config: %s", cfg)
 
+    # Pre-generate openapi.json from NapCat workspace
+    if cfg.run_openapi_codegen_before_pipeline:
+        try:
+            run_openapi_codegen(
+                runner=cfg.openapi_codegen_runner,
+                cwd=cfg.openapi_codegen_cwd,
+            )
+        except FileNotFoundError:
+            logger.error(
+                "OpenAPI codegen runner not found. "
+                "Install pnpm (or required toolchain) or disable with run_openapi_codegen_before_pipeline=False.",
+            )
+            raise
+        except subprocess.CalledProcessError:
+            logger.error("OpenAPI codegen failed before pipeline. See error above.")
+            raise
+
     # Pre-generate api input files from pyproject profiles
     if cfg.run_datamodel_codegen_before_pipeline:
         try:
@@ -1418,6 +1452,11 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
     parser.add_argument("--no-ruff", action="store_true", help="Do not run ruff formatting")
     parser.add_argument("--ignore-ruff-errors", action="store_true", help="Ignore ruff failures (do not fail pipeline)")
     parser.add_argument(
+        "--no-openapi-pre-codegen",
+        action="store_true",
+        help="Skip building openapi.json before pipeline",
+    )
+    parser.add_argument(
         "--no-pre-codegen",
         action="store_true",
         help="Skip running datamodel-codegen profiles before pipeline",
@@ -1437,6 +1476,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
         generated_output_path=ns.out_generated,
         schemas_output_path=ns.out_schemas,
         messages_init_output_path=ns.out_messages_init,
+        run_openapi_codegen_before_pipeline=not ns.no_openapi_pre_codegen,
         run_datamodel_codegen_before_pipeline=not ns.no_pre_codegen,
         cleanup_codegen_inputs_after_pipeline=not ns.no_cleanup_inputs,
         format_with_ruff=not ns.no_ruff,
