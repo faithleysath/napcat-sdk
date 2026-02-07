@@ -308,6 +308,23 @@ def collect_top_level_definition_names(module: cst.Module) -> set[str]:
     return names
 
 
+def collect_annotation_names_from_module(module: cst.Module) -> set[str]:
+    """
+    收集模块顶层定义中注解/TypeAlias 表达式使用到的名称。
+    """
+    names: set[str] = set()
+    for stmt in module.body:
+        if isinstance(stmt, cst.ClassDef):
+            names.update(collect_annotation_names_from_class(stmt))
+            continue
+
+        if isinstance(stmt, cst.SimpleStatementLine):
+            for small_stmt in stmt.body:
+                if isinstance(small_stmt, cst.TypeAlias):
+                    names.update(collect_names_from_expr(small_stmt.value))
+    return names
+
+
 def collect_selected_type_alias_blocks(
     module: cst.Module,
     target_alias_names: set[str],
@@ -374,7 +391,10 @@ def postprocess_generated_files(paths: Sequence[str]) -> None:
             source = f.read()
 
         replaced = source.replace("OB11MessageData", "Message")
-        replaced = replaced.replace("OB11Message", "")
+        # 仅对 messages/generated.py 做 OB11Message 前缀去除，
+        # 避免 schemas.py 中把普通类型名误伤（例如 OB11MessageEmojiLikesListItem -> EmojiLikesListItem）。
+        if path.endswith("src/napcat/types/messages/generated.py"):
+            replaced = replaced.replace("OB11Message", "")
 
         if replaced != source:
             with open(path, "w", encoding="utf-8") as f:
@@ -424,9 +444,42 @@ def collect_dataclass_fields_with_inheritance(
     return [(fname, field_blocks[fname]) for fname in field_order]
 
 
+def collect_dataclass_class_names_with_inheritance(
+    class_name: str,
+    definitions: dict[str, cst.ClassDef],
+    visiting: set[str] | None = None,
+) -> set[str]:
+    """
+    递归收集 dataclass 类名（父类 + 自身），用于同步删除 typedict 同名定义。
+    """
+    if visiting is None:
+        visiting = set()
+    if class_name in visiting:
+        return set()
+
+    class_node = definitions.get(class_name)
+    if not class_node or not is_dataclass_class(class_node):
+        return set()
+
+    visiting.add(class_name)
+
+    collected: set[str] = {class_name}
+    for base in class_node.bases:
+        base_name = get_base_class_name(base)
+        if not base_name:
+            continue
+        collected.update(
+            collect_dataclass_class_names_with_inheritance(base_name, definitions, visiting)
+        )
+
+    visiting.remove(class_name)
+    return collected
+
+
 def transform_message_segment_class(
     class_node: cst.ClassDef,
     definitions: dict[str, cst.ClassDef],
+    flattened_dataclass_names: set[str] | None = None,
 ) -> cst.ClassDef | None:
     field_blocks = get_field_blocks(class_node)
     field_map = {name: (ann, block) for name, ann, block in field_blocks}
@@ -457,6 +510,14 @@ def transform_message_segment_class(
         data_ann, _ = data_field
         data_annotation = data_ann.annotation.annotation
         if isinstance(data_annotation, cst.Name):
+            if flattened_dataclass_names is not None:
+                flattened_dataclass_names.update(
+                    collect_dataclass_class_names_with_inheritance(
+                        data_annotation.value,
+                        definitions,
+                    )
+                )
+
             flattened_fields = collect_dataclass_fields_with_inheritance(
                 data_annotation.value,
                 definitions,
@@ -506,6 +567,7 @@ print(f"Successfully removed {typedict_remover.removed_count} flattened class de
 
 # 4. 从 dataclass_module 提取并生成 MessageSegment 模块
 generated_message_classes: list[cst.ClassDef] = []
+flattened_dataclass_names: set[str] = set()
 
 for stmt in dataclass_module.body:
     if not isinstance(stmt, cst.ClassDef):
@@ -519,7 +581,11 @@ for stmt in dataclass_module.body:
     if not is_dataclass_class(stmt):
         continue
 
-    transformed = transform_message_segment_class(stmt, dataclass_collector.definitions)
+    transformed = transform_message_segment_class(
+        stmt,
+        dataclass_collector.definitions,
+        flattened_dataclass_names,
+    )
     if transformed is None:
         continue
     generated_message_classes.append(transformed)
@@ -575,9 +641,21 @@ print(f"Successfully generated {len(generated_message_classes)} message segment 
 
 # 5. 生成 schemas.py：从 generated 导入所有定义，并删除 typedict 同名定义
 generated_definition_names = sorted(collect_top_level_definition_names(generated_message_module))
+generated_definition_name_set = set(generated_definition_names)
 
-typedict_remover_for_schemas = DefinitionNameRemover(set(generated_definition_names))
-schemas_typedict_module = typedict_module.visit(typedict_remover_for_schemas)
+# 仅删除“可被 generated 导入替代”或“在 schemas 剩余定义中已不再被引用”的名称，
+# 避免出现像 FileBaseData 这类仍被引用却被删掉的未定义错误。
+referenced_names_in_schemas_source = collect_annotation_names_from_module(cleaned_typedict_module)
+schemas_names_to_remove = generated_definition_name_set | flattened_dataclass_names
+schemas_names_to_remove = {
+    name
+    for name in schemas_names_to_remove
+    if name in generated_definition_name_set or name not in referenced_names_in_schemas_source
+}
+typedict_remover_for_schemas = DefinitionNameRemover(schemas_names_to_remove)
+# 这里必须基于 cleaned_typedict_module（已删除被展平定义）继续处理，
+# 否则会把原始 typedict_module 中的被展平定义重新带回 schemas.py。
+schemas_typedict_module = cleaned_typedict_module.visit(typedict_remover_for_schemas)
 
 generated_import_module = cst.parse_module(
     "from .messages.generated import (\n"

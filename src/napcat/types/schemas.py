@@ -1,33 +1,7 @@
 from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 from .messages.generated import (
-    At,
-    Contact,
-    CustomMusic,
     Message,
-    Dice,
-    Face,
-    File,
-    FlashTransfer,
-    Forward,
-    IdMusic,
-    Image,
-    Json,
-    JsonDataConfig,
-    Location,
-    MFace,
-    Markdown,
-    MiniApp,
-    Node,
-    NodeDataNew,
-    OnlineFile,
-    Poke,
-    RPS,
-    Record,
-    Reply,
-    Text,
-    Video,
-    Xml,
 )
 
 
@@ -87,7 +61,7 @@ class FileBaseData(TypedDict):
     """
 
 
-class AtData(TypedDict):
+class OB11MessageAtData(TypedDict):
     qq: str
     """
     QQ号或all
@@ -98,7 +72,7 @@ class AtData(TypedDict):
     """
 
 
-class ContactData(TypedDict):
+class OB11MessageContactData(TypedDict):
     type: Literal["qq", "group"]
     """
     联系人类型
@@ -109,7 +83,7 @@ class ContactData(TypedDict):
     """
 
 
-class CustomMusicData(TypedDict):
+class OB11MessageCustomMusicData(TypedDict):
     type: Literal["qq", "163", "kugou", "migu", "kuwo", "custom"]
     """
     音乐平台类型
@@ -137,14 +111,14 @@ class CustomMusicData(TypedDict):
     """
 
 
-class DiceData(TypedDict):
+class OB11MessageDiceData(TypedDict):
     result: float | str
     """
     骰子结果
     """
 
 
-class FaceData(TypedDict):
+class OB11MessageFaceData(TypedDict):
     id: str
     """
     表情ID
@@ -159,7 +133,7 @@ class FaceData(TypedDict):
     """
 
 
-class FileBase(TypedDict):
+class OB11MessageFileBase(TypedDict):
     """
     文件消息基础接口
     """
@@ -167,25 +141,25 @@ class FileBase(TypedDict):
     data: FileBaseData
 
 
-class FlashTransferData(TypedDict):
+class OB11MessageFlashTransferData(TypedDict):
     fileSetId: str
     """
     文件集ID
     """
 
 
-class ForwardData(TypedDict):
+class OB11MessageForwardData(TypedDict):
     id: str
     """
     合并转发ID
     """
     content: NotRequired[dict[str, Any]]
     """
-    消息内容 ([])
+    消息内容 (OB11Message[])
     """
 
 
-class IdMusicData(TypedDict):
+class OB11MessageIdMusicData(TypedDict):
     type: Literal["qq", "163", "kugou", "migu", "kuwo"]
     """
     音乐平台类型
@@ -207,15 +181,15 @@ class Data(FileBaseData):
     """
 
 
-class JsonData(TypedDict):
+class OB11MessageJsonData(TypedDict):
     data: str | dict[str, Any]
     """
     JSON数据
     """
-    config: NotRequired[JsonDataConfig]
+    config: NotRequired[OB11MessageJsonDataConfig]
 
 
-class LocationData(TypedDict):
+class OB11MessageLocationData(TypedDict):
     lat: str | float
     """
     纬度
@@ -234,7 +208,7 @@ class LocationData(TypedDict):
     """
 
 
-class MFaceData(TypedDict):
+class OB11MessageMFaceData(TypedDict):
     emoji_package_id: float
     """
     表情包ID
@@ -253,21 +227,21 @@ class MFaceData(TypedDict):
     """
 
 
-class MarkdownData(TypedDict):
+class OB11MessageMarkdownData(TypedDict):
     content: str
     """
     Markdown内容
     """
 
 
-class MiniAppData(TypedDict):
+class OB11MessageMiniAppData(TypedDict):
     data: str
     """
     小程序数据
     """
 
 
-class NodeData(TypedDict):
+class OB11MessageNodeData(TypedDict):
     id: NotRequired[str]
     """
     转发消息ID
@@ -290,13 +264,13 @@ class NodeData(TypedDict):
     """
     content: dict[str, Any]
     """
-    消息内容 (MixType)
+    消息内容 (OB11MessageMixType)
     """
     source: NotRequired[str]
     """
     消息来源
     """
-    news: NotRequired[list[NodeDataNew]]
+    news: NotRequired[list[OB11MessageNodeDataNew]]
     summary: NotRequired[str]
     """
     摘要
@@ -311,7 +285,7 @@ class NodeData(TypedDict):
     """
 
 
-class OnlineFileData(TypedDict):
+class OB11MessageOnlineFileData(TypedDict):
     msgId: str
     """
     消息ID
@@ -334,7 +308,7 @@ class OnlineFileData(TypedDict):
     """
 
 
-class PokeData(TypedDict):
+class OB11MessagePokeData(TypedDict):
     type: str
     """
     戳一戳类型
@@ -345,14 +319,14 @@ class PokeData(TypedDict):
     """
 
 
-class RPSData(TypedDict):
+class OB11MessageRPSData(TypedDict):
     result: float | str
     """
     猜拳结果
     """
 
 
-class ReplyData(TypedDict):
+class OB11MessageReplyData(TypedDict):
     id: NotRequired[str]
     """
     消息ID的短ID映射
@@ -363,7 +337,7 @@ class ReplyData(TypedDict):
     """
 
 
-class EmojiLikesListItem(TypedDict):
+class OB11MessageEmojiLikesListItem(TypedDict):
     emoji_id: str
     """
     表情ID
@@ -378,14 +352,14 @@ class EmojiLikesListItem(TypedDict):
     """
 
 
-class TextData(TypedDict):
+class OB11MessageTextData(TypedDict):
     text: str
     """
     纯文本内容
     """
 
 
-class XmlData(TypedDict):
+class OB11MessageXmlData(TypedDict):
     data: str
     """
     XML数据
@@ -768,11 +742,7 @@ class CleanStreamTempFilePostRequest(TypedDict):
     pass
 
 
-class CleanStreamTempFilePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type CleanStreamTempFilePostResponse = None
 
 
 class DownloadFileStreamPostRequest(TypedDict):
@@ -790,11 +760,7 @@ class DownloadFileStreamPostRequest(TypedDict):
     """
 
 
-class DownloadFileStreamPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DownloadFileStreamPostResponse = dict[str, Any]
 
 
 class DownloadFileRecordStreamPostRequest(TypedDict):
@@ -816,11 +782,7 @@ class DownloadFileRecordStreamPostRequest(TypedDict):
     """
 
 
-class DownloadFileRecordStreamPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DownloadFileRecordStreamPostResponse = dict[str, Any]
 
 
 class DownloadFileImageStreamPostRequest(TypedDict):
@@ -838,11 +800,7 @@ class DownloadFileImageStreamPostRequest(TypedDict):
     """
 
 
-class DownloadFileImageStreamPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DownloadFileImageStreamPostResponse = dict[str, Any]
 
 
 class TestDownloadStreamPostRequest(TypedDict):
@@ -852,11 +810,7 @@ class TestDownloadStreamPostRequest(TypedDict):
     """
 
 
-class TestDownloadStreamPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type TestDownloadStreamPostResponse = dict[str, Any]
 
 
 class UploadFileStreamPostRequest(TypedDict):
@@ -906,11 +860,7 @@ class UploadFileStreamPostRequest(TypedDict):
     """
 
 
-class UploadFileStreamPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type UploadFileStreamPostResponse = dict[str, Any]
 
 
 class DelGroupAlbumMediaPostRequest(TypedDict):
@@ -928,11 +878,7 @@ class DelGroupAlbumMediaPostRequest(TypedDict):
     """
 
 
-class DelGroupAlbumMediaPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DelGroupAlbumMediaPostResponse = dict[str, Any]
 
 
 class SetGroupAlbumMediaLikePostRequest(TypedDict):
@@ -958,11 +904,7 @@ class SetGroupAlbumMediaLikePostRequest(TypedDict):
     """
 
 
-class SetGroupAlbumMediaLikePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetGroupAlbumMediaLikePostResponse = dict[str, Any]
 
 
 class DoGroupAlbumCommentPostRequest(TypedDict):
@@ -984,11 +926,7 @@ class DoGroupAlbumCommentPostRequest(TypedDict):
     """
 
 
-class DoGroupAlbumCommentPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DoGroupAlbumCommentPostResponse = dict[str, Any]
 
 
 class GetGroupAlbumMediaListPostRequest(TypedDict):
@@ -1006,11 +944,7 @@ class GetGroupAlbumMediaListPostRequest(TypedDict):
     """
 
 
-class GetGroupAlbumMediaListPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetGroupAlbumMediaListPostResponse = dict[str, Any]
 
 
 class GetQunAlbumListPostRequest(TypedDict):
@@ -1020,11 +954,7 @@ class GetQunAlbumListPostRequest(TypedDict):
     """
 
 
-class GetQunAlbumListPostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type GetQunAlbumListPostResponse = list[Any]
 
 
 class UploadImageToQunAlbumPostRequest(TypedDict):
@@ -1046,11 +976,7 @@ class UploadImageToQunAlbumPostRequest(TypedDict):
     """
 
 
-class UploadImageToQunAlbumPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type UploadImageToQunAlbumPostResponse = dict[str, Any]
 
 
 class SetGroupTodoPostRequest(TypedDict):
@@ -1068,11 +994,7 @@ class SetGroupTodoPostRequest(TypedDict):
     """
 
 
-class SetGroupTodoPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupTodoPostResponse = None
 
 
 class GetGroupDetailInfoPostRequest(TypedDict):
@@ -1082,10 +1004,7 @@ class GetGroupDetailInfoPostRequest(TypedDict):
     """
 
 
-class Data1(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupDetailInfoPostResponse(TypedDict):
 
     group_id: float
     """
@@ -1113,13 +1032,6 @@ class Data1(TypedDict):
     """
 
 
-class GetGroupDetailInfoPostResponse(BaseResponse):
-    data: Data1
-    """
-    业务数据
-    """
-
-
 class SetGroupKickMembersPostRequest(TypedDict):
     group_id: str
     """
@@ -1135,11 +1047,7 @@ class SetGroupKickMembersPostRequest(TypedDict):
     """
 
 
-class SetGroupKickMembersPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupKickMembersPostResponse = None
 
 
 class SetGroupAddOptionPostRequest(TypedDict):
@@ -1161,11 +1069,7 @@ class SetGroupAddOptionPostRequest(TypedDict):
     """
 
 
-class SetGroupAddOptionPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupAddOptionPostResponse = None
 
 
 class SetGroupRobotAddOptionPostRequest(TypedDict):
@@ -1183,11 +1087,7 @@ class SetGroupRobotAddOptionPostRequest(TypedDict):
     """
 
 
-class SetGroupRobotAddOptionPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupRobotAddOptionPostResponse = None
 
 
 class SetGroupSearchPostRequest(TypedDict):
@@ -1205,11 +1105,7 @@ class SetGroupSearchPostRequest(TypedDict):
     """
 
 
-class SetGroupSearchPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupSearchPostResponse = None
 
 
 class SetDoubtFriendsAddRequestPostRequest(TypedDict):
@@ -1223,11 +1119,7 @@ class SetDoubtFriendsAddRequestPostRequest(TypedDict):
     """
 
 
-class SetDoubtFriendsAddRequestPostResponse(BaseResponse):
-    data: Any
-    """
-    业务数据
-    """
+type SetDoubtFriendsAddRequestPostResponse = Any
 
 
 class GetDoubtFriendsAddRequestPostRequest(TypedDict):
@@ -1237,11 +1129,7 @@ class GetDoubtFriendsAddRequestPostRequest(TypedDict):
     """
 
 
-class GetDoubtFriendsAddRequestPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetDoubtFriendsAddRequestPostResponse = dict[str, Any]
 
 
 class SetFriendRemarkPostRequest(TypedDict):
@@ -1255,11 +1143,7 @@ class SetFriendRemarkPostRequest(TypedDict):
     """
 
 
-class SetFriendRemarkPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetFriendRemarkPostResponse = None
 
 
 class GetRkeyPostRequest(TypedDict):
@@ -1285,21 +1169,14 @@ class Datum(TypedDict):
     """
 
 
-class GetRkeyPostResponse(BaseResponse):
-    data: list[Datum]
-    """
-    业务数据
-    """
+type GetRkeyPostResponse = list[Datum]
 
 
 class GetRkeyServerPostRequest(TypedDict):
     pass
 
 
-class Data2(TypedDict):
-    """
-    业务数据
-    """
+class GetRkeyServerPostResponse(TypedDict):
 
     private_rkey: NotRequired[str]
     """
@@ -1319,13 +1196,6 @@ class Data2(TypedDict):
     """
 
 
-class GetRkeyServerPostResponse(BaseResponse):
-    data: Data2
-    """
-    业务数据
-    """
-
-
 class SetGroupRemarkPostRequest(TypedDict):
     group_id: str
     """
@@ -1337,11 +1207,7 @@ class SetGroupRemarkPostRequest(TypedDict):
     """
 
 
-class SetGroupRemarkPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupRemarkPostResponse = None
 
 
 class GetGroupInfoExPostRequest(TypedDict):
@@ -1351,11 +1217,7 @@ class GetGroupInfoExPostRequest(TypedDict):
     """
 
 
-class GetGroupInfoExPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetGroupInfoExPostResponse = dict[str, Any]
 
 
 class FetchEmojiLikePostRequest(TypedDict):
@@ -1396,10 +1258,7 @@ class Data3EmojiLikesListItem(TypedDict):
     """
 
 
-class Data3(TypedDict):
-    """
-    业务数据
-    """
+class FetchEmojiLikePostResponse(TypedDict):
 
     emojiLikesList: list[Data3EmojiLikesListItem]
     """
@@ -1424,13 +1283,6 @@ class Data3(TypedDict):
     errMsg: str
     """
     错 误信息
-    """
-
-
-class FetchEmojiLikePostResponse(BaseResponse):
-    data: Data3
-    """
-    业务数据
     """
 
 
@@ -1468,21 +1320,11 @@ class Data4EmojiLikeListItem(TypedDict):
     """
 
 
-class Data4(TypedDict):
-    """
-    业务数据
-    """
+class GetEmojiLikesPostResponse(TypedDict):
 
     emoji_like_list: list[Data4EmojiLikeListItem]
     """
     表情回应列表
-    """
-
-
-class GetEmojiLikesPostResponse(BaseResponse):
-    data: Data4
-    """
-    业务数据
     """
 
 
@@ -1497,10 +1339,7 @@ class GetFilePostRequest(TypedDict):
     """
 
 
-class Data5(TypedDict):
-    """
-    业务数据
-    """
+class GetFilePostResponse(TypedDict):
 
     file: NotRequired[str]
     """
@@ -1524,13 +1363,6 @@ class Data5(TypedDict):
     """
 
 
-class GetFilePostResponse(BaseResponse):
-    data: Data5
-    """
-    业务数据
-    """
-
-
 class SetQqProfilePostRequest(TypedDict):
     nickname: str
     """
@@ -1546,11 +1378,7 @@ class SetQqProfilePostRequest(TypedDict):
     """
 
 
-class SetQqProfilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetQqProfilePostResponse = dict[str, Any]
 
 
 class ArkShareGroupPostRequest(TypedDict):
@@ -1560,11 +1388,7 @@ class ArkShareGroupPostRequest(TypedDict):
     """
 
 
-class ArkShareGroupPostResponse(BaseResponse):
-    data: str
-    """
-    业务数据
-    """
+type ArkShareGroupPostResponse = str
 
 
 class ArkSharePeerPostRequest(TypedDict):
@@ -1582,11 +1406,7 @@ class ArkSharePeerPostRequest(TypedDict):
     """
 
 
-class ArkSharePeerPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type ArkSharePeerPostResponse = dict[str, Any]
 
 
 class SendGroupArkSharePostRequest(TypedDict):
@@ -1596,11 +1416,7 @@ class SendGroupArkSharePostRequest(TypedDict):
     """
 
 
-class SendGroupArkSharePostResponse(BaseResponse):
-    data: str
-    """
-    业务数据
-    """
+type SendGroupArkSharePostResponse = str
 
 
 class SendArkSharePostRequest(TypedDict):
@@ -1618,11 +1434,7 @@ class SendArkSharePostRequest(TypedDict):
     """
 
 
-class SendArkSharePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SendArkSharePostResponse = dict[str, Any]
 
 
 class CreateCollectionPostRequest(TypedDict):
@@ -1636,11 +1448,7 @@ class CreateCollectionPostRequest(TypedDict):
     """
 
 
-class CreateCollectionPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type CreateCollectionPostResponse = dict[str, Any]
 
 
 class SetSelfLongnickPostRequest(TypedDict):
@@ -1650,11 +1458,7 @@ class SetSelfLongnickPostRequest(TypedDict):
     """
 
 
-class SetSelfLongnickPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetSelfLongnickPostResponse = dict[str, Any]
 
 
 class ForwardFriendSingleMsgPostRequest(TypedDict):
@@ -1672,11 +1476,7 @@ class ForwardFriendSingleMsgPostRequest(TypedDict):
     """
 
 
-class ForwardFriendSingleMsgPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type ForwardFriendSingleMsgPostResponse = None
 
 
 class ForwardGroupSingleMsgPostRequest(TypedDict):
@@ -1694,11 +1494,7 @@ class ForwardGroupSingleMsgPostRequest(TypedDict):
     """
 
 
-class ForwardGroupSingleMsgPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type ForwardGroupSingleMsgPostResponse = None
 
 
 class MarkGroupMsgAsReadPostRequest(TypedDict):
@@ -1716,11 +1512,7 @@ class MarkGroupMsgAsReadPostRequest(TypedDict):
     """
 
 
-class MarkGroupMsgAsReadPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type MarkGroupMsgAsReadPostResponse = None
 
 
 class MarkPrivateMsgAsReadPostRequest(TypedDict):
@@ -1738,11 +1530,7 @@ class MarkPrivateMsgAsReadPostRequest(TypedDict):
     """
 
 
-class MarkPrivateMsgAsReadPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type MarkPrivateMsgAsReadPostResponse = None
 
 
 class SetQqAvatarPostRequest(TypedDict):
@@ -1752,11 +1540,7 @@ class SetQqAvatarPostRequest(TypedDict):
     """
 
 
-class SetQqAvatarPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetQqAvatarPostResponse = None
 
 
 class TranslateEn2zhPostRequest(TypedDict):
@@ -1766,21 +1550,11 @@ class TranslateEn2zhPostRequest(TypedDict):
     """
 
 
-class Data6(TypedDict):
-    """
-    业务数据
-    """
+class TranslateEn2zhPostResponse(TypedDict):
 
     words: list[str]
     """
     翻译结果列表
-    """
-
-
-class TranslateEn2zhPostResponse(BaseResponse):
-    data: Data6
-    """
-    业务数据
     """
 
 
@@ -1795,10 +1569,7 @@ class GetGroupRootFilesPostRequest(TypedDict):
     """
 
 
-class Data7(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupRootFilesPostResponse(TypedDict):
 
     files: list[Any]
     """
@@ -1810,13 +1581,6 @@ class Data7(TypedDict):
     """
 
 
-class GetGroupRootFilesPostResponse(BaseResponse):
-    data: Data7
-    """
-    业务数据
-    """
-
-
 class SetGroupSignPostRequest(TypedDict):
     group_id: str
     """
@@ -1824,11 +1588,7 @@ class SetGroupSignPostRequest(TypedDict):
     """
 
 
-class SetGroupSignPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupSignPostResponse = None
 
 
 class SendGroupSignPostRequest(TypedDict):
@@ -1838,32 +1598,18 @@ class SendGroupSignPostRequest(TypedDict):
     """
 
 
-class SendGroupSignPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SendGroupSignPostResponse = None
 
 
 class GetClientkeyPostRequest(TypedDict):
     pass
 
 
-class Data8(TypedDict):
-    """
-    业务数据
-    """
+class GetClientkeyPostResponse(TypedDict):
 
     clientkey: NotRequired[str]
     """
     客户端Key
-    """
-
-
-class GetClientkeyPostResponse(BaseResponse):
-    data: Data8
-    """
-    业务数据
     """
 
 
@@ -1886,21 +1632,11 @@ class MoveGroupFilePostRequest(TypedDict):
     """
 
 
-class Data9(TypedDict):
-    """
-    业务数据
-    """
+class MoveGroupFilePostResponse(TypedDict):
 
     ok: bool
     """
     是否成功
-    """
-
-
-class MoveGroupFilePostResponse(BaseResponse):
-    data: Data9
-    """
-    业务数据
     """
 
 
@@ -1923,10 +1659,11 @@ class RenameGroupFilePostRequest(TypedDict):
     """
 
 
-class RenameGroupFilePostResponse(BaseResponse):
-    data: Data9
+class RenameGroupFilePostResponse(TypedDict):
+
+    ok: bool
     """
-    业务数据
+    是否成功
     """
 
 
@@ -1941,10 +1678,11 @@ class TransGroupFilePostRequest(TypedDict):
     """
 
 
-class TransGroupFilePostResponse(BaseResponse):
-    data: Data9
+class TransGroupFilePostResponse(TypedDict):
+
+    ok: bool
     """
-    业务数据
+    是否成功
     """
 
 
@@ -1959,11 +1697,7 @@ class SendLikePostRequest(TypedDict):
     """
 
 
-class SendLikePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SendLikePostResponse = None
 
 
 class GetMsgPostRequest(TypedDict):
@@ -1973,10 +1707,7 @@ class GetMsgPostRequest(TypedDict):
     """
 
 
-class Data12(TypedDict):
-    """
-    业务数据
-    """
+class GetMsgPostResponse(TypedDict):
 
     time: float
     """
@@ -2028,19 +1759,11 @@ class Data12(TypedDict):
     """
 
 
-class GetMsgPostResponse(BaseResponse):
-    data: Data12
-    """
-    业务数据
-    """
-
-
 class GetLoginInfoPostRequest(TypedDict):
     pass
 
 
-class GetLoginInfoPostResponse(BaseResponse):
-    data: OB11User
+type GetLoginInfoPostResponse = OB11User
 
 
 class GetFriendListPostRequest(TypedDict):
@@ -2050,11 +1773,7 @@ class GetFriendListPostRequest(TypedDict):
     """
 
 
-class GetFriendListPostResponse(BaseResponse):
-    data: list[OB11User]
-    """
-    业务数据
-    """
+type GetFriendListPostResponse = list[OB11User]
 
 
 class GetGroupListPostRequest(TypedDict):
@@ -2064,11 +1783,7 @@ class GetGroupListPostRequest(TypedDict):
     """
 
 
-class GetGroupListPostResponse(BaseResponse):
-    data: list[OB11Group]
-    """
-    业务数据
-    """
+type GetGroupListPostResponse = list[OB11Group]
 
 
 class GetGroupInfoPostRequest(TypedDict):
@@ -2078,8 +1793,7 @@ class GetGroupInfoPostRequest(TypedDict):
     """
 
 
-class GetGroupInfoPostResponse(BaseResponse):
-    data: OB11Group
+type GetGroupInfoPostResponse = OB11Group
 
 
 class GetGroupMemberListPostRequest(TypedDict):
@@ -2093,11 +1807,7 @@ class GetGroupMemberListPostRequest(TypedDict):
     """
 
 
-class GetGroupMemberListPostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type GetGroupMemberListPostResponse = list[Any]
 
 
 class GetGroupMemberInfoPostRequest(TypedDict):
@@ -2115,18 +1825,14 @@ class GetGroupMemberInfoPostRequest(TypedDict):
     """
 
 
-class GetGroupMemberInfoPostResponse(BaseResponse):
-    data: OB11GroupMember
+type GetGroupMemberInfoPostResponse = OB11GroupMember
 
 
 class SendGroupMsgPostRequestNew(TypedDict):
     text: str
 
 
-class Data13(TypedDict):
-    """
-    业务数据
-    """
+class SendGroupMsgPostResponse(TypedDict):
 
     message_id: float
     """
@@ -2142,21 +1848,23 @@ class Data13(TypedDict):
     """
 
 
-class SendGroupMsgPostResponse(BaseResponse):
-    data: Data13
-    """
-    业务数据
-    """
-
-
 class SendPrivateMsgPostRequestNew(TypedDict):
     text: str
 
 
-class SendPrivateMsgPostResponse(BaseResponse):
-    data: Data13
+class SendPrivateMsgPostResponse(TypedDict):
+
+    message_id: float
     """
-    业务数据
+    消息ID
+    """
+    res_id: NotRequired[str]
+    """
+    转发消息的 res_id
+    """
+    forward_id: NotRequired[str]
+    """
+    转发消息的 forward_id
     """
 
 
@@ -2164,10 +1872,19 @@ class SendMsgPostRequestNew(TypedDict):
     text: str
 
 
-class SendMsgPostResponse(BaseResponse):
-    data: Data13
+class SendMsgPostResponse(TypedDict):
+
+    message_id: float
     """
-    业务数据
+    消息ID
+    """
+    res_id: NotRequired[str]
+    """
+    转发消息的 res_id
+    """
+    forward_id: NotRequired[str]
+    """
+    转发消息的 forward_id
     """
 
 
@@ -2178,11 +1895,7 @@ class DeleteMsgPostRequest(TypedDict):
     """
 
 
-class DeleteMsgPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type DeleteMsgPostResponse = None
 
 
 class SetGroupAddRequestPostRequest(TypedDict):
@@ -2204,11 +1917,7 @@ class SetGroupAddRequestPostRequest(TypedDict):
     """
 
 
-class SetGroupAddRequestPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupAddRequestPostResponse = None
 
 
 class SetFriendAddRequestPostRequest(TypedDict):
@@ -2226,11 +1935,7 @@ class SetFriendAddRequestPostRequest(TypedDict):
     """
 
 
-class SetFriendAddRequestPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetFriendAddRequestPostResponse = None
 
 
 class SetGroupLeavePostRequest(TypedDict):
@@ -2244,21 +1949,14 @@ class SetGroupLeavePostRequest(TypedDict):
     """
 
 
-class SetGroupLeavePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupLeavePostResponse = None
 
 
 class GetVersionInfoPostRequest(TypedDict):
     pass
 
 
-class Data16(TypedDict):
-    """
-    业务数据
-    """
+class GetVersionInfoPostResponse(TypedDict):
 
     app_name: str
     """
@@ -2274,21 +1972,11 @@ class Data16(TypedDict):
     """
 
 
-class GetVersionInfoPostResponse(BaseResponse):
-    data: Data16
-    """
-    业务数据
-    """
-
-
 class CanSendRecordPostRequest(TypedDict):
     pass
 
 
-class Data17(TypedDict):
-    """
-    业务数据
-    """
+class CanSendRecordPostResponse(TypedDict):
 
     yes: bool
     """
@@ -2296,21 +1984,15 @@ class Data17(TypedDict):
     """
 
 
-class CanSendRecordPostResponse(BaseResponse):
-    data: Data17
-    """
-    业务数据
-    """
-
-
 class CanSendImagePostRequest(TypedDict):
     pass
 
 
-class CanSendImagePostResponse(BaseResponse):
-    data: Data17
+class CanSendImagePostResponse(TypedDict):
+
+    yes: bool
     """
-    业务数据
+    是否可以发送
     """
 
 
@@ -2318,10 +2000,7 @@ class GetStatusPostRequest(TypedDict):
     pass
 
 
-class Data19(TypedDict):
-    """
-    业务数据
-    """
+class GetStatusPostResponse(TypedDict):
 
     online: bool
     """
@@ -2337,13 +2016,6 @@ class Data19(TypedDict):
     """
 
 
-class GetStatusPostResponse(BaseResponse):
-    data: Data19
-    """
-    业务数据
-    """
-
-
 class SetGroupWholeBanPostRequest(TypedDict):
     group_id: str
     """
@@ -2355,11 +2027,7 @@ class SetGroupWholeBanPostRequest(TypedDict):
     """
 
 
-class SetGroupWholeBanPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupWholeBanPostResponse = None
 
 
 class SetGroupBanPostRequest(TypedDict):
@@ -2377,11 +2045,7 @@ class SetGroupBanPostRequest(TypedDict):
     """
 
 
-class SetGroupBanPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupBanPostResponse = None
 
 
 class SetGroupKickPostRequest(TypedDict):
@@ -2399,11 +2063,7 @@ class SetGroupKickPostRequest(TypedDict):
     """
 
 
-class SetGroupKickPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupKickPostResponse = None
 
 
 class SetGroupAdminPostRequest(TypedDict):
@@ -2421,11 +2081,7 @@ class SetGroupAdminPostRequest(TypedDict):
     """
 
 
-class SetGroupAdminPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupAdminPostResponse = None
 
 
 class SetGroupNamePostRequest(TypedDict):
@@ -2439,11 +2095,7 @@ class SetGroupNamePostRequest(TypedDict):
     """
 
 
-class SetGroupNamePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupNamePostResponse = None
 
 
 class SetGroupCardPostRequest(TypedDict):
@@ -2461,11 +2113,7 @@ class SetGroupCardPostRequest(TypedDict):
     """
 
 
-class SetGroupCardPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupCardPostResponse = None
 
 
 class GetImagePostRequest(TypedDict):
@@ -2479,10 +2127,7 @@ class GetImagePostRequest(TypedDict):
     """
 
 
-class Data20(TypedDict):
-    """
-    业务数据
-    """
+class GetImagePostResponse(TypedDict):
 
     file: NotRequired[str]
     """
@@ -2506,13 +2151,6 @@ class Data20(TypedDict):
     """
 
 
-class GetImagePostResponse(BaseResponse):
-    data: Data20
-    """
-    业务数据
-    """
-
-
 class GetRecordPostRequest(TypedDict):
     file: NotRequired[str]
     """
@@ -2528,10 +2166,27 @@ class GetRecordPostRequest(TypedDict):
     """
 
 
-class GetRecordPostResponse(BaseResponse):
-    data: Data20
+class GetRecordPostResponse(TypedDict):
+
+    file: NotRequired[str]
     """
-    业务数据
+    本地路径
+    """
+    url: NotRequired[str]
+    """
+    下载URL
+    """
+    file_size: NotRequired[str]
+    """
+    文件大小
+    """
+    file_name: NotRequired[str]
+    """
+    文件名
+    """
+    base64: NotRequired[str]
+    """
+    Base64编码
     """
 
 
@@ -2550,11 +2205,7 @@ class SetMsgEmojiLikePostRequest(TypedDict):
     """
 
 
-class SetMsgEmojiLikePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetMsgEmojiLikePostResponse = dict[str, Any]
 
 
 class GetCookiesPostRequest(TypedDict):
@@ -2564,10 +2215,7 @@ class GetCookiesPostRequest(TypedDict):
     """
 
 
-class Data22(TypedDict):
-    """
-    业务数据
-    """
+class GetCookiesPostResponse(TypedDict):
 
     cookies: str
     """
@@ -2576,13 +2224,6 @@ class Data22(TypedDict):
     bkn: str
     """
     CSRF Token
-    """
-
-
-class GetCookiesPostResponse(BaseResponse):
-    data: Data22
-    """
-    业务数据
     """
 
 
@@ -2601,22 +2242,14 @@ class SetOnlineStatusPostRequest(TypedDict):
     """
 
 
-class SetOnlineStatusPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetOnlineStatusPostResponse = None
 
 
 class GetRobotUinRangePostRequest(TypedDict):
     pass
 
 
-class GetRobotUinRangePostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type GetRobotUinRangePostResponse = list[Any]
 
 
 class GetFriendsWithCategoryPostRequest(TypedDict):
@@ -2642,11 +2275,7 @@ class Datum1(TypedDict):
     """
 
 
-class GetFriendsWithCategoryPostResponse(BaseResponse):
-    data: list[Datum1]
-    """
-    业务数据
-    """
+type GetFriendsWithCategoryPostResponse = list[Datum1]
 
 
 class DeleteFriendPostRequest(TypedDict):
@@ -2668,11 +2297,7 @@ class DeleteFriendPostRequest(TypedDict):
     """
 
 
-class DeleteFriendPostResponse(BaseResponse):
-    data: Any
-    """
-    业务数据
-    """
+type DeleteFriendPostResponse = Any
 
 
 class CheckUrlSafelyPostRequest(TypedDict):
@@ -2682,21 +2307,11 @@ class CheckUrlSafelyPostRequest(TypedDict):
     """
 
 
-class Data23(TypedDict):
-    """
-    业务数据
-    """
+class CheckUrlSafelyPostResponse(TypedDict):
 
     level: float
     """
     安全等级 (1: 安全, 2: 未知, 3: 危险)
-    """
-
-
-class CheckUrlSafelyPostResponse(BaseResponse):
-    data: Data23
-    """
-    业务数据
     """
 
 
@@ -2706,11 +2321,7 @@ class GetOnlineClientsPostRequest(TypedDict):
     """
 
 
-class GetOnlineClientsPostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type GetOnlineClientsPostResponse = list[Any]
 
 
 class OcrImagePostRequest(TypedDict):
@@ -2720,11 +2331,7 @@ class OcrImagePostRequest(TypedDict):
     """
 
 
-class OcrImagePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type OcrImagePostResponse = dict[str, Any]
 
 
 class FieldOcrImagePostRequest(TypedDict):
@@ -2734,11 +2341,7 @@ class FieldOcrImagePostRequest(TypedDict):
     """
 
 
-class FieldOcrImagePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type FieldOcrImagePostResponse = dict[str, Any]
 
 
 class GetGroupHonorInfoPostRequest(TypedDict):
@@ -2754,10 +2357,7 @@ class GetGroupHonorInfoPostRequest(TypedDict):
     """
 
 
-class Data24(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupHonorInfoPostResponse(TypedDict):
 
     group_id: float
     """
@@ -2786,13 +2386,6 @@ class Data24(TypedDict):
     strong_newbie_list: list[Any]
     """
     冒尖小春笋列表
-    """
-
-
-class GetGroupHonorInfoPostResponse(BaseResponse):
-    data: Data24
-    """
-    业务数据
     """
 
 
@@ -2831,11 +2424,7 @@ class FieldSendGroupNoticePostRequest(TypedDict):
     """
 
 
-class FieldSendGroupNoticePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type FieldSendGroupNoticePostResponse = None
 
 
 class FieldGetGroupNoticePostRequest(TypedDict):
@@ -2891,11 +2480,7 @@ class Datum2(TypedDict):
     """
 
 
-class FieldGetGroupNoticePostResponse(BaseResponse):
-    data: list[Datum2]
-    """
-    业务数据
-    """
+type FieldGetGroupNoticePostResponse = list[Datum2]
 
 
 class GetEssenceMsgListPostRequest(TypedDict):
@@ -2944,11 +2529,7 @@ class Datum3(TypedDict):
     """
 
 
-class GetEssenceMsgListPostResponse(BaseResponse):
-    data: list[Datum3]
-    """
-    业务数据
-    """
+type GetEssenceMsgListPostResponse = list[Datum3]
 
 
 class GetGroupAtAllRemainPostRequest(TypedDict):
@@ -2958,10 +2539,7 @@ class GetGroupAtAllRemainPostRequest(TypedDict):
     """
 
 
-class Data25(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupAtAllRemainPostResponse(TypedDict):
 
     can_at_all: bool
     """
@@ -2977,21 +2555,11 @@ class Data25(TypedDict):
     """
 
 
-class GetGroupAtAllRemainPostResponse(BaseResponse):
-    data: Data25
-    """
-    业务数据
-    """
-
-
 class SendForwardMsgPostRequestNew(TypedDict):
     text: str
 
 
-class Data26(TypedDict):
-    """
-    业务数据
-    """
+class SendForwardMsgPostResponse(TypedDict):
 
     message_id: float
     """
@@ -3007,21 +2575,23 @@ class Data26(TypedDict):
     """
 
 
-class SendForwardMsgPostResponse(BaseResponse):
-    data: Data26
-    """
-    业务数据
-    """
-
-
 class SendGroupForwardMsgPostRequestNew(TypedDict):
     text: str
 
 
-class SendGroupForwardMsgPostResponse(BaseResponse):
-    data: Data26
+class SendGroupForwardMsgPostResponse(TypedDict):
+
+    message_id: float
     """
-    业务数据
+    消息ID
+    """
+    res_id: NotRequired[str]
+    """
+    转发消息的 res_id
+    """
+    forward_id: NotRequired[str]
+    """
+    转发消息的 forward_id
     """
 
 
@@ -3029,10 +2599,19 @@ class SendPrivateForwardMsgPostRequestNew(TypedDict):
     text: str
 
 
-class SendPrivateForwardMsgPostResponse(BaseResponse):
-    data: Data26
+class SendPrivateForwardMsgPostResponse(TypedDict):
+
+    message_id: float
     """
-    业务数据
+    消息ID
+    """
+    res_id: NotRequired[str]
+    """
+    转发消息的 res_id
+    """
+    forward_id: NotRequired[str]
+    """
+    转发消息的 forward_id
     """
 
 
@@ -3047,10 +2626,7 @@ class GetStrangerInfoPostRequest(TypedDict):
     """
 
 
-class Data29(TypedDict):
-    """
-    业务数据
-    """
+class GetStrangerInfoPostResponse(TypedDict):
 
     user_id: float
     """
@@ -3114,13 +2690,6 @@ class Data29(TypedDict):
     """
 
 
-class GetStrangerInfoPostResponse(BaseResponse):
-    data: Data29
-    """
-    业务数据
-    """
-
-
 class DownloadFilePostRequest(TypedDict):
     url: NotRequired[str]
     """
@@ -3140,10 +2709,7 @@ class DownloadFilePostRequest(TypedDict):
     """
 
 
-class Data30(TypedDict):
-    """
-    业务数据
-    """
+class DownloadFilePostResponse(TypedDict):
 
     file: str
     """
@@ -3151,22 +2717,11 @@ class Data30(TypedDict):
     """
 
 
-class DownloadFilePostResponse(BaseResponse):
-    data: Data30
-    """
-    业务数据
-    """
-
-
 class GetGuildListPostRequest(TypedDict):
     pass
 
 
-class GetGuildListPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type GetGuildListPostResponse = None
 
 
 class MarkMsgAsReadPostRequest(TypedDict):
@@ -3184,11 +2739,7 @@ class MarkMsgAsReadPostRequest(TypedDict):
     """
 
 
-class MarkMsgAsReadPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type MarkMsgAsReadPostResponse = None
 
 
 class UploadGroupFilePostRequest(TypedDict):
@@ -3218,21 +2769,11 @@ class UploadGroupFilePostRequest(TypedDict):
     """
 
 
-class Data31(TypedDict):
-    """
-    业务数据
-    """
+class UploadGroupFilePostResponse(TypedDict):
 
     file_id: str | None
     """
     文件 ID
-    """
-
-
-class UploadGroupFilePostResponse(BaseResponse):
-    data: Data31
-    """
-    业务数据
     """
 
 
@@ -3271,21 +2812,11 @@ class GetGroupMsgHistoryPostRequest(TypedDict):
     """
 
 
-class Data32(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupMsgHistoryPostResponse(TypedDict):
 
     messages: list[Any]
     """
     消息列表
-    """
-
-
-class GetGroupMsgHistoryPostResponse(BaseResponse):
-    data: Data32
-    """
-    业务数据
     """
 
 
@@ -3300,21 +2831,11 @@ class GetForwardMsgPostRequest(TypedDict):
     """
 
 
-class Data33(TypedDict):
-    """
-    业务数据
-    """
+class GetForwardMsgPostResponse(TypedDict):
 
     messages: NotRequired[list[Any]]
     """
     消息列表
-    """
-
-
-class GetForwardMsgPostResponse(BaseResponse):
-    data: Data33
-    """
-    业务数据
     """
 
 
@@ -3353,21 +2874,11 @@ class GetFriendMsgHistoryPostRequest(TypedDict):
     """
 
 
-class Data34(TypedDict):
-    """
-    业务数据
-    """
+class GetFriendMsgHistoryPostResponse(TypedDict):
 
     messages: list[Any]
     """
     消息列表
-    """
-
-
-class GetFriendMsgHistoryPostResponse(BaseResponse):
-    data: Data34
-    """
-    业务数据
     """
 
 
@@ -3532,11 +3043,7 @@ class FieldHandleQuickOperationPostRequest(TypedDict):
     """
 
 
-class FieldHandleQuickOperationPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type FieldHandleQuickOperationPostResponse = None
 
 
 class GetGroupIgnoredNotifiesPostRequest(TypedDict):
@@ -3545,10 +3052,7 @@ class GetGroupIgnoredNotifiesPostRequest(TypedDict):
     """
 
 
-class Data35(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupIgnoredNotifiesPostResponse(TypedDict):
 
     invited_requests: list[Any]
     """
@@ -3561,13 +3065,6 @@ class Data35(TypedDict):
     join_requests: list[Any]
     """
     加入请求列表
-    """
-
-
-class GetGroupIgnoredNotifiesPostResponse(BaseResponse):
-    data: Data35
-    """
-    业务数据
     """
 
 
@@ -3590,11 +3087,7 @@ class DeleteEssenceMsgPostRequest(TypedDict):
     """
 
 
-class DeleteEssenceMsgPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DeleteEssenceMsgPostResponse = dict[str, Any]
 
 
 class SetEssenceMsgPostRequest(TypedDict):
@@ -3604,11 +3097,7 @@ class SetEssenceMsgPostRequest(TypedDict):
     """
 
 
-class SetEssenceMsgPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetEssenceMsgPostResponse = dict[str, Any]
 
 
 class GetRecentContactPostRequest(TypedDict):
@@ -3657,22 +3146,14 @@ class Datum4(TypedDict):
     """
 
 
-class GetRecentContactPostResponse(BaseResponse):
-    data: list[Datum4]
-    """
-    业务数据
-    """
+type GetRecentContactPostResponse = list[Datum4]
 
 
 class FieldMarkAllAsReadPostRequest(TypedDict):
     pass
 
 
-class FieldMarkAllAsReadPostResponse(BaseResponse):
-    data: EmptyData | None
-    """
-    业务数据
-    """
+type FieldMarkAllAsReadPostResponse = EmptyData | None
 
 
 class GetProfileLikePostRequest(TypedDict):
@@ -3732,10 +3213,7 @@ class Data36VoteInfo(TypedDict):
     """
 
 
-class Data36(TypedDict):
-    """
-    业务数据
-    """
+class GetProfileLikePostResponse(TypedDict):
 
     uid: str
     """
@@ -3749,13 +3227,6 @@ class Data36(TypedDict):
     voteInfo: Data36VoteInfo
 
 
-class GetProfileLikePostResponse(BaseResponse):
-    data: Data36
-    """
-    业务数据
-    """
-
-
 class SetGroupPortraitPostRequest(TypedDict):
     file: str
     """
@@ -3767,20 +3238,10 @@ class SetGroupPortraitPostRequest(TypedDict):
     """
 
 
-class Data37(TypedDict):
-    """
-    业务数据
-    """
+class SetGroupPortraitPostResponse(TypedDict):
 
     result: float
     errMsg: str
-
-
-class SetGroupPortraitPostResponse(BaseResponse):
-    data: Data37
-    """
-    业务数据
-    """
 
 
 class FetchCustomFacePostRequest(TypedDict):
@@ -3790,11 +3251,7 @@ class FetchCustomFacePostRequest(TypedDict):
     """
 
 
-class FetchCustomFacePostResponse(BaseResponse):
-    data: list[str]
-    """
-    业务数据
-    """
+type FetchCustomFacePostResponse = list[str]
 
 
 class UploadPrivateFilePostRequest(TypedDict):
@@ -3816,10 +3273,7 @@ class UploadPrivateFilePostRequest(TypedDict):
     """
 
 
-class Data38(TypedDict):
-    """
-    业务数据
-    """
+class UploadPrivateFilePostResponse(TypedDict):
 
     file_id: str | None
     """
@@ -3827,22 +3281,11 @@ class Data38(TypedDict):
     """
 
 
-class UploadPrivateFilePostResponse(BaseResponse):
-    data: Data38
-    """
-    业务数据
-    """
-
-
 class GetGuildServiceProfilePostRequest(TypedDict):
     pass
 
 
-class GetGuildServiceProfilePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type GetGuildServiceProfilePostResponse = None
 
 
 class FieldGetModelShowPostRequest(TypedDict):
@@ -3867,22 +3310,14 @@ class Datum5(TypedDict):
     variants: Datum5Variants
 
 
-class FieldGetModelShowPostResponse(BaseResponse):
-    data: list[Datum5]
-    """
-    业务数据
-    """
+type FieldGetModelShowPostResponse = list[Datum5]
 
 
 class FieldSetModelShowPostRequest(TypedDict):
     pass
 
 
-class FieldSetModelShowPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type FieldSetModelShowPostResponse = None
 
 
 class SetInputStatusPostRequest(TypedDict):
@@ -3896,32 +3331,18 @@ class SetInputStatusPostRequest(TypedDict):
     """
 
 
-class SetInputStatusPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SetInputStatusPostResponse = dict[str, Any]
 
 
 class GetCsrfTokenPostRequest(TypedDict):
     pass
 
 
-class Data39(TypedDict):
-    """
-    业务数据
-    """
+class GetCsrfTokenPostResponse(TypedDict):
 
     token: float
     """
     CSRF Token
-    """
-
-
-class GetCsrfTokenPostResponse(BaseResponse):
-    data: Data39
-    """
-    业务数据
     """
 
 
@@ -3932,10 +3353,7 @@ class GetCredentialsPostRequest(TypedDict):
     """
 
 
-class Data40(TypedDict):
-    """
-    业务数据
-    """
+class GetCredentialsPostResponse(TypedDict):
 
     cookies: str
     """
@@ -3944,13 +3362,6 @@ class Data40(TypedDict):
     token: float
     """
     CSRF Token
-    """
-
-
-class GetCredentialsPostResponse(BaseResponse):
-    data: Data40
-    """
-    业务数据
     """
 
 
@@ -3965,11 +3376,7 @@ class FieldDelGroupNoticePostRequest(TypedDict):
     """
 
 
-class FieldDelGroupNoticePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type FieldDelGroupNoticePostResponse = dict[str, Any]
 
 
 class DeleteGroupFilePostRequest(TypedDict):
@@ -3983,11 +3390,7 @@ class DeleteGroupFilePostRequest(TypedDict):
     """
 
 
-class DeleteGroupFilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DeleteGroupFilePostResponse = dict[str, Any]
 
 
 class CreateGroupFileFolderPostRequest(TypedDict):
@@ -4005,10 +3408,7 @@ class CreateGroupFileFolderPostRequest(TypedDict):
     """
 
 
-class Data41(TypedDict):
-    """
-    业务数据
-    """
+class CreateGroupFileFolderPostResponse(TypedDict):
 
     result: dict[str, Any]
     """
@@ -4017,13 +3417,6 @@ class Data41(TypedDict):
     groupItem: dict[str, Any]
     """
     群项信息
-    """
-
-
-class CreateGroupFileFolderPostResponse(BaseResponse):
-    data: Data41
-    """
-    业务数据
     """
 
 
@@ -4042,11 +3435,7 @@ class DeleteGroupFolderPostRequest(TypedDict):
     """
 
 
-class DeleteGroupFolderPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DeleteGroupFolderPostResponse = dict[str, Any]
 
 
 class GetGroupFileSystemInfoPostRequest(TypedDict):
@@ -4056,10 +3445,7 @@ class GetGroupFileSystemInfoPostRequest(TypedDict):
     """
 
 
-class Data42(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupFileSystemInfoPostResponse(TypedDict):
 
     file_count: float
     """
@@ -4076,13 +3462,6 @@ class Data42(TypedDict):
     total_space: float
     """
     总空间
-    """
-
-
-class GetGroupFileSystemInfoPostResponse(BaseResponse):
-    data: Data42
-    """
-    业务数据
     """
 
 
@@ -4105,10 +3484,7 @@ class GetGroupFilesByFolderPostRequest(TypedDict):
     """
 
 
-class Data43(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupFilesByFolderPostResponse(TypedDict):
 
     files: list[Any]
     """
@@ -4120,33 +3496,18 @@ class Data43(TypedDict):
     """
 
 
-class GetGroupFilesByFolderPostResponse(BaseResponse):
-    data: Data43
-    """
-    业务数据
-    """
-
-
 class NcGetPacketStatusPostRequest(TypedDict):
     pass
 
 
-class NcGetPacketStatusPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type NcGetPacketStatusPostResponse = None
 
 
 class SetRestartPostRequest(TypedDict):
     pass
 
 
-class SetRestartPostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetRestartPostResponse = None
 
 
 class GroupPokePostRequest(TypedDict):
@@ -4164,11 +3525,7 @@ class GroupPokePostRequest(TypedDict):
     """
 
 
-class GroupPokePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type GroupPokePostResponse = None
 
 
 class FriendPokePostRequest(TypedDict):
@@ -4186,11 +3543,7 @@ class FriendPokePostRequest(TypedDict):
     """
 
 
-class FriendPokePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type FriendPokePostResponse = None
 
 
 class NcGetUserStatusPostRequest(TypedDict):
@@ -4200,10 +3553,7 @@ class NcGetUserStatusPostRequest(TypedDict):
     """
 
 
-class Data44(TypedDict):
-    """
-    业务数据
-    """
+class NcGetUserStatusPostResponse(TypedDict):
 
     status: float
     """
@@ -4215,22 +3565,11 @@ class Data44(TypedDict):
     """
 
 
-class NcGetUserStatusPostResponse(BaseResponse):
-    data: Data44
-    """
-    业务数据
-    """
-
-
 class NcGetRkeyPostRequest(TypedDict):
     pass
 
 
-class NcGetRkeyPostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type NcGetRkeyPostResponse = list[Any]
 
 
 class SetGroupSpecialTitlePostRequest(TypedDict):
@@ -4248,11 +3587,7 @@ class SetGroupSpecialTitlePostRequest(TypedDict):
     """
 
 
-class SetGroupSpecialTitlePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SetGroupSpecialTitlePostResponse = None
 
 
 class SetDiyOnlineStatusPostRequest(TypedDict):
@@ -4270,11 +3605,7 @@ class SetDiyOnlineStatusPostRequest(TypedDict):
     """
 
 
-class SetDiyOnlineStatusPostResponse(BaseResponse):
-    data: str
-    """
-    业务数据
-    """
+type SetDiyOnlineStatusPostResponse = str
 
 
 class GetGroupShutListPostRequest(TypedDict):
@@ -4284,11 +3615,7 @@ class GetGroupShutListPostRequest(TypedDict):
     """
 
 
-class GetGroupShutListPostResponse(BaseResponse):
-    data: list[Any]
-    """
-    业务数据
-    """
+type GetGroupShutListPostResponse = list[Any]
 
 
 class GetGroupFileUrlPostRequest(TypedDict):
@@ -4302,21 +3629,11 @@ class GetGroupFileUrlPostRequest(TypedDict):
     """
 
 
-class Data45(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupFileUrlPostResponse(TypedDict):
 
     url: NotRequired[str]
     """
     文件下载链接
-    """
-
-
-class GetGroupFileUrlPostResponse(BaseResponse):
-    data: Data45
-    """
-    业务数据
     """
 
 
@@ -4435,21 +3752,11 @@ type GetMiniAppArkPostRequest = (
 """
 
 
-class Data46(TypedDict):
-    """
-    业务数据
-    """
+class GetMiniAppArkPostResponse(TypedDict):
 
     data: dict[str, Any]
     """
     Ark数据
-    """
-
-
-class GetMiniAppArkPostResponse(BaseResponse):
-    data: Data46
-    """
-    业务数据
     """
 
 
@@ -4468,11 +3775,7 @@ class GetAiRecordPostRequest(TypedDict):
     """
 
 
-class GetAiRecordPostResponse(BaseResponse):
-    data: str
-    """
-    业务数据
-    """
+type GetAiRecordPostResponse = str
 
 
 class SendGroupAiRecordPostRequest(TypedDict):
@@ -4490,21 +3793,11 @@ class SendGroupAiRecordPostRequest(TypedDict):
     """
 
 
-class Data47(TypedDict):
-    """
-    业务数据
-    """
+class SendGroupAiRecordPostResponse(TypedDict):
 
     message_id: float
     """
     消息ID
-    """
-
-
-class SendGroupAiRecordPostResponse(BaseResponse):
-    data: Data47
-    """
-    业务数据
     """
 
 
@@ -4545,11 +3838,7 @@ class Datum6(TypedDict):
     """
 
 
-class GetAiCharactersPostResponse(BaseResponse):
-    data: list[Datum6]
-    """
-    业务数据
-    """
+type GetAiCharactersPostResponse = list[Datum6]
 
 
 class SendPacketPostRequest(TypedDict):
@@ -4567,11 +3856,7 @@ class SendPacketPostRequest(TypedDict):
     """
 
 
-class SendPacketPostResponse(BaseResponse):
-    data: str | None
-    """
-    业务数据
-    """
+type SendPacketPostResponse = str | None
 
 
 class SendPokePostRequest(TypedDict):
@@ -4589,11 +3874,7 @@ class SendPokePostRequest(TypedDict):
     """
 
 
-class SendPokePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type SendPokePostResponse = None
 
 
 class GetGroupSystemMsgPostRequest(TypedDict):
@@ -4603,10 +3884,7 @@ class GetGroupSystemMsgPostRequest(TypedDict):
     """
 
 
-class Data48(TypedDict):
-    """
-    业务数据
-    """
+class GetGroupSystemMsgPostResponse(TypedDict):
 
     invited_requests: list[OB11Notify]
     """
@@ -4622,22 +3900,11 @@ class Data48(TypedDict):
     """
 
 
-class GetGroupSystemMsgPostResponse(BaseResponse):
-    data: Data48
-    """
-    业务数据
-    """
-
-
 class BotExitPostRequest(TypedDict):
     pass
 
 
-class BotExitPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type BotExitPostResponse = dict[str, Any]
 
 
 class ClickInlineKeyboardButtonPostRequest(TypedDict):
@@ -4663,11 +3930,7 @@ class ClickInlineKeyboardButtonPostRequest(TypedDict):
     """
 
 
-class ClickInlineKeyboardButtonPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type ClickInlineKeyboardButtonPostResponse = dict[str, Any]
 
 
 class GetPrivateFileUrlPostRequest(TypedDict):
@@ -4677,21 +3940,11 @@ class GetPrivateFileUrlPostRequest(TypedDict):
     """
 
 
-class Data49(TypedDict):
-    """
-    业务数据
-    """
+class GetPrivateFileUrlPostResponse(TypedDict):
 
     url: NotRequired[str]
     """
     文件下载链接
-    """
-
-
-class GetPrivateFileUrlPostResponse(BaseResponse):
-    data: Data49
-    """
-    业务数据
     """
 
 
@@ -4722,22 +3975,14 @@ class Datum7(TypedDict):
     """
 
 
-class GetUnidirectionalFriendListPostResponse(BaseResponse):
-    data: list[Datum7]
-    """
-    业务数据
-    """
+type GetUnidirectionalFriendListPostResponse = list[Datum7]
 
 
 class CleanCachePostRequest(TypedDict):
     pass
 
 
-class CleanCachePostResponse(BaseResponse):
-    data: None
-    """
-    业务数据
-    """
+type CleanCachePostResponse = None
 
 
 class GetGroupIgnoreAddRequestPostRequest(TypedDict):
@@ -4783,11 +4028,7 @@ class Datum8(TypedDict):
     """
 
 
-class GetGroupIgnoreAddRequestPostResponse(BaseResponse):
-    data: list[Datum8]
-    """
-    业务数据
-    """
+type GetGroupIgnoreAddRequestPostResponse = list[Datum8]
 
 
 class GetCollectionListPostRequest(TypedDict):
@@ -4801,11 +4042,7 @@ class GetCollectionListPostRequest(TypedDict):
     """
 
 
-class GetCollectionListPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetCollectionListPostResponse = dict[str, Any]
 
 
 class CreateFlashTaskPostRequest(TypedDict):
@@ -4823,11 +4060,7 @@ class CreateFlashTaskPostRequest(TypedDict):
     """
 
 
-class CreateFlashTaskPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type CreateFlashTaskPostResponse = dict[str, Any]
 
 
 class GetFlashFileListPostRequest(TypedDict):
@@ -4837,11 +4070,7 @@ class GetFlashFileListPostRequest(TypedDict):
     """
 
 
-class GetFlashFileListPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetFlashFileListPostResponse = dict[str, Any]
 
 
 class GetFlashFileUrlPostRequest(TypedDict):
@@ -4859,11 +4088,7 @@ class GetFlashFileUrlPostRequest(TypedDict):
     """
 
 
-class GetFlashFileUrlPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetFlashFileUrlPostResponse = dict[str, Any]
 
 
 class SendFlashMsgPostRequest(TypedDict):
@@ -4881,11 +4106,7 @@ class SendFlashMsgPostRequest(TypedDict):
     """
 
 
-class SendFlashMsgPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SendFlashMsgPostResponse = dict[str, Any]
 
 
 class GetShareLinkPostRequest(TypedDict):
@@ -4895,11 +4116,7 @@ class GetShareLinkPostRequest(TypedDict):
     """
 
 
-class GetShareLinkPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetShareLinkPostResponse = dict[str, Any]
 
 
 class GetFilesetInfoPostRequest(TypedDict):
@@ -4909,11 +4126,7 @@ class GetFilesetInfoPostRequest(TypedDict):
     """
 
 
-class GetFilesetInfoPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetFilesetInfoPostResponse = dict[str, Any]
 
 
 class GetOnlineFileMsgPostRequest(TypedDict):
@@ -4923,11 +4136,7 @@ class GetOnlineFileMsgPostRequest(TypedDict):
     """
 
 
-class GetOnlineFileMsgPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type GetOnlineFileMsgPostResponse = dict[str, Any]
 
 
 class SendOnlineFilePostRequest(TypedDict):
@@ -4945,11 +4154,7 @@ class SendOnlineFilePostRequest(TypedDict):
     """
 
 
-class SendOnlineFilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SendOnlineFilePostResponse = dict[str, Any]
 
 
 class SendOnlineFolderPostRequest(TypedDict):
@@ -4967,11 +4172,7 @@ class SendOnlineFolderPostRequest(TypedDict):
     """
 
 
-class SendOnlineFolderPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type SendOnlineFolderPostResponse = dict[str, Any]
 
 
 class ReceiveOnlineFilePostRequest(TypedDict):
@@ -4989,11 +4190,7 @@ class ReceiveOnlineFilePostRequest(TypedDict):
     """
 
 
-class ReceiveOnlineFilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type ReceiveOnlineFilePostResponse = dict[str, Any]
 
 
 class RefuseOnlineFilePostRequest(TypedDict):
@@ -5011,11 +4208,7 @@ class RefuseOnlineFilePostRequest(TypedDict):
     """
 
 
-class RefuseOnlineFilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type RefuseOnlineFilePostResponse = dict[str, Any]
 
 
 class CancelOnlineFilePostRequest(TypedDict):
@@ -5029,11 +4222,7 @@ class CancelOnlineFilePostRequest(TypedDict):
     """
 
 
-class CancelOnlineFilePostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type CancelOnlineFilePostResponse = dict[str, Any]
 
 
 class DownloadFilesetPostRequest(TypedDict):
@@ -5043,11 +4232,7 @@ class DownloadFilesetPostRequest(TypedDict):
     """
 
 
-class DownloadFilesetPostResponse(BaseResponse):
-    data: dict[str, Any]
-    """
-    业务数据
-    """
+type DownloadFilesetPostResponse = dict[str, Any]
 
 
 class GetFilesetIdPostRequest(TypedDict):
@@ -5057,34 +4242,24 @@ class GetFilesetIdPostRequest(TypedDict):
     """
 
 
-class Data50(TypedDict):
-    """
-    业务数据
-    """
+class GetFilesetIdPostResponse(TypedDict):
 
     fileset_id: str
     """
     文件集 ID
-    """
-
-
-class GetFilesetIdPostResponse(BaseResponse):
-    data: Data50
-    """
-    业务数据
     """
 """
 OneBot 11 消息段
 """
 
 
-type MixType = list[Message] | str | Message
+type OB11MessageMixType = list[Message] | str | Message
 """
 OneBot 11 消息混合类型
 """
 
 
-class (TypedDict):
+class OB11Message(TypedDict):
     """
     OneBot 11 完整消息对象
     """
@@ -5170,7 +4345,7 @@ class (TypedDict):
     """
     原始消息对象
     """
-    emoji_likes_list: NotRequired[list[EmojiLikesListItem]]
+    emoji_likes_list: NotRequired[list[OB11MessageEmojiLikesListItem]]
     """
     表情点赞列表
     """
@@ -5193,8 +4368,8 @@ class OB11PostSendMsg(TypedDict):
     """
     群号
     """
-    message: MixType
-    messages: NotRequired[MixType]
+    message: OB11MessageMixType
+    messages: NotRequired[OB11MessageMixType]
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5247,7 +4422,7 @@ class SendGroupMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5283,7 +4458,7 @@ class SendPrivateMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5319,7 +4494,7 @@ class SendMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5355,7 +4530,7 @@ class SendForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5391,7 +4566,7 @@ class SendGroupForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5427,7 +4602,7 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: MixType
+    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
