@@ -1,33 +1,33 @@
 from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 from .messages.generated import (
-    OB11MessageAt,
-    OB11MessageContact,
-    OB11MessageCustomMusic,
-    OB11MessageData,
-    OB11MessageDice,
-    OB11MessageFace,
-    OB11MessageFile,
-    OB11MessageFlashTransfer,
-    OB11MessageForward,
-    OB11MessageIdMusic,
-    OB11MessageImage,
-    OB11MessageJson,
-    OB11MessageJsonDataConfig,
-    OB11MessageLocation,
-    OB11MessageMFace,
-    OB11MessageMarkdown,
-    OB11MessageMiniApp,
-    OB11MessageNode,
-    OB11MessageNodeDataNew,
-    OB11MessageOnlineFile,
-    OB11MessagePoke,
-    OB11MessageRPS,
-    OB11MessageRecord,
-    OB11MessageReply,
-    OB11MessageText,
-    OB11MessageVideo,
-    OB11MessageXml,
+    At,
+    Contact,
+    CustomMusic,
+    Message,
+    Dice,
+    Face,
+    File,
+    FlashTransfer,
+    Forward,
+    IdMusic,
+    Image,
+    Json,
+    JsonDataConfig,
+    Location,
+    MFace,
+    Markdown,
+    MiniApp,
+    Node,
+    NodeDataNew,
+    OnlineFile,
+    Poke,
+    RPS,
+    Record,
+    Reply,
+    Text,
+    Video,
+    Xml,
 )
 
 
@@ -87,7 +87,7 @@ class FileBaseData(TypedDict):
     """
 
 
-class OB11MessageAtData(TypedDict):
+class AtData(TypedDict):
     qq: str
     """
     QQ号或all
@@ -98,7 +98,7 @@ class OB11MessageAtData(TypedDict):
     """
 
 
-class OB11MessageContactData(TypedDict):
+class ContactData(TypedDict):
     type: Literal["qq", "group"]
     """
     联系人类型
@@ -109,7 +109,7 @@ class OB11MessageContactData(TypedDict):
     """
 
 
-class OB11MessageCustomMusicData(TypedDict):
+class CustomMusicData(TypedDict):
     type: Literal["qq", "163", "kugou", "migu", "kuwo", "custom"]
     """
     音乐平台类型
@@ -137,14 +137,14 @@ class OB11MessageCustomMusicData(TypedDict):
     """
 
 
-class OB11MessageDiceData(TypedDict):
+class DiceData(TypedDict):
     result: float | str
     """
     骰子结果
     """
 
 
-class OB11MessageFaceData(TypedDict):
+class FaceData(TypedDict):
     id: str
     """
     表情ID
@@ -159,7 +159,7 @@ class OB11MessageFaceData(TypedDict):
     """
 
 
-class OB11MessageFileBase(TypedDict):
+class FileBase(TypedDict):
     """
     文件消息基础接口
     """
@@ -167,25 +167,25 @@ class OB11MessageFileBase(TypedDict):
     data: FileBaseData
 
 
-class OB11MessageFlashTransferData(TypedDict):
+class FlashTransferData(TypedDict):
     fileSetId: str
     """
     文件集ID
     """
 
 
-class OB11MessageForwardData(TypedDict):
+class ForwardData(TypedDict):
     id: str
     """
     合并转发ID
     """
     content: NotRequired[dict[str, Any]]
     """
-    消息内容 (OB11Message[])
+    消息内容 ([])
     """
 
 
-class OB11MessageIdMusicData(TypedDict):
+class IdMusicData(TypedDict):
     type: Literal["qq", "163", "kugou", "migu", "kuwo"]
     """
     音乐平台类型
@@ -207,15 +207,15 @@ class Data(FileBaseData):
     """
 
 
-class OB11MessageJsonData(TypedDict):
+class JsonData(TypedDict):
     data: str | dict[str, Any]
     """
     JSON数据
     """
-    config: NotRequired[OB11MessageJsonDataConfig]
+    config: NotRequired[JsonDataConfig]
 
 
-class OB11MessageLocationData(TypedDict):
+class LocationData(TypedDict):
     lat: str | float
     """
     纬度
@@ -234,7 +234,7 @@ class OB11MessageLocationData(TypedDict):
     """
 
 
-class OB11MessageMFaceData(TypedDict):
+class MFaceData(TypedDict):
     emoji_package_id: float
     """
     表情包ID
@@ -253,21 +253,21 @@ class OB11MessageMFaceData(TypedDict):
     """
 
 
-class OB11MessageMarkdownData(TypedDict):
+class MarkdownData(TypedDict):
     content: str
     """
     Markdown内容
     """
 
 
-class OB11MessageMiniAppData(TypedDict):
+class MiniAppData(TypedDict):
     data: str
     """
     小程序数据
     """
 
 
-class OB11MessageNodeData(TypedDict):
+class NodeData(TypedDict):
     id: NotRequired[str]
     """
     转发消息ID
@@ -290,13 +290,13 @@ class OB11MessageNodeData(TypedDict):
     """
     content: dict[str, Any]
     """
-    消息内容 (OB11MessageMixType)
+    消息内容 (MixType)
     """
     source: NotRequired[str]
     """
     消息来源
     """
-    news: NotRequired[list[OB11MessageNodeDataNew]]
+    news: NotRequired[list[NodeDataNew]]
     summary: NotRequired[str]
     """
     摘要
@@ -311,7 +311,7 @@ class OB11MessageNodeData(TypedDict):
     """
 
 
-class OB11MessageOnlineFileData(TypedDict):
+class OnlineFileData(TypedDict):
     msgId: str
     """
     消息ID
@@ -334,7 +334,7 @@ class OB11MessageOnlineFileData(TypedDict):
     """
 
 
-class OB11MessagePokeData(TypedDict):
+class PokeData(TypedDict):
     type: str
     """
     戳一戳类型
@@ -345,14 +345,14 @@ class OB11MessagePokeData(TypedDict):
     """
 
 
-class OB11MessageRPSData(TypedDict):
+class RPSData(TypedDict):
     result: float | str
     """
     猜拳结果
     """
 
 
-class OB11MessageReplyData(TypedDict):
+class ReplyData(TypedDict):
     id: NotRequired[str]
     """
     消息ID的短ID映射
@@ -363,7 +363,7 @@ class OB11MessageReplyData(TypedDict):
     """
 
 
-class OB11MessageEmojiLikesListItem(TypedDict):
+class EmojiLikesListItem(TypedDict):
     emoji_id: str
     """
     表情ID
@@ -378,14 +378,14 @@ class OB11MessageEmojiLikesListItem(TypedDict):
     """
 
 
-class OB11MessageTextData(TypedDict):
+class TextData(TypedDict):
     text: str
     """
     纯文本内容
     """
 
 
-class OB11MessageXmlData(TypedDict):
+class XmlData(TypedDict):
     data: str
     """
     XML数据
@@ -5078,13 +5078,13 @@ OneBot 11 消息段
 """
 
 
-type OB11MessageMixType = list[OB11MessageData] | str | OB11MessageData
+type MixType = list[Message] | str | Message
 """
 OneBot 11 消息混合类型
 """
 
 
-class OB11Message(TypedDict):
+class (TypedDict):
     """
     OneBot 11 完整消息对象
     """
@@ -5146,7 +5146,7 @@ class OB11Message(TypedDict):
     消息子类型
     """
     sender: OB11Sender
-    message: list[OB11MessageData] | str
+    message: list[Message] | str
     """
     消息内容
     """
@@ -5170,7 +5170,7 @@ class OB11Message(TypedDict):
     """
     原始消息对象
     """
-    emoji_likes_list: NotRequired[list[OB11MessageEmojiLikesListItem]]
+    emoji_likes_list: NotRequired[list[EmojiLikesListItem]]
     """
     表情点赞列表
     """
@@ -5193,8 +5193,8 @@ class OB11PostSendMsg(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
-    messages: NotRequired[OB11MessageMixType]
+    message: MixType
+    messages: NotRequired[MixType]
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5247,7 +5247,7 @@ class SendGroupMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5283,7 +5283,7 @@ class SendPrivateMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5319,7 +5319,7 @@ class SendMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5355,7 +5355,7 @@ class SendForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5391,7 +5391,7 @@ class SendGroupForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -5427,7 +5427,7 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
+    message: MixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送

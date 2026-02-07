@@ -322,8 +322,10 @@ def collect_selected_type_alias_blocks(
     while i < len(body):
         stmt = body[i]
         matched_alias = False
+        matched_stmt: cst.SimpleStatementLine | None = None
 
         if isinstance(stmt, cst.SimpleStatementLine):
+            matched_stmt = stmt
             for small_stmt in stmt.body:
                 if (
                     isinstance(small_stmt, cst.TypeAlias)
@@ -336,14 +338,17 @@ def collect_selected_type_alias_blocks(
             i += 1
             continue
 
-        collected.append(stmt)
+        if matched_stmt is not None:
+            collected.append(matched_stmt)
         i += 1
-        while (
-            i < len(body)
-            and isinstance(body[i], cst.SimpleStatementLine)
-            and is_docstring_stmt(body[i])
-        ):
-            collected.append(body[i])
+        while i < len(body):
+            next_stmt = body[i]
+            if not isinstance(next_stmt, cst.SimpleStatementLine):
+                break
+            if not is_docstring_stmt(next_stmt):
+                break
+
+            collected.append(next_stmt)
             i += 1
 
     return collected
@@ -356,6 +361,26 @@ def is_import_statement(stmt: BaseStatement) -> bool:
         if isinstance(small_stmt, cst.Import) or isinstance(small_stmt, cst.ImportFrom):
             return True
     return False
+
+
+def postprocess_generated_files(paths: Sequence[str]) -> None:
+    """
+    生成完成后的纯文本全局替换（不使用 libcst）：
+    1) OB11MessageData -> Message
+    2) OB11Message -> ""
+    """
+    for path in paths:
+        with open(path, "r", encoding="utf-8") as f:
+            source = f.read()
+
+        replaced = source.replace("OB11MessageData", "Message")
+        replaced = replaced.replace("OB11Message", "")
+
+        if replaced != source:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(replaced)
+
+        print(f"Post-processed replacements for {path}.")
 
 
 def collect_dataclass_fields_with_inheritance(
@@ -583,4 +608,12 @@ with open(schemas_output_path, "w", encoding="utf-8") as f:
 print(
     "Successfully generated schemas module to "
     f"{schemas_output_path} with {len(generated_definition_names)} generated imports."
+)
+
+# 6. 生成完成后对两个文件做全局替换（纯文本）
+postprocess_generated_files(
+    [
+        generated_output_path,
+        schemas_output_path,
+    ]
 )
