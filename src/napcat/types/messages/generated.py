@@ -53,7 +53,7 @@ class Contact(MessageSegment):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class CustomMusic(MessageSegment):
+class CustomMusic(MessageSegment, register=False):
     """
     自定义音乐消息段
     """

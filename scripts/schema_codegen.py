@@ -1011,6 +1011,12 @@ def transform_message_segment_class(
             continue
         new_body.extend(block)
 
+    register_kwarg: list[cst.Arg] = []
+    if class_node.name.value.endswith("CustomMusic"):
+        register_kwarg = [
+            cst.Arg(keyword=cst.Name("register"), value=cst.Name("False"))
+        ]
+
     return class_node.with_changes(
         decorators=[
             cst.Decorator(
@@ -1025,6 +1031,7 @@ def transform_message_segment_class(
             )
         ],
         bases=[cst.Arg(value=cst.Name("MessageSegment"))],
+        keywords=register_kwarg,
         body=cst.IndentedBlock(body=new_body),
     )
 
