@@ -66,15 +66,67 @@ def get_dict(value: Any) -> dict[str, Any]:
     return cast(dict[str, Any], value) if isinstance(value, dict) else {}
 
 
-def build_docstring(summary: str, tag: str) -> str:
+def _extract_example_value(examples_obj: Any, preferred_key: str | None = None) -> Any:
+    examples = get_dict(examples_obj)
+    if not examples:
+        return None
+
+    candidate_keys: list[str] = []
+    if preferred_key is not None:
+        candidate_keys.append(preferred_key)
+    candidate_keys.extend(k for k in examples.keys() if k not in candidate_keys)
+
+    for key in candidate_keys:
+        item = get_dict(examples.get(key))
+        if not item:
+            continue
+        # 按需求：遇到 $ref 直接忽略
+        if "$ref" in item:
+            continue
+        if "value" in item:
+            return item.get("value")
+
+    return None
+
+
+def _format_json_block(value: Any, max_chars: int = 2000) -> str:
+    text = json.dumps(value, ensure_ascii=False, indent=2)
+    if len(text) > max_chars:
+        text = text[: max_chars - 15].rstrip() + "\n... (truncated)"
+    return text
+
+
+def build_docstring(
+    summary: str,
+    description: str,
+    tag: str,
+    request_example: Any,
+    success_data_example: Any,
+) -> str:
     safe_summary = summary or "未提供描述"
-    safe_tag = tag or ""
-    return (
-        '        """\n'
-        f"        {safe_summary}\n\n"
-        f"        标签: {safe_tag}\n"
-        '        """'
-    )
+    lines: list[str] = ['        """', f"        {safe_summary}"]
+
+    if description:
+        lines.extend(["", "        描述:"])
+        for part in description.splitlines() or [description]:
+            lines.append(f"        {part}")
+
+    lines.extend(["", f"        标签: {tag or ''}"])
+
+    if request_example is not None:
+        lines.extend(["", "        请求示例:"])
+        req_block = _format_json_block(request_example)
+        for line in req_block.splitlines():
+            lines.append(f"        {line}")
+
+    if success_data_example is not None:
+        lines.extend(["", "        成功响应 data 示例:"])
+        resp_block = _format_json_block(success_data_example)
+        for line in resp_block.splitlines():
+            lines.append(f"        {line}")
+
+    lines.append('        """')
+    return "\n".join(lines)
 
 
 def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) -> tuple[str, int]:
@@ -116,6 +168,8 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
 
         raw_summary = post_dict.get("summary")
         summary = raw_summary if isinstance(raw_summary, str) else ""
+        raw_description = post_dict.get("description")
+        description = raw_description.strip() if isinstance(raw_description, str) else ""
         raw_tags = post_dict.get("tags")
         tags: list[str] = []
         if isinstance(raw_tags, list):
@@ -123,7 +177,27 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
                 if isinstance(item, str):
                     tags.append(item)
         first_tag = tags[0] if tags else ""
-        doc = build_docstring(summary, first_tag)
+
+        request_examples = app_json.get("examples") if app_json else None
+        request_example = _extract_example_value(request_examples, preferred_key="Default")
+
+        responses = get_dict(post_dict.get("responses"))
+        response_200 = get_dict(responses.get("200"))
+        response_content = get_dict(response_200.get("content"))
+        response_app_json = get_dict(response_content.get("application/json"))
+        response_examples = response_app_json.get("examples")
+        success_response_example = _extract_example_value(response_examples, preferred_key="Success")
+        success_data_example = None
+        if isinstance(success_response_example, dict):
+            success_data_example = get_dict(success_response_example).get("data")
+
+        doc = build_docstring(
+            summary=summary,
+            description=description,
+            tag=first_tag,
+            request_example=request_example,
+            success_data_example=success_data_example,
+        )
 
         is_union_request = isinstance(request_schema, dict) and (
             "oneOf" in request_schema or "anyOf" in request_schema
