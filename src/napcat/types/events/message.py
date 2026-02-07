@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
-from ..messages import MessageSegment, MessageText, MessageReply, MessageAt, Model as MessageSegmentType
+from ..messages import MessageSegment, Text, Reply, At, Message
 from ..utils import IgnoreExtraArgsMixin, TypeValidatorMixin
 from .base import NapCatEvent
 
@@ -30,7 +30,7 @@ class MessageEvent(NapCatEvent):
     real_id: int | None = None
     sender: MessageSender
     raw_message: str
-    message: tuple[MessageSegmentType]
+    message: tuple[Message]
     message_format: Literal["array"] = "array"
     font: int | None = None
 
@@ -66,19 +66,19 @@ class MessageEvent(NapCatEvent):
 
         raise ValueError(f"Unknown message type: {msg_type}")
     
-    async def send_msg(self, message: str | list[MessageSegmentType]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> int:
         raise NotImplementedError("send_msg must be implemented in subclasses")
     
-    async def reply(self, message: str | list[MessageSegmentType], at: bool = False) -> int:
+    async def reply(self, message: str | list[Message], at: bool = False) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         
         if isinstance(message, str):
-            message = [MessageText(text=message)]
+            message = [Text(text=message)]
 
-        segments: list[MessageSegmentType] = [MessageReply(id=str(self.message_id))]
+        segments: list[Message] = [Reply(id=str(self.message_id))]
         if at:
-            segments.append(MessageAt(qq=str(self.user_id)))
+            segments.append(At(qq=str(self.user_id)))
         
         return await self.send_msg(segments + message)
 
@@ -92,7 +92,7 @@ class PrivateMessageEvent(MessageEvent):
     message_type: Literal["private"] = "private"
     sub_type: Literal["friend", "group"] | str | None = None
 
-    async def send_msg(self, message: str | list[MessageSegmentType]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_private_msg(
@@ -109,7 +109,7 @@ class GroupMessageEvent(MessageEvent):
     message_type: Literal["group"] = "group"
     sub_type: Literal["normal"] | str | None = None
 
-    async def send_msg(self, message: str | list[MessageSegmentType]) -> int:
+    async def send_msg(self, message: str | list[Message]) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
         return await self._client.send_group_msg(
