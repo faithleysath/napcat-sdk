@@ -1,7 +1,33 @@
 from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 from .messages.generated import (
+    OB11MessageAt,
+    OB11MessageContact,
+    OB11MessageCustomMusic,
     Message,
+    OB11MessageDice,
+    OB11MessageFace,
+    OB11MessageFile,
+    OB11MessageFlashTransfer,
+    OB11MessageForward,
+    OB11MessageIdMusic,
+    OB11MessageImage,
+    OB11MessageJson,
+    OB11MessageJsonDataConfig,
+    OB11MessageLocation,
+    OB11MessageMFace,
+    OB11MessageMarkdown,
+    OB11MessageMiniApp,
+    OB11MessageNode,
+    OB11MessageNodeDataNew,
+    OB11MessageOnlineFile,
+    OB11MessagePoke,
+    OB11MessageRPS,
+    OB11MessageRecord,
+    OB11MessageReply,
+    OB11MessageText,
+    OB11MessageVideo,
+    OB11MessageXml,
 )
 
 
