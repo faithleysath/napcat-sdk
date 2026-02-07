@@ -752,6 +752,21 @@ def collect_annotation_names_from_module(module: cst.Module) -> set[str]:
     return names
 
 
+def collect_definition_annotation_names(module: cst.Module) -> dict[str, set[str]]:
+    """Collect annotation/reference names for each top-level definition."""
+    result: dict[str, set[str]] = {}
+    for stmt in module.body:
+        if isinstance(stmt, cst.ClassDef):
+            result[stmt.name.value] = collect_annotation_names_from_class(stmt)
+            continue
+
+        if isinstance(stmt, cst.SimpleStatementLine):
+            for small_stmt in stmt.body:
+                if isinstance(small_stmt, cst.TypeAlias):
+                    result[small_stmt.name.value] = collect_names_from_expr(small_stmt.value)
+    return result
+
+
 def collect_selected_type_alias_blocks(
     module: cst.Module,
     target_alias_names: set[str],
@@ -1207,17 +1222,26 @@ def build_schemas_module(
     referenced_names_in_schemas_source = collect_annotation_names_from_module(
         cleaned_typedict_module
     )
+    definition_annotation_names = collect_definition_annotation_names(cleaned_typedict_module)
 
     # Remove:
     # - any generated names (because schemas should import them)
     # - any flattened dataclass names (do not belong in schemas)
+    #
+    # We intentionally remove both sets unconditionally. These legacy local
+    # definitions are superseded by `.messages.generated` imports inserted below.
     schemas_names_to_remove = generated_definition_name_set | flattened_dataclass_names
-    schemas_names_to_remove = {
+
+    # Remove unreferenced helper wrappers that only depend on flattened names,
+    # e.g. `OB11MessageFileBase -> data: FileBaseData` after FileBaseData removal.
+    orphan_helpers_to_remove = {
         name
-        for name in schemas_names_to_remove
-        if name in generated_definition_name_set
-        or name not in referenced_names_in_schemas_source
+        for name, ann_names in definition_annotation_names.items()
+        if name not in generated_definition_name_set
+        and name not in referenced_names_in_schemas_source
+        and bool(ann_names & flattened_dataclass_names)
     }
+    schemas_names_to_remove |= orphan_helpers_to_remove
 
     typedict_remover_for_schemas = DefinitionNameRemover(schemas_names_to_remove)
     schemas_typedict_module = cleaned_typedict_module.visit(typedict_remover_for_schemas)
