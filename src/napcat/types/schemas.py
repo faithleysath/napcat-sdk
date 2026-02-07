@@ -10,7 +10,7 @@ class BaseResponse(TypedDict):
     """
     状态 (ok/failed)
     """
-    retcode: float
+    retcode: int
     """
     返回码
     """
@@ -65,7 +65,7 @@ class OB11Sender(TypedDict):
     OneBot 11 发送者信息
     """
 
-    user_id: float | str
+    user_id: int | str
     """
     发送者QQ号
     """
@@ -85,7 +85,7 @@ class OB11Sender(TypedDict):
     """
     性别
     """
-    age: NotRequired[float]
+    age: NotRequired[int]
     """
     年龄
     """
@@ -108,11 +108,11 @@ class OB11GroupMember(TypedDict):
     OneBot 11 群成员信息
     """
 
-    group_id: float
+    group_id: int
     """
     群号
     """
-    user_id: float
+    user_id: int
     """
     QQ号
     """
@@ -128,15 +128,15 @@ class OB11GroupMember(TypedDict):
     """
     性别
     """
-    age: NotRequired[float]
+    age: NotRequired[int]
     """
     年龄
     """
-    join_time: NotRequired[float]
+    join_time: NotRequired[int]
     """
     入群时间戳
     """
-    last_sent_time: NotRequired[float]
+    last_sent_time: NotRequired[int]
     """
     最后发言时间戳
     """
@@ -144,7 +144,7 @@ class OB11GroupMember(TypedDict):
     """
     等级
     """
-    qq_level: NotRequired[float]
+    qq_level: NotRequired[int]
     """
     QQ等级
     """
@@ -164,7 +164,7 @@ class OB11GroupMember(TypedDict):
     """
     是否不良记录
     """
-    title_expire_time: NotRequired[float]
+    title_expire_time: NotRequired[int]
     """
     头衔过期时间
     """
@@ -172,7 +172,7 @@ class OB11GroupMember(TypedDict):
     """
     是否允许修改名片
     """
-    shut_up_timestamp: NotRequired[float]
+    shut_up_timestamp: NotRequired[int]
     """
     禁言截止时间戳
     """
@@ -180,7 +180,7 @@ class OB11GroupMember(TypedDict):
     """
     是否为机器人
     """
-    qage: NotRequired[float]
+    qage: NotRequired[int]
     """
     Q龄
     """
@@ -191,7 +191,7 @@ class OB11Group(TypedDict):
     OneBot 11 群信息
     """
 
-    group_all_shut: float
+    group_all_shut: int
     """
     是否全员禁言
     """
@@ -199,7 +199,7 @@ class OB11Group(TypedDict):
     """
     群备注
     """
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -207,11 +207,11 @@ class OB11Group(TypedDict):
     """
     群名称
     """
-    member_count: NotRequired[float]
+    member_count: NotRequired[int]
     """
     成员人数
     """
-    max_member_count: NotRequired[float]
+    max_member_count: NotRequired[int]
     """
     最大成员人数
     """
@@ -237,11 +237,11 @@ class OB11Notify(TypedDict):
     OneBot 11 通知信息
     """
 
-    request_id: float
+    request_id: int
     """
     请求ID
     """
-    invitor_uin: float
+    invitor_uin: int
     """
     邀请者QQ
     """
@@ -249,7 +249,7 @@ class OB11Notify(TypedDict):
     """
     邀请者昵称
     """
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -265,7 +265,7 @@ class OB11Notify(TypedDict):
     """
     是否已处理
     """
-    actor: float
+    actor: int
     """
     操作者QQ
     """
@@ -280,15 +280,15 @@ class OB11User(TypedDict):
     OneBot 11 用户信息
     """
 
-    birthday_year: NotRequired[float]
+    birthday_year: NotRequired[int]
     """
     出生年份
     """
-    birthday_month: NotRequired[float]
+    birthday_month: NotRequired[int]
     """
     出生月份
     """
-    birthday_day: NotRequired[float]
+    birthday_day: NotRequired[int]
     """
     出生日期
     """
@@ -300,11 +300,11 @@ class OB11User(TypedDict):
     """
     邮箱
     """
-    category_id: NotRequired[float]
+    category_id: NotRequired[int]
     """
     分组ID
     """
-    user_id: float
+    user_id: int
     """
     QQ号
     """
@@ -320,11 +320,11 @@ class OB11User(TypedDict):
     """
     性别
     """
-    level: NotRequired[float]
+    level: NotRequired[int]
     """
     等级
     """
-    age: NotRequired[float]
+    age: NotRequired[int]
     """
     年龄
     """
@@ -332,7 +332,7 @@ class OB11User(TypedDict):
     """
     QID
     """
-    login_days: NotRequired[float]
+    login_days: NotRequired[int]
     """
     登录天数
     """
@@ -340,14 +340,14 @@ class OB11User(TypedDict):
     """
     分组名称
     """
-    categoryId: NotRequired[float]
+    categoryId: NotRequired[int]
     """
     分组ID
     """
 
 
 class OB11LatestMessageSender(TypedDict):
-    user_id: float
+    user_id: int
     """
     用户QQ号
     """
@@ -370,15 +370,15 @@ class OB11LatestMessage(TypedDict):
     最后一条消息
     """
 
-    self_id: float
+    self_id: int
     """
     发送者QQ号
     """
-    user_id: float
+    user_id: int
     """
     接收者QQ号
     """
-    time: float
+    time: int
     """
     时间戳
     """
@@ -395,7 +395,7 @@ class OB11LatestMessage(TypedDict):
     """
     原始消息
     """
-    font: float
+    font: int
     """
     字体大小
     """
@@ -415,7 +415,7 @@ class OB11LatestMessage(TypedDict):
     """
     发布类型
     """
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -441,7 +441,7 @@ class DownloadFileStreamPostRequest(TypedDict):
     """
     文件 ID
     """
-    chunk_size: NotRequired[float]
+    chunk_size: NotRequired[int]
     """
     分块大小 (字节)
     """
@@ -459,7 +459,7 @@ class DownloadFileRecordStreamPostRequest(TypedDict):
     """
     文件 ID
     """
-    chunk_size: NotRequired[float]
+    chunk_size: NotRequired[int]
     """
     分块大小 (字节)
     """
@@ -481,7 +481,7 @@ class DownloadFileImageStreamPostRequest(TypedDict):
     """
     文件 ID
     """
-    chunk_size: NotRequired[float]
+    chunk_size: NotRequired[int]
     """
     分块大小 (字节)
     """
@@ -509,15 +509,15 @@ class UploadFileStreamPostRequest(TypedDict):
     """
     分块数据 (Base64)
     """
-    chunk_index: NotRequired[float]
+    chunk_index: NotRequired[int]
     """
     分块索引
     """
-    total_chunks: NotRequired[float]
+    total_chunks: NotRequired[int]
     """
     总分块数
     """
-    file_size: NotRequired[float]
+    file_size: NotRequired[int]
     """
     文件总大小
     """
@@ -541,7 +541,7 @@ class UploadFileStreamPostRequest(TypedDict):
     """
     是否仅验证
     """
-    file_retention: float
+    file_retention: int
     """
     文件保留时间 (毫秒)
     """
@@ -667,7 +667,7 @@ type UploadImageToQunAlbumPostResponse = dict[str, Any]
 
 
 class SetGroupTodoPostRequest(TypedDict):
-    group_id: str | float
+    group_id: str | int
     """
     群号
     """
@@ -692,7 +692,7 @@ class GetGroupDetailInfoPostRequest(TypedDict):
 
 
 class GetGroupDetailInfoPostResponse(TypedDict):
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -700,15 +700,15 @@ class GetGroupDetailInfoPostResponse(TypedDict):
     """
     群名称
     """
-    member_count: float
+    member_count: int
     """
     成员数量
     """
-    max_member_count: float
+    max_member_count: int
     """
     最大成员数量
     """
-    group_all_shut: float
+    group_all_shut: int
     """
     全员禁言状态
     """
@@ -741,7 +741,7 @@ class SetGroupAddOptionPostRequest(TypedDict):
     """
     群号
     """
-    add_type: float
+    add_type: int
     """
     加群方式
     """
@@ -763,11 +763,11 @@ class SetGroupRobotAddOptionPostRequest(TypedDict):
     """
     群号
     """
-    robot_member_switch: NotRequired[float]
+    robot_member_switch: NotRequired[int]
     """
     机器人成员开关
     """
-    robot_member_examine: NotRequired[float]
+    robot_member_examine: NotRequired[int]
     """
     机器人成员审核
     """
@@ -781,11 +781,11 @@ class SetGroupSearchPostRequest(TypedDict):
     """
     群号
     """
-    no_code_finger_open: NotRequired[float]
+    no_code_finger_open: NotRequired[int]
     """
     未知
     """
-    no_finger_open: NotRequired[float]
+    no_finger_open: NotRequired[int]
     """
     未知
     """
@@ -809,7 +809,7 @@ type SetDoubtFriendsAddRequestPostResponse = Any
 
 
 class GetDoubtFriendsAddRequestPostRequest(TypedDict):
-    count: float
+    count: int
     """
     获取数量
     """
@@ -845,11 +845,11 @@ class Datum(TypedDict):
     """
     RKey
     """
-    created_at: float
+    created_at: int
     """
     创建时间
     """
-    ttl: float
+    ttl: int
     """
     有效期
     """
@@ -871,7 +871,7 @@ class GetRkeyServerPostResponse(TypedDict):
     """
     群聊 RKey
     """
-    expired_time: NotRequired[float]
+    expired_time: NotRequired[int]
     """
     过期时间
     """
@@ -906,19 +906,19 @@ type GetGroupInfoExPostResponse = dict[str, Any]
 
 
 class FetchEmojiLikePostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
-    emojiId: float | str
+    emojiId: int | str
     """
     表情ID
     """
-    emojiType: float | str
+    emojiType: int | str
     """
     表情类型
     """
-    count: float | str
+    count: int | str
     """
     获取数量
     """
@@ -960,7 +960,7 @@ class FetchEmojiLikePostResponse(TypedDict):
     """
     是否第一页
     """
-    result: float
+    result: int
     """
     结果状态码
     """
@@ -987,7 +987,7 @@ class GetEmojiLikesPostRequest(TypedDict):
     """
     表情类型
     """
-    count: float
+    count: int
     """
     数量，0代表全部
     """
@@ -1054,7 +1054,7 @@ class SetQqProfilePostRequest(TypedDict):
     """
     个性签名
     """
-    sex: NotRequired[float | str]
+    sex: NotRequired[int | str]
     """
     性别 (0: 未知, 1: 男, 2: 女)
     """
@@ -1144,7 +1144,7 @@ type SetSelfLongnickPostResponse = dict[str, Any]
 
 
 class ForwardFriendSingleMsgPostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
@@ -1162,7 +1162,7 @@ type ForwardFriendSingleMsgPostResponse = None
 
 
 class ForwardGroupSingleMsgPostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
@@ -1180,7 +1180,7 @@ type ForwardGroupSingleMsgPostResponse = None
 
 
 class MarkGroupMsgAsReadPostRequest(TypedDict):
-    user_id: NotRequired[str | float]
+    user_id: NotRequired[str | int]
     """
     用户QQ
     """
@@ -1198,7 +1198,7 @@ type MarkGroupMsgAsReadPostResponse = None
 
 
 class MarkPrivateMsgAsReadPostRequest(TypedDict):
-    user_id: NotRequired[str | float]
+    user_id: NotRequired[str | int]
     """
     用户QQ
     """
@@ -1244,7 +1244,7 @@ class GetGroupRootFilesPostRequest(TypedDict):
     """
     群号
     """
-    file_count: float | str
+    file_count: int | str
     """
     文件数量
     """
@@ -1367,7 +1367,7 @@ class SendLikePostRequest(TypedDict):
     """
     对方 QQ 号
     """
-    times: float | str
+    times: int | str
     """
     点赞次数
     """
@@ -1377,14 +1377,14 @@ type SendLikePostResponse = None
 
 
 class GetMsgPostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
 
 
 class GetMsgPostResponse(TypedDict):
-    time: float
+    time: int
     """
     发送时间
     """
@@ -1392,15 +1392,15 @@ class GetMsgPostResponse(TypedDict):
     """
     消息类型
     """
-    message_id: float
+    message_id: int
     """
     消息ID
     """
-    real_id: float
+    real_id: int
     """
     真实ID
     """
-    message_seq: float
+    message_seq: int
     """
     消息序号
     """
@@ -1416,15 +1416,15 @@ class GetMsgPostResponse(TypedDict):
     """
     原始消息内容
     """
-    font: float
+    font: int
     """
     字体
     """
-    group_id: NotRequired[float | str]
+    group_id: NotRequired[int | str]
     """
     群号
     """
-    user_id: float | str
+    user_id: int | str
     """
     发送者QQ号
     """
@@ -1508,7 +1508,7 @@ class SendGroupMsgPostRequestNew(TypedDict):
 
 
 class SendGroupMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -1527,7 +1527,7 @@ class SendPrivateMsgPostRequestNew(TypedDict):
 
 
 class SendPrivateMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -1546,7 +1546,7 @@ class SendMsgPostRequestNew(TypedDict):
 
 
 class SendMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -1561,7 +1561,7 @@ class SendMsgPostResponse(TypedDict):
 
 
 class DeleteMsgPostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
@@ -1583,7 +1583,7 @@ class SetGroupAddRequestPostRequest(TypedDict):
     """
     拒绝理由
     """
-    count: NotRequired[float]
+    count: NotRequired[int]
     """
     搜索通知数量
     """
@@ -1707,7 +1707,7 @@ class SetGroupBanPostRequest(TypedDict):
     """
     用户QQ
     """
-    duration: float | str
+    duration: int | str
     """
     禁言时长(秒)
     """
@@ -1857,11 +1857,11 @@ class GetRecordPostResponse(TypedDict):
 
 
 class SetMsgEmojiLikePostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
-    emoji_id: float | str
+    emoji_id: int | str
     """
     表情ID
     """
@@ -1893,15 +1893,15 @@ class GetCookiesPostResponse(TypedDict):
 
 
 class SetOnlineStatusPostRequest(TypedDict):
-    status: float | str
+    status: int | str
     """
     在线状态
     """
-    ext_status: float | str
+    ext_status: int | str
     """
     扩展状态
     """
-    battery_status: float | str
+    battery_status: int | str
     """
     电量状态
     """
@@ -1922,7 +1922,7 @@ class GetFriendsWithCategoryPostRequest(TypedDict):
 
 
 class Datum1(TypedDict):
-    categoryId: float
+    categoryId: int
     """
     分组ID
     """
@@ -1930,7 +1930,7 @@ class Datum1(TypedDict):
     """
     分组名称
     """
-    categoryMbCount: float
+    categoryMbCount: int
     """
     分组内好友数量
     """
@@ -1944,11 +1944,11 @@ type GetFriendsWithCategoryPostResponse = list[Datum1]
 
 
 class DeleteFriendPostRequest(TypedDict):
-    friend_id: NotRequired[str | float]
+    friend_id: NotRequired[str | int]
     """
     好友 QQ 号
     """
-    user_id: NotRequired[str | float]
+    user_id: NotRequired[str | int]
     """
     用户 QQ 号
     """
@@ -1973,7 +1973,7 @@ class CheckUrlSafelyPostRequest(TypedDict):
 
 
 class CheckUrlSafelyPostResponse(TypedDict):
-    level: float
+    level: int
     """
     安全等级 (1: 安全, 2: 未知, 3: 危险)
     """
@@ -2022,7 +2022,7 @@ class GetGroupHonorInfoPostRequest(TypedDict):
 
 
 class GetGroupHonorInfoPostResponse(TypedDict):
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -2065,23 +2065,23 @@ class FieldSendGroupNoticePostRequest(TypedDict):
     """
     公告图片路径或 URL
     """
-    pinned: float | str
+    pinned: int | str
     """
     是否置顶 (0/1)
     """
-    type: float | str
+    type: int | str
     """
     类型 (默认为 1)
     """
-    confirm_required: float | str
+    confirm_required: int | str
     """
     是否需要确认 (0/1)
     """
-    is_show_edit_card: float | str
+    is_show_edit_card: int | str
     """
     是否显示修改群名片引导 (0/1)
     """
-    tip_window_type: float | str
+    tip_window_type: int | str
     """
     弹窗类型 (默认为 0)
     """
@@ -2117,11 +2117,11 @@ class Datum2Message(TypedDict):
 
 
 class Datum2(TypedDict):
-    sender_id: float
+    sender_id: int
     """
     发送者QQ
     """
-    publish_time: float
+    publish_time: int
     """
     发布时间
     """
@@ -2137,7 +2137,7 @@ class Datum2(TypedDict):
     """
     设置项
     """
-    read_num: NotRequired[float]
+    read_num: NotRequired[int]
     """
     阅读数
     """
@@ -2154,15 +2154,15 @@ class GetEssenceMsgListPostRequest(TypedDict):
 
 
 class Datum3(TypedDict):
-    msg_seq: float
+    msg_seq: int
     """
     消息序号
     """
-    msg_random: float
+    msg_random: int
     """
     消息随机数
     """
-    sender_id: float
+    sender_id: int
     """
     发送者QQ
     """
@@ -2170,7 +2170,7 @@ class Datum3(TypedDict):
     """
     发送者昵称
     """
-    operator_id: float
+    operator_id: int
     """
     操作者QQ
     """
@@ -2178,11 +2178,11 @@ class Datum3(TypedDict):
     """
     操作者昵称
     """
-    message_id: float
+    message_id: int
     """
     消息ID
     """
-    operator_time: float
+    operator_time: int
     """
     操作时间
     """
@@ -2207,11 +2207,11 @@ class GetGroupAtAllRemainPostResponse(TypedDict):
     """
     是否可以艾特全体
     """
-    remain_at_all_count_for_group: float
+    remain_at_all_count_for_group: int
     """
     群艾特全体剩余次数
     """
-    remain_at_all_count_for_uin: float
+    remain_at_all_count_for_uin: int
     """
     个人艾特全体剩余次数
     """
@@ -2222,7 +2222,7 @@ class SendForwardMsgPostRequestNew(TypedDict):
 
 
 class SendForwardMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -2241,7 +2241,7 @@ class SendGroupForwardMsgPostRequestNew(TypedDict):
 
 
 class SendGroupForwardMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -2260,7 +2260,7 @@ class SendPrivateForwardMsgPostRequestNew(TypedDict):
 
 
 class SendPrivateForwardMsgPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -2286,7 +2286,7 @@ class GetStrangerInfoPostRequest(TypedDict):
 
 
 class GetStrangerInfoPostResponse(TypedDict):
-    user_id: float
+    user_id: int
     """
     用户QQ
     """
@@ -2298,7 +2298,7 @@ class GetStrangerInfoPostResponse(TypedDict):
     """
     昵称
     """
-    age: float
+    age: int
     """
     年龄
     """
@@ -2306,7 +2306,7 @@ class GetStrangerInfoPostResponse(TypedDict):
     """
     QID
     """
-    qqLevel: float
+    qqLevel: int
     """
     QQ等级
     """
@@ -2318,7 +2318,7 @@ class GetStrangerInfoPostResponse(TypedDict):
     """
     个性签名
     """
-    reg_time: float
+    reg_time: int
     """
     注册时间
     """
@@ -2330,7 +2330,7 @@ class GetStrangerInfoPostResponse(TypedDict):
     """
     是否年费VIP
     """
-    vip_level: float
+    vip_level: int
     """
     VIP等级
     """
@@ -2338,11 +2338,11 @@ class GetStrangerInfoPostResponse(TypedDict):
     """
     备注
     """
-    status: float
+    status: int
     """
     状态
     """
-    login_days: float
+    login_days: int
     """
     登录天数
     """
@@ -2382,7 +2382,7 @@ type GetGuildListPostResponse = None
 
 
 class MarkMsgAsReadPostRequest(TypedDict):
-    user_id: NotRequired[str | float]
+    user_id: NotRequired[str | int]
     """
     用户QQ
     """
@@ -2442,7 +2442,7 @@ class GetGroupMsgHistoryPostRequest(TypedDict):
     """
     起始消息序号
     """
-    count: float
+    count: int
     """
     获取消息数量
     """
@@ -2502,7 +2502,7 @@ class GetFriendMsgHistoryPostRequest(TypedDict):
     """
     起始消息序号
     """
-    count: float
+    count: int
     """
     获取消息数量
     """
@@ -2548,7 +2548,7 @@ class FieldHandleQuickOperationPostRequestContextSender(TypedDict):
     """
     性别
     """
-    age: NotRequired[float]
+    age: NotRequired[int]
     """
     年龄
     """
@@ -2571,11 +2571,11 @@ class FieldHandleQuickOperationPostRequestContext(TypedDict):
     事件上下文
     """
 
-    time: float
+    time: int
     """
     事件发生时间
     """
-    self_id: float
+    self_id: int
     """
     收到事件的机器人 QQ 号
     """
@@ -2599,15 +2599,15 @@ class FieldHandleQuickOperationPostRequestContext(TypedDict):
     """
     群号
     """
-    message_id: NotRequired[float]
+    message_id: NotRequired[int]
     """
     消息 ID
     """
-    message_seq: NotRequired[float]
+    message_seq: NotRequired[int]
     """
     消息序列号
     """
-    real_id: NotRequired[float]
+    real_id: NotRequired[int]
     """
     真实消息 ID
     """
@@ -2624,7 +2624,7 @@ class FieldHandleQuickOperationPostRequestContext(TypedDict):
     """
     原始消息内容
     """
-    font: NotRequired[float]
+    font: NotRequired[int]
     """
     字体
     """
@@ -2667,7 +2667,7 @@ class FieldHandleQuickOperationPostRequestOperation(TypedDict):
     """
     是否禁言发送者
     """
-    ban_duration: NotRequired[float]
+    ban_duration: NotRequired[int]
     """
     禁言时长
     """
@@ -2721,7 +2721,7 @@ class GetGroupIgnoredNotifiesPostResponse(TypedDict):
 
 
 class DeleteEssenceMsgPostRequest(TypedDict):
-    message_id: NotRequired[float | str]
+    message_id: NotRequired[int | str]
     """
     消息ID
     """
@@ -2743,7 +2743,7 @@ type DeleteEssenceMsgPostResponse = dict[str, Any]
 
 
 class SetEssenceMsgPostRequest(TypedDict):
-    message_id: float | str
+    message_id: int | str
     """
     消息ID
     """
@@ -2753,7 +2753,7 @@ type SetEssenceMsgPostResponse = dict[str, Any]
 
 
 class GetRecentContactPostRequest(TypedDict):
-    count: float | str
+    count: int | str
     """
     获取的数量
     """
@@ -2776,7 +2776,7 @@ class Datum4(TypedDict):
     """
     消息时间
     """
-    chatType: float
+    chatType: int
     """
     聊天类型
     """
@@ -2813,11 +2813,11 @@ class GetProfileLikePostRequest(TypedDict):
     """
     QQ号
     """
-    start: float | str
+    start: int | str
     """
     起始位置
     """
-    count: float | str
+    count: int | str
     """
     获取数量
     """
@@ -2828,34 +2828,34 @@ class Data36FavoriteInfo(TypedDict):
     """
     点赞用户信息
     """
-    total_count: float
+    total_count: int
     """
     总点赞数
     """
-    last_time: float
+    last_time: int
     """
     最后点赞时间
     """
-    today_count: float
+    today_count: int
     """
     今日点赞数
     """
 
 
 class Data36VoteInfo(TypedDict):
-    total_count: float
+    total_count: int
     """
     总点赞数
     """
-    new_count: float
+    new_count: int
     """
     新增点赞数
     """
-    new_nearby_count: float
+    new_nearby_count: int
     """
     新增附近点赞数
     """
-    last_visit_time: float
+    last_visit_time: int
     """
     最后访问时间
     """
@@ -2890,12 +2890,12 @@ class SetGroupPortraitPostRequest(TypedDict):
 
 
 class SetGroupPortraitPostResponse(TypedDict):
-    result: float
+    result: int
     errMsg: str
 
 
 class FetchCustomFacePostRequest(TypedDict):
-    count: float | str
+    count: int | str
     """
     获取数量
     """
@@ -2974,7 +2974,7 @@ class SetInputStatusPostRequest(TypedDict):
     """
     QQ号
     """
-    event_type: float
+    event_type: int
     """
     事件类型
     """
@@ -2988,7 +2988,7 @@ class GetCsrfTokenPostRequest(TypedDict):
 
 
 class GetCsrfTokenPostResponse(TypedDict):
-    token: float
+    token: int
     """
     CSRF Token
     """
@@ -3006,7 +3006,7 @@ class GetCredentialsPostResponse(TypedDict):
     """
     Cookies
     """
-    token: float
+    token: int
     """
     CSRF Token
     """
@@ -3092,19 +3092,19 @@ class GetGroupFileSystemInfoPostRequest(TypedDict):
 
 
 class GetGroupFileSystemInfoPostResponse(TypedDict):
-    file_count: float
+    file_count: int
     """
     文件总数
     """
-    limit_count: float
+    limit_count: int
     """
     文件上限
     """
-    used_space: float
+    used_space: int
     """
     已使用空间
     """
-    total_space: float
+    total_space: int
     """
     总空间
     """
@@ -3123,7 +3123,7 @@ class GetGroupFilesByFolderPostRequest(TypedDict):
     """
     文件夹ID
     """
-    file_count: float | str
+    file_count: int | str
     """
     文件数量
     """
@@ -3198,11 +3198,11 @@ class NcGetUserStatusPostRequest(TypedDict):
 
 
 class NcGetUserStatusPostResponse(TypedDict):
-    status: float
+    status: int
     """
     在线状态
     """
-    ext_status: float
+    ext_status: int
     """
     扩展状态
     """
@@ -3234,11 +3234,11 @@ type SetGroupSpecialTitlePostResponse = None
 
 
 class SetDiyOnlineStatusPostRequest(TypedDict):
-    face_id: float | str
+    face_id: int | str
     """
     图标ID
     """
-    face_type: float | str
+    face_type: int | str
     """
     图标类型
     """
@@ -3435,7 +3435,7 @@ class SendGroupAiRecordPostRequest(TypedDict):
 
 
 class SendGroupAiRecordPostResponse(TypedDict):
-    message_id: float
+    message_id: int
     """
     消息ID
     """
@@ -3446,7 +3446,7 @@ class GetAiCharactersPostRequest(TypedDict):
     """
     群号
     """
-    chat_type: float | str
+    chat_type: int | str
     """
     聊天类型
     """
@@ -3518,7 +3518,7 @@ type SendPokePostResponse = None
 
 
 class GetGroupSystemMsgPostRequest(TypedDict):
-    count: float | str
+    count: int | str
     """
     获取的消息数量
     """
@@ -3591,7 +3591,7 @@ class GetUnidirectionalFriendListPostRequest(TypedDict):
 
 
 class Datum7(TypedDict):
-    uin: float
+    uin: int
     """
     QQ号
     """
@@ -3603,7 +3603,7 @@ class Datum7(TypedDict):
     """
     昵称
     """
-    age: float
+    age: int
     """
     年龄
     """
@@ -3628,11 +3628,11 @@ class GetGroupIgnoreAddRequestPostRequest(TypedDict):
 
 
 class Datum8(TypedDict):
-    request_id: float
+    request_id: int
     """
     请求ID
     """
-    invitor_uin: float
+    invitor_uin: int
     """
     邀请者QQ
     """
@@ -3640,7 +3640,7 @@ class Datum8(TypedDict):
     """
     邀请者昵称
     """
-    group_id: float
+    group_id: int
     """
     群号
     """
@@ -3656,7 +3656,7 @@ class Datum8(TypedDict):
     """
     是否已处理
     """
-    actor: float
+    actor: int
     """
     处理者QQ
     """
@@ -3720,7 +3720,7 @@ class GetFlashFileUrlPostRequest(TypedDict):
     """
     文件名
     """
-    file_index: NotRequired[float]
+    file_index: NotRequired[int]
     """
     文件索引
     """
@@ -3907,7 +3907,7 @@ class OB11Message(TypedDict):
     """
     真实序列号
     """
-    temp_source: NotRequired[float]
+    temp_source: NotRequired[int]
     """
     临时会话来源
     """
@@ -3915,35 +3915,35 @@ class OB11Message(TypedDict):
     """
     消息发送类型
     """
-    target_id: NotRequired[float]
+    target_id: NotRequired[int]
     """
     目标ID
     """
-    self_id: NotRequired[float]
+    self_id: NotRequired[int]
     """
     机器人QQ号
     """
-    time: float
+    time: int
     """
     消息时间戳
     """
-    message_id: float
+    message_id: int
     """
     消息ID
     """
-    message_seq: float
+    message_seq: int
     """
     消息序列号
     """
-    real_id: float
+    real_id: int
     """
     真实ID
     """
-    user_id: float | str
+    user_id: int | str
     """
     发送者QQ号
     """
-    group_id: NotRequired[float | str]
+    group_id: NotRequired[int | str]
     """
     群号
     """
@@ -3972,7 +3972,7 @@ class OB11Message(TypedDict):
     """
     原始消息
     """
-    font: float
+    font: int
     """
     字体
     """
@@ -4037,11 +4037,11 @@ class OB11ActionMessage(OB11LatestMessage):
     OneBot 11 消息信息
     """
 
-    message_id: float
+    message_id: int
     """
     消息ID
     """
-    message_seq: float
+    message_seq: int
     """
     消息序列号
     """

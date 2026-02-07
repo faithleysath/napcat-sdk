@@ -369,6 +369,38 @@ def postprocess_schemas_file(
     )
 
 
+def postprocess_float_to_int_with_location_exceptions(
+    path: str | os.PathLike[str],
+) -> None:
+    """
+    Post-process generated code types:
+    - globally replace `float` -> `int`
+    - then restore `lat` / `lon` field annotations to `str | float`
+    """
+    path = str(path)
+    source = read_text(path)
+
+    replaced = re.sub(r"\bfloat\b", "int", source)
+
+    # Restore location field types.
+    replaced = re.sub(
+        r"^(\s*lat:\s*)str\s*\|\s*int(\s*(?:=[^\n]*)?)$",
+        r"\1str | float\2",
+        replaced,
+        flags=re.MULTILINE,
+    )
+    replaced = re.sub(
+        r"^(\s*lon:\s*)str\s*\|\s*int(\s*(?:=[^\n]*)?)$",
+        r"\1str | float\2",
+        replaced,
+        flags=re.MULTILINE,
+    )
+
+    if replaced != source:
+        write_text(path, replaced)
+        logger.info("🧹 Post-processed float->int with location exceptions: %s", path)
+
+
 def format_generated_files_with_ruff(
     paths: Sequence[str | os.PathLike[str]],
     *,
@@ -1385,6 +1417,10 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     # Postprocess renames
     generated_rename_map = postprocess_generated_file(cfg.generated_output_path)
     postprocess_schemas_file(cfg.schemas_output_path, generated_rename_map)
+
+    # Postprocess float/int mapping in generated artifacts
+    postprocess_float_to_int_with_location_exceptions(cfg.generated_output_path)
+    postprocess_float_to_int_with_location_exceptions(cfg.schemas_output_path)
 
     # Assemble messages/__init__.py from final generated output
     final_generated_source = read_text(cfg.generated_output_path)

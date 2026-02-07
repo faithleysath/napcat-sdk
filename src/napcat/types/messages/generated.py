@@ -93,7 +93,7 @@ class Dice(MessageSegment):
     """
 
     _type: ClassVar[str] = "dice"
-    result: float | str
+    result: int | str
     """
     骰子结果
     """
@@ -114,7 +114,7 @@ class Face(MessageSegment):
     """
     结果ID
     """
-    chainCount: float | None = None
+    chainCount: int | None = None
     """
     连击数
     """
@@ -191,7 +191,7 @@ class IdMusic(MessageSegment):
     """
     音乐平台类型
     """
-    id: str | float
+    id: str | int
     """
     音乐ID
     """
@@ -229,7 +229,7 @@ class Image(MessageSegment):
     """
     图片摘要
     """
-    sub_type: float | None = None
+    sub_type: int | None = None
     """
     图片子类型
     """
@@ -281,7 +281,7 @@ class MFace(MessageSegment):
     """
 
     _type: ClassVar[str] = "mface"
-    emoji_package_id: float
+    emoji_package_id: int
     """
     表情包ID
     """
@@ -344,11 +344,11 @@ class Node(MessageSegment):
     """
     转发消息ID
     """
-    user_id: float | str | None = None
+    user_id: int | str | None = None
     """
     发送者QQ号
     """
-    uin: float | str | None = None
+    uin: int | str | None = None
     """
     发送者QQ号(兼容go-cqhttp)
     """
@@ -428,7 +428,7 @@ class RPS(MessageSegment):
     """
 
     _type: ClassVar[str] = "rps"
-    result: float | str
+    result: int | str
     """
     猜拳结果
     """
@@ -475,7 +475,7 @@ class Reply(MessageSegment):
     """
     消息ID的短ID映射
     """
-    seq: float | None = None
+    seq: int | None = None
     """
     消息序列号，优先使用
     """

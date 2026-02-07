@@ -6,7 +6,7 @@ from websockets.asyncio.client import connect as ws_connect
 
 from .connection import Connection
 from .types import NapCatEvent
-from .types.messages import Message, Text
+from .types.messages import Message
 from .client_api import NapCatAPI
 
 
@@ -23,7 +23,7 @@ class NapCatClient:
         self._ws_ctx: ws_connect | None = None
 
         self.api = NapCatAPI(self)
-        self.self_id: str = "-1"
+        self.self_id: int = -1  # 连接后更新
 
     async def __aenter__(self):
         # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
@@ -41,11 +41,11 @@ class NapCatClient:
         # 2. 获取自身 ID (增加容错处理)
         try:
             resp = await self.api.get_login_info() 
-            self.self_id = str(resp['user_id'])
+            self.self_id = resp['user_id']
                 
         except Exception as e:
             print(f"Warning: Failed to get self_id: {e}")
-            self.self_id = "-1"
+            self.self_id = -1
         return self
 
     async def __aexit__(
@@ -88,29 +88,25 @@ class NapCatClient:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
     
-    async def send_private_msg(self, user_id: str, message: str | list[Message]) -> str:
+    async def send_private_msg(self, user_id: int, message: str | list[Message] | Message) -> int:
         """
         发送私聊消息，返回消息 ID
         """
-        if isinstance(message, str):
-            message = [Text(text=message)]
         resp = await self.api.send_private_msg(
-            user_id=user_id,
+            user_id=str(user_id),
             message=message
         )
-        return str(resp["message_id"])
+        return resp["message_id"]
     
-    async def send_group_msg(self, group_id: str, message: str | list[Message]) -> str:
+    async def send_group_msg(self, group_id: int, message: str | list[Message] | Message) -> int:
         """
         发送群消息，返回消息 ID
         """
-        if isinstance(message, str):
-            message = [Text(text=message)]
         resp = await self.api.send_group_msg(
-            group_id=group_id,
+            group_id=str(group_id),
             message=message
         )
-        return str(resp["message_id"])
+        return resp["message_id"]
 
 
     # --- 黑魔法区域 ---
