@@ -6,6 +6,8 @@ from collections.abc import Iterator
 
 if TYPE_CHECKING:
     from .generated import Message
+else:
+    Message = Any
 
 class MessageSegment(ABC):
     _registry: ClassVar[dict[str, type[Message]]] = {}

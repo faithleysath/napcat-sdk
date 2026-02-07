@@ -33,7 +33,7 @@ class NapCatEvent(FromDictMixin, ABC):
     __event_register__: ClassVar[bool]
 
     def __init_subclass__(cls: type[NapCatEvent], register: bool = True, **kwargs: Any):
-        super().__init_subclass__(**kwargs)
+        # super().__init_subclass__(**kwargs)
 
         # Persist the explicit `register=` decision across potential class
         # recreation by @dataclass(slots=True, ...).

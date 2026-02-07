@@ -28,7 +28,7 @@ class NoticeEvent(NapCatEvent):
     __notice_register__: ClassVar[bool]
 
     def __init_subclass__(cls, register: bool = True, **kwargs: Any):
-        super().__init_subclass__(**kwargs)
+        # super().__init_subclass__(**kwargs)
 
         # Persist explicit register decision across dataclass(slots=True) class recreation.
         saved_register = cls.__dict__.get("__notice_register__")
