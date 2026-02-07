@@ -1,7 +1,7 @@
 """
 Update aggregate __init__.py files for napcat types exports.
 
-This script updates only auto-generated marker blocks in:
+This script updates only auto-generated export marker blocks in:
 - src/napcat/types/events/__init__.py
 - src/napcat/types/__init__.py
 - src/napcat/__init__.py
@@ -23,23 +23,15 @@ TYPES_INIT = Path("src/napcat/types/__init__.py")
 NAPCAT_INIT = Path("src/napcat/__init__.py")
 
 
-EVENTS_NOTICE_IMPORTS_START = "# >>> AUTO-GENERATED: NOTICE IMPORTS START"
-EVENTS_NOTICE_IMPORTS_END = "# <<< AUTO-GENERATED: NOTICE IMPORTS END"
 EVENTS_NOTICE_EXPORTS_START = "# >>> AUTO-GENERATED: NOTICE EXPORTS START"
 EVENTS_NOTICE_EXPORTS_END = "# <<< AUTO-GENERATED: NOTICE EXPORTS END"
 
-TYPES_EVENTS_IMPORTS_START = "# >>> AUTO-GENERATED: EVENTS IMPORTS START"
-TYPES_EVENTS_IMPORTS_END = "# <<< AUTO-GENERATED: EVENTS IMPORTS END"
 TYPES_EVENTS_EXPORTS_START = "# >>> AUTO-GENERATED: EVENTS EXPORTS START"
 TYPES_EVENTS_EXPORTS_END = "# <<< AUTO-GENERATED: EVENTS EXPORTS END"
 
-TYPES_MESSAGE_IMPORTS_START = "# >>> AUTO-GENERATED: MESSAGE IMPORTS START"
-TYPES_MESSAGE_IMPORTS_END = "# <<< AUTO-GENERATED: MESSAGE IMPORTS END"
 TYPES_MESSAGE_EXPORTS_START = "# >>> AUTO-GENERATED: MESSAGE EXPORTS START"
 TYPES_MESSAGE_EXPORTS_END = "# <<< AUTO-GENERATED: MESSAGE EXPORTS END"
 
-NAPCAT_TYPES_IMPORTS_START = "# >>> AUTO-GENERATED: TYPES IMPORTS START"
-NAPCAT_TYPES_IMPORTS_END = "# <<< AUTO-GENERATED: TYPES IMPORTS END"
 NAPCAT_TYPES_EXPORTS_START = "# >>> AUTO-GENERATED: TYPES EXPORTS START"
 NAPCAT_TYPES_EXPORTS_END = "# <<< AUTO-GENERATED: TYPES EXPORTS END"
 
@@ -93,22 +85,12 @@ def replace_marker_block(text: str, start_marker: str, end_marker: str, block: s
     return text[: start_line_end + 1] + new_block + text[end_line_start:]
 
 
-def format_import_items(names: list[str], indent: str = "    ") -> str:
-    return "\n".join(f"{indent}{name}," for name in names)
-
-
 def format_export_items(names: list[str], indent: str = "    ") -> str:
     return "\n".join(f'{indent}"{name}",' for name in names)
 
 
 def update_events_init(notice_exports: list[str]) -> None:
     source = EVENTS_INIT.read_text(encoding="utf-8")
-    source = replace_marker_block(
-        source,
-        EVENTS_NOTICE_IMPORTS_START,
-        EVENTS_NOTICE_IMPORTS_END,
-        format_import_items(notice_exports),
-    )
     source = replace_marker_block(
         source,
         EVENTS_NOTICE_EXPORTS_START,
@@ -122,21 +104,9 @@ def update_types_init(event_exports: list[str], message_exports: list[str]) -> N
     source = TYPES_INIT.read_text(encoding="utf-8")
     source = replace_marker_block(
         source,
-        TYPES_EVENTS_IMPORTS_START,
-        TYPES_EVENTS_IMPORTS_END,
-        format_import_items(event_exports),
-    )
-    source = replace_marker_block(
-        source,
         TYPES_EVENTS_EXPORTS_START,
         TYPES_EVENTS_EXPORTS_END,
         format_export_items(event_exports),
-    )
-    source = replace_marker_block(
-        source,
-        TYPES_MESSAGE_IMPORTS_START,
-        TYPES_MESSAGE_IMPORTS_END,
-        format_import_items(message_exports),
     )
     source = replace_marker_block(
         source,
@@ -149,12 +119,6 @@ def update_types_init(event_exports: list[str], message_exports: list[str]) -> N
 
 def update_napcat_init(type_exports: list[str]) -> None:
     source = NAPCAT_INIT.read_text(encoding="utf-8")
-    source = replace_marker_block(
-        source,
-        NAPCAT_TYPES_IMPORTS_START,
-        NAPCAT_TYPES_IMPORTS_END,
-        format_import_items(type_exports),
-    )
     source = replace_marker_block(
         source,
         NAPCAT_TYPES_EXPORTS_START,

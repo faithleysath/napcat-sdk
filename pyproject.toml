@@ -102,3 +102,8 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/napcat/__init__.py" = ["F403", "F405"]
+"src/napcat/types/__init__.py" = ["F403", "F405"]
+"src/napcat/types/events/__init__.py" = ["F403", "F405"]

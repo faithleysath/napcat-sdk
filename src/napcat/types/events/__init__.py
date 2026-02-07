@@ -5,38 +5,7 @@
 from .base import NapCatEvent, UnknownEvent
 from .message import GroupMessageEvent, MessageEvent, MessageSender, PrivateMessageEvent
 from .meta import HeartbeatEvent, HeartbeatStatus, LifecycleMetaEvent, MetaEvent
-from .notice import (
-    # >>> AUTO-GENERATED: NOTICE IMPORTS START
-    BotOfflineEvent,
-    FriendAddNoticeEvent,
-    FriendPokeEvent,
-    FriendRecallNoticeEvent,
-    GroupAdminNoticeEvent,
-    GroupBanEvent,
-    GroupCardEvent,
-    GroupDecreaseEvent,
-    GroupEssenceEvent,
-    GroupGrayTipEvent,
-    GroupIncreaseEvent,
-    GroupMsgEmojiLikeEvent,
-    GroupNameEvent,
-    GroupNoticeEvent,
-    GroupPokeEvent,
-    GroupRecallNoticeEvent,
-    GroupTitleEvent,
-    GroupUploadFile,
-    GroupUploadNoticeEvent,
-    InputStatusEvent,
-    MsgEmojiLike,
-    NoticeEvent,
-    OnlineFileNoticeEvent,
-    OnlineFileReceiveEvent,
-    OnlineFileSendEvent,
-    PokeEvent,
-    ProfileLikeEvent,
-    UnknownNoticeEvent,
-    # <<< AUTO-GENERATED: NOTICE IMPORTS END
-)
+from .notice import *
 from .request import FriendRequestEvent, GroupRequestEvent, RequestEvent
 
 __all__ = [
