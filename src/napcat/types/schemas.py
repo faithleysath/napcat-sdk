@@ -16,6 +16,10 @@ class BaseResponse(TypedDict):
     """
     返回码
     """
+    data: NotRequired[Any]
+    """
+    业务数据（具体结构由各接口定义）
+    """
     message: NotRequired[str]
     """
     消息
