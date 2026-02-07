@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from typing import Any, Literal, ClassVar, TypedDict
 
 
-class JsonDataConfig(TypedDict):
+class OB11MessageJsonDataConfig(TypedDict):
     token: str
     """
     token
     """
 
 
-class NodeDataNew(TypedDict):
+class OB11MessageNodeDataNew(TypedDict):
     text: str
     """
     新闻文本
@@ -19,7 +19,7 @@ class NodeDataNew(TypedDict):
 
 
 @dataclass
-class At(MessageSegment):
+class OB11MessageAt(MessageSegment):
     """
     @消息段
     """
@@ -35,7 +35,7 @@ class At(MessageSegment):
 
 
 @dataclass
-class Contact(MessageSegment):
+class OB11MessageContact(MessageSegment):
     """
     联系人消息段
     """
@@ -51,7 +51,7 @@ class Contact(MessageSegment):
 
 
 @dataclass
-class CustomMusic(MessageSegment):
+class OB11MessageCustomMusic(MessageSegment):
     """
     自定义音乐消息段
     """
@@ -84,7 +84,7 @@ class CustomMusic(MessageSegment):
 
 
 @dataclass
-class Dice(MessageSegment):
+class OB11MessageDice(MessageSegment):
     """
     骰子消息段
     """
@@ -96,7 +96,7 @@ class Dice(MessageSegment):
 
 
 @dataclass
-class Face(MessageSegment):
+class OB11MessageFace(MessageSegment):
     """
     QQ表情消息段
     """
@@ -116,7 +116,7 @@ class Face(MessageSegment):
 
 
 @dataclass
-class File(MessageSegment):
+class OB11MessageFile(MessageSegment):
     """
     文件消息段
     """
@@ -145,7 +145,7 @@ class File(MessageSegment):
 
 
 @dataclass
-class FlashTransfer(MessageSegment):
+class OB11MessageFlashTransfer(MessageSegment):
     """
     QQ闪传消息段
     """
@@ -157,7 +157,7 @@ class FlashTransfer(MessageSegment):
 
 
 @dataclass
-class Forward(MessageSegment):
+class OB11MessageForward(MessageSegment):
     """
     合并转发消息段
     """
@@ -168,12 +168,12 @@ class Forward(MessageSegment):
     """
     content: dict[str, Any] | None = None
     """
-    消息内容 ([])
+    消息内容 (OB11Message[])
     """
 
 
 @dataclass
-class IdMusic(MessageSegment):
+class OB11MessageIdMusic(MessageSegment):
     """
     ID音乐消息段
     """
@@ -189,7 +189,7 @@ class IdMusic(MessageSegment):
 
 
 @dataclass
-class Image(MessageSegment):
+class OB11MessageImage(MessageSegment):
     """
     图片消息段
     """
@@ -226,7 +226,7 @@ class Image(MessageSegment):
 
 
 @dataclass
-class Json(MessageSegment):
+class OB11MessageJson(MessageSegment):
     """
     JSON消息段
     """
@@ -235,11 +235,11 @@ class Json(MessageSegment):
     """
     JSON数据
     """
-    config: JsonDataConfig | None = None
+    config: OB11MessageJsonDataConfig | None = None
 
 
 @dataclass
-class Location(MessageSegment):
+class OB11MessageLocation(MessageSegment):
     """
     位置消息段
     """
@@ -263,7 +263,7 @@ class Location(MessageSegment):
 
 
 @dataclass
-class MFace(MessageSegment):
+class OB11MessageMFace(MessageSegment):
     """
     商城表情消息段
     """
@@ -287,7 +287,7 @@ class MFace(MessageSegment):
 
 
 @dataclass
-class Markdown(MessageSegment):
+class OB11MessageMarkdown(MessageSegment):
     """
     Markdown消息段
     """
@@ -299,7 +299,7 @@ class Markdown(MessageSegment):
 
 
 @dataclass
-class MiniApp(MessageSegment):
+class OB11MessageMiniApp(MessageSegment):
     """
     小程序消息段
     """
@@ -311,7 +311,7 @@ class MiniApp(MessageSegment):
 
 
 @dataclass
-class Node(MessageSegment):
+class OB11MessageNode(MessageSegment):
     """
     合并转发消息节点
     """
@@ -322,7 +322,7 @@ class Node(MessageSegment):
     """
     content: dict[str, Any]
     """
-    消息内容 (MixType)
+    消息内容 (OB11MessageMixType)
     """
     id: str | None = None
     """
@@ -344,7 +344,7 @@ class Node(MessageSegment):
     """
     消息来源
     """
-    news: list[NodeDataNew] | None = None
+    news: list[OB11MessageNodeDataNew] | None = None
     summary: str | None = None
     """
     摘要
@@ -360,7 +360,7 @@ class Node(MessageSegment):
 
 
 @dataclass
-class OnlineFile(MessageSegment):
+class OB11MessageOnlineFile(MessageSegment):
     """
     在线文件消息段
     """
@@ -388,7 +388,7 @@ class OnlineFile(MessageSegment):
 
 
 @dataclass
-class Poke(MessageSegment):
+class OB11MessagePoke(MessageSegment):
     """
     戳一戳消息段
     """
@@ -404,7 +404,7 @@ class Poke(MessageSegment):
 
 
 @dataclass
-class RPS(MessageSegment):
+class OB11MessageRPS(MessageSegment):
     """
     猜拳消息段
     """
@@ -416,7 +416,7 @@ class RPS(MessageSegment):
 
 
 @dataclass
-class Record(MessageSegment):
+class OB11MessageRecord(MessageSegment):
     """
     语音消息段
     """
@@ -445,7 +445,7 @@ class Record(MessageSegment):
 
 
 @dataclass
-class Reply(MessageSegment):
+class OB11MessageReply(MessageSegment):
     """
     回复消息段
     """
@@ -461,7 +461,7 @@ class Reply(MessageSegment):
 
 
 @dataclass
-class Text(MessageSegment):
+class OB11MessageText(MessageSegment):
     """
     纯文本消息段
     """
@@ -473,7 +473,7 @@ class Text(MessageSegment):
 
 
 @dataclass
-class Video(MessageSegment):
+class OB11MessageVideo(MessageSegment):
     """
     视频消息段
     """
@@ -502,7 +502,7 @@ class Video(MessageSegment):
 
 
 @dataclass
-class Xml(MessageSegment):
+class OB11MessageXml(MessageSegment):
     """
     XML消息段
     """
@@ -513,31 +513,31 @@ class Xml(MessageSegment):
     """
 
 
-type Message = (
-    Text
-    | Face
-    | MFace
-    | At
-    | Reply
-    | Image
-    | Record
-    | Video
-    | File
-    | IdMusic
-    | CustomMusic
-    | Poke
-    | Dice
-    | RPS
-    | Contact
-    | Location
-    | Json
-    | Xml
-    | Markdown
-    | MiniApp
-    | Node
-    | Forward
-    | OnlineFile
-    | FlashTransfer
+type OB11MessageData = (
+    OB11MessageText
+    | OB11MessageFace
+    | OB11MessageMFace
+    | OB11MessageAt
+    | OB11MessageReply
+    | OB11MessageImage
+    | OB11MessageRecord
+    | OB11MessageVideo
+    | OB11MessageFile
+    | OB11MessageIdMusic
+    | OB11MessageCustomMusic
+    | OB11MessagePoke
+    | OB11MessageDice
+    | OB11MessageRPS
+    | OB11MessageContact
+    | OB11MessageLocation
+    | OB11MessageJson
+    | OB11MessageXml
+    | OB11MessageMarkdown
+    | OB11MessageMiniApp
+    | OB11MessageNode
+    | OB11MessageForward
+    | OB11MessageOnlineFile
+    | OB11MessageFlashTransfer
 )
 """
 OneBot 11 消息段

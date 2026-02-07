@@ -16,8 +16,7 @@ def postprocess_generated_files(paths: Sequence[str]) -> None:
         source = read_text(path)
 
         replaced = source.replace("OB11MessageData", "Message")
-        if path.endswith("src/napcat/types/messages/generated.py"):
-            replaced = replaced.replace("OB11Message", "")
+        replaced = replaced.replace("OB11Message", "")
 
         if replaced != source:
             write_text(path, replaced)

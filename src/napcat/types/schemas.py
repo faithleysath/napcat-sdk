@@ -4,7 +4,7 @@ from .messages.generated import (
     OB11MessageAt,
     OB11MessageContact,
     OB11MessageCustomMusic,
-    Message,
+    OB11MessageData,
     OB11MessageDice,
     OB11MessageFace,
     OB11MessageFile,
@@ -4279,7 +4279,7 @@ OneBot 11 消息段
 """
 
 
-type OB11MessageMixType = list[Message] | str | Message
+type OB11MessageMixType = list[OB11MessageData] | str | OB11MessageData
 """
 OneBot 11 消息混合类型
 """
@@ -4347,7 +4347,7 @@ class OB11Message(TypedDict):
     消息子类型
     """
     sender: OB11Sender
-    message: list[Message] | str
+    message: list[OB11MessageData] | str
     """
     消息内容
     """

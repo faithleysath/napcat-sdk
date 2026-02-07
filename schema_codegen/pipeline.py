@@ -70,9 +70,11 @@ def run_pipeline(config: CodegenConfig | None = None) -> None:
         f"{config.schemas_output_path} with {len(generated_definition_names)} generated imports."
     )
 
-    postprocess_generated_files(
-        [
-            config.generated_output_path,
-            config.schemas_output_path,
-        ]
-    )
+    # postprocess_generated_files(
+    #     [
+    #         config.generated_output_path,
+    #         config.schemas_output_path,
+    #     ]
+    # )
+
+    
