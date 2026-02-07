@@ -1,5 +1,5 @@
 """
-schema_codegen_single.py
+schema_codegen.py
 
 一个“单文件”的代码生成/重构版本（由原多模块项目合并而来）。
 
@@ -18,14 +18,14 @@ schema_codegen_single.py
 - 保持与原项目一致的核心逻辑与生成结果（在依赖一致的前提下）
 
 运行方式示例：
-    python schema_codegen_single.py \
+    python schema_codegen.py \
         --typedict api_typedict.py \
         --dataclass api_dataclass.py \
         --out-generated src/napcat/types/messages/generated.py \
         --out-schemas src/napcat/types/schemas.py
 
 也可以在代码中直接调用：
-    from schema_codegen_single import CodegenConfig, run_pipeline
+    from schema_codegen import CodegenConfig, run_pipeline
     run_pipeline(CodegenConfig(...))
 
 依赖：
