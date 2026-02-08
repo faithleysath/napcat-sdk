@@ -1,6 +1,6 @@
 # src/napcat/__init__.py
 
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 
 from . import types
 from .client import NapCatClient

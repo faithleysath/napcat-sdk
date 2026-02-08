@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
 from ..messages import At, Message, MessageSegment, Reply, Text, UnknownMessageSegment
 from ..utils import FromDictMixin
 from .base import NapCatEvent
+
+logger = logging.getLogger("napcat.events")
 
 
 class MessageSenderPayload(TypedDict):
@@ -70,8 +73,8 @@ class MessageEvent(NapCatEvent):
     real_id: int
     sender: MessageSender
     raw_message: str
-    message: tuple[Message | UnknownMessageSegment, ...] | str
-    message_format: Literal["array", "string"] | str = "array"
+    message: tuple[Message | UnknownMessageSegment, ...]
+    message_format: Literal["array"] = "array"
     font: int = 14
 
     # --- 新增字段 ---
@@ -97,7 +100,12 @@ class MessageEvent(NapCatEvent):
         raw_emoji_likes_list = data.get("emoji_likes_list")
 
         if isinstance(raw_message, str):
-            parsed_message: tuple[Message | UnknownMessageSegment, ...] | str = raw_message
+            logger.critical(
+                "Invalid message payload type=str in MessageEvent: message_type=%r payload_keys=%s",
+                msg_type,
+                sorted(data.keys()),
+            )
+            raise ValueError("Unsupported message payload type: str")
         elif isinstance(raw_message, list):
             parsed_message = tuple(
                 MessageSegment.from_dict(seg)
