@@ -26,21 +26,15 @@ pip install napcat-sdk
 
 ```python
 import asyncio
-from napcat import NapCatClient, GroupMessageEvent, PrivateMessageEvent
+from napcat import NapCatClient, PrivateMessageEvent
 
-async def listen(client: NapCatClient):
-    async for event in client:
+async def main():
+    async for event in NapCatClient(ws_url="ws://localhost:3001", token="token"):
         match event:
             case PrivateMessageEvent():
                 await event.send_msg("收到你的私聊消息")
-            case GroupMessageEvent():
-                await event.reply("群消息已收到")
             case _:
                 pass
-
-async def main():
-    client = NapCatClient(ws_url="ws://localhost:3001", token="your-token")
-    await listen(client)
 
 if __name__ == "__main__":
     asyncio.run(main())

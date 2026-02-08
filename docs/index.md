@@ -39,14 +39,14 @@ icon: lucide/rocket
 
 ---
 
-NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类型覆盖**、**原生 asyncio** 与 **零框架约束**。你可以用它快速编写机器人逻辑，同时享受 IDE 级别的参数提示与自动补全。
+NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类型覆盖**、**原生异步** 与 **零框架约束**。你可以用它快速编写机器人逻辑，同时享受 IDE 级别的参数提示与自动补全。
 
 ## 为什么选择 NapCat-SDK
 
 - **完整类型覆盖**：所有事件、消息段、API 都有类型定义，补全体验一流。
 - **纯异步**：基于 `websockets` + `asyncio`，轻量且性能优秀。
-- **双模式**：既能主动连接 NapCat（Client 模式），也能作为反向 WebSocket 服务端（Server 模式）。
-- **低依赖**：只依赖 `websockets` 与 `orjson`，安装快、体积小。
+- **双模式**：既能主动连接 NapCat（Client 模式），也能作为反向 WebSocket 服务端。
+- **上游同步**：基于代码生成链路，零时差跟进上游 Schema 与 API 变更。
 
 ## 你将学到什么
 
