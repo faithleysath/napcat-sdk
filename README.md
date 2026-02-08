@@ -77,7 +77,7 @@ from napcat import NapCatClient, GroupMessageEvent, PrivateMessageEvent
 
 async def listen_private(client: NapCatClient):
     print(">> 私聊监听启动")
-    async for event in client.events():
+    async for event in client:
         match event:
             case PrivateMessageEvent():
                 print(f"[私信] {event.sender.nickname}: {event.raw_message}")
@@ -87,7 +87,7 @@ async def listen_private(client: NapCatClient):
 
 async def listen_group(client: NapCatClient):
     print(">> 群聊监听启动")
-    async for event in client.events():
+    async for event in client:
         match event:
             case GroupMessageEvent():
                 print(f"[群消息] {event.group_id}: {event.raw_message}")
@@ -96,12 +96,12 @@ async def listen_group(client: NapCatClient):
                 pass
 
 async def main():
-    # 正向 WebSocket 连接
-    async with NapCatClient(ws_url="ws://localhost:3001", token="123") as client:
-        await asyncio.gather(
-            listen_private(client),
-            listen_group(client)
-        )
+    # 正向 WebSocket 连接（支持自动管理上下文）
+    client = NapCatClient(ws_url="ws://localhost:3001", token="123")
+    await asyncio.gather(
+        listen_private(client),
+        listen_group(client)
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -112,6 +112,8 @@ if __name__ == "__main__":
 ---
 
 ## 📖 Usage
+
+`NapCatClient` 支持直接作为异步迭代器使用，并会在迭代开始/结束时自动管理连接生命周期。
 
 <details> <summary><b>🔌 反向 WebSocket 服务端 (Server Mode)</b></summary>
 
@@ -126,7 +128,7 @@ async def handler(client: NapCatClient):
     print(f"Bot Connected! Self ID: {client.self_id}")
     
     # 就像 Client 模式一样处理事件
-    async for event in client.events():
+    async for event in client:
         if isinstance(event, GroupMessageEvent):
             print(f"收到群 {event.group_id} 消息: {event.raw_message}")
             await event.reply("服务端已收到")
@@ -148,18 +150,18 @@ SDK 提供了强类型的 `MessageSegment`，告别手动拼接 CQ 码。
 
 ```python
 from napcat import (
-    NapCatClient, 
-    TextMessageSegment, 
-    ImageMessageSegment, 
-    AtMessageSegment
+    NapCatClient,
+    Text,
+    Image,
+    At,
 )
 
 async def send_rich_media(client: NapCatClient, group_id: int):
     # 构建消息链：@某人 + 文本 + 图片
     message = [
-        AtMessageSegment(qq=12345678),
-        TextMessageSegment(text=" 来看这张图："),
-        ImageMessageSegment(file="[https://example.com/image.jpg](https://example.com/image.jpg)")
+        At(qq="12345678"),
+        Text(text=" 来看这张图："),
+        Image(file="https://example.com/image.jpg"),
     ]
     
     # 直接发送列表
@@ -205,15 +207,16 @@ cd napcat-sdk
 uv sync
 ```
 
-2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成。如果你更新了 `schema.openapi.json`，请运行以下命令重新生成代码：
+2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成。如果你更新了 `NapCatQQ/packages/napcat-schema/dist/openapi.json`，请运行以下命令重新生成代码：
 ```
-uv run scripts/generate_schema.py
+uv run scripts/schema-codegen.py
 ```
-*这会自动更新 `src/napcat/types/schemas.py` 和 `src/napcat/client_api.py`。*
+*这会自动更新 `src/napcat/types/messages/generated.py`、`src/napcat/types/schemas.py`、`src/napcat/client_api.py` 以及相关的 `__init__.py`。*
 
 3. **运行测试**:
 ```
-uv run tests/smoke_test.py
+# 运行 tests（排除 static 检查）
+uv run pytest src/tests -m "not static" -q
 ```
 
 ---
