@@ -69,7 +69,18 @@ class NapCatClient:
             yield event
 
     def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
-        return self.events()
+        async def _iter() -> AsyncGenerator[NapCatEvent, None]:
+            should_manage_lifecycle = self._conn is None
+            if should_manage_lifecycle:
+                await self.__aenter__()
+            try:
+                async for event in self.events():
+                    yield event
+            finally:
+                if should_manage_lifecycle:
+                    await self.__aexit__(None, None, None)
+
+        return _iter()
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:

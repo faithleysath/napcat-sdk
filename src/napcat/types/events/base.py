@@ -29,6 +29,10 @@ class NapCatEvent(FromDictMixin, ABC):
         init=False, repr=False, hash=False, compare=False, default=None
     )
 
+    @property
+    def client(self) -> NapCatClient | None:
+        return self._client
+
     # --- 自动注册机制 ---
     _registry: ClassVar[dict[str, type[NapCatEvent]]] = {}
     __event_register__: ClassVar[bool]
