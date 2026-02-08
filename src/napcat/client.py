@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator, Mapping
 from types import TracebackType
-from typing import Any
+from typing import Any, cast
 
 from websockets.asyncio.client import connect as ws_connect
 
@@ -83,10 +83,25 @@ class NapCatClient:
         """
         if params is None:
             params = {}
+
+        if action in {"send_private_msg", "send_group_msg"} and "message" in params:
+            normalized_params = dict(params)
+            message_for_send = cast(str | list[Message] | Message, normalized_params["message"])
+            normalized_params["message"] = self._normalize_message_for_send(message_for_send)
+            params = normalized_params
+
         resp = await self.send({"action": action, "params": params})
         if resp.get("status") != "ok" and resp.get("retcode") != 0:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
+
+    @staticmethod
+    def _normalize_message_for_send(message: str | list[Message] | Message) -> str | list[dict[str, Any]] | dict[str, Any]:
+        if isinstance(message, str):
+            return message
+        if isinstance(message, list):
+            return [dict(segment) for segment in message]
+        return dict(message)
 
     async def send_private_msg(self, user_id: int, message: str | list[Message] | Message) -> int:
         """
