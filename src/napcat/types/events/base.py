@@ -7,7 +7,7 @@ from abc import ABC
 from dataclasses import dataclass, field, is_dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from ..utils import FromDictMixin
+from ..utils import FromDictMixin, get_dataclass_field_default
 
 if TYPE_CHECKING:
     from ...client import NapCatClient
@@ -53,6 +53,10 @@ class NapCatEvent(FromDictMixin, ABC):
         if not is_dataclass(cls):
             return
 
+        # If post_type exists, it means it's an early class not the final class
+        if cls.__dict__.get("post_type") is not None:
+            return
+
         if not effective_register:
             return
 
@@ -60,7 +64,7 @@ class NapCatEvent(FromDictMixin, ABC):
             return
 
         # 1. 仅从 post_type 读取注册键
-        pt = cls.__dict__.get("post_type")
+        pt = get_dataclass_field_default(cls, "post_type", declared_only=True)
 
         if not pt or not isinstance(pt, (str, tuple, list)):
             return

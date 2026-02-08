@@ -1,11 +1,48 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import fields, is_dataclass
+from dataclasses import MISSING, fields, is_dataclass
 from typing import Any, ClassVar
 
 logger = logging.getLogger("napcat.from_dict")
 
+
+def get_dataclass_field_default(
+    cls: type[Any],
+    field_name: str,
+    *,
+    declared_only: bool = False,
+) -> Any | None:
+    """Read a dataclass field default value in a slots-safe way.
+
+    Returns ``None`` when:
+    - ``cls`` is not a dataclass class
+    - field does not exist
+    - field has no default value
+
+    Args:
+        declared_only: When ``True``, only read fields declared on ``cls`` itself
+            (exclude inherited dataclass fields).
+    """
+
+    if not is_dataclass(cls):
+        return None
+
+    own_annotations = cls.__dict__.get("__annotations__", {})
+
+    for field in fields(cls):
+        if field.name != field_name:
+            continue
+
+        if declared_only and field.name not in own_annotations:
+            return None
+
+        if field.default is not MISSING:
+            return field.default
+
+        return None
+
+    return None
 
 class FromDictMixin:
     """Safe dataclass constructor with cached field names.

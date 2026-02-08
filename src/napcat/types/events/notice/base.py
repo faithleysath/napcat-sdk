@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, is_dataclass
-from typing import Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal
 
+from ...utils import get_dataclass_field_default
 from ..base import NapCatEvent
 
 logger = logging.getLogger("napcat.events")
@@ -21,12 +22,11 @@ class NoticeEvent(NapCatEvent):
     notice_type: str
 
     # Python 3.12+: 使用原生 dict 和 type
-    _post_type: ClassVar[str] = "notice"
     _notice_registry: ClassVar[dict[str, type[NoticeEvent]]] = {}
     _notify_registry: ClassVar[dict[str, type[NoticeEvent]]] = {}
     __notice_register__: ClassVar[bool]
 
-    def __init_subclass__(cls, register: bool = True, **kwargs: Any):
+    def __init_subclass__(cls: type[NoticeEvent], register: bool = True, **kwargs: Any):
         # super().__init_subclass__(**kwargs)
 
         # Persist explicit register decision across dataclass(slots=True) class recreation.
@@ -42,11 +42,15 @@ class NoticeEvent(NapCatEvent):
         if not is_dataclass(cls):
             return
 
+        # If notice_type exists, it means it's an early class not the final class
+        if cls.__dict__.get("notice_type") is not None:
+            return
+
         if not effective_register:
             return
 
         # 1. 获取 notice_type (仅限当前类定义，不查找父类)
-        n_type = cls.__dict__.get("notice_type")
+        n_type = get_dataclass_field_default(cls, "notice_type", declared_only=True)
 
         # 如果当前类没有显式定义 notice_type，直接跳过注册
         # 这完美解决了 PokeEvent 子类重复注册的问题
@@ -69,18 +73,18 @@ class NoticeEvent(NapCatEvent):
         # 2. 注册逻辑
         if n_type == "notify":
             # 同样仅限当前类定义的 sub_type
-            s_type = cls.__dict__.get("sub_type")
+            s_type = get_dataclass_field_default(cls, "sub_type", declared_only=True)
             if s_type and isinstance(s_type, str):
                 register_safely(
                     NoticeEvent._notify_registry,
                     s_type,
-                    cast(type[NoticeEvent], cls),
+                    cls,
                 )
         else:
             register_safely(
                 NoticeEvent._notice_registry,
                 n_type,
-                cast(type[NoticeEvent], cls),
+                cls,
             )
 
     @classmethod
