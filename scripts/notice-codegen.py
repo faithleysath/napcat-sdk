@@ -81,7 +81,11 @@ So generated event classes must implement `_from_dict` when custom nested conver
         -   `field: list[HelperDataclass]` (payload is `list[dict]`)
     -   If no nested helper conversion is needed, do not generate `_from_dict`.
     -   When `_from_dict` is present, create a typed copy first: `payload: dict[str, Any] = dict(data)`.
-    -   Convert only required nested fields on `payload` (prefer `HelperDataclass._from_dict(...)`), keep others unchanged, then return `super()._from_dict(payload)`.
+    -   Convert only required nested fields on `payload` (prefer `HelperDataclass._from_dict(...)`), keep others unchanged.
+    -   In `@classmethod` `_from_dict`, **DO NOT** use zero-arg `super()` when returning parent `_from_dict`.
+        -   MUST use explicit two-arg form with current class and `cls`:
+        -   `return super(CurrentClassName, cls)._from_dict(payload)`
+        -   Reason: `@dataclass(slots=True)` may recreate class objects, and zero-arg `super()` can raise `TypeError: super(type, obj)`.
     -   For single nested dict conversion, cast before calling helper `_from_dict`.
         -   Example:
             -   `file_raw = payload.get("file")`

@@ -28,6 +28,6 @@ class GroupMsgEmojiLikeEvent(GroupNoticeEvent):
     def _from_dict(cls, data: dict[str, Any]) -> GroupMsgEmojiLikeEvent:
         payload: dict[str, Any] = dict(data)
         if "likes" in payload and isinstance(payload["likes"], list):
-            raw_likes = cast(list[dict[str, Any]], payload["likes"])
-            payload["likes"] = [MsgEmojiLike._from_dict(item) for item in raw_likes]
-        return super()._from_dict(payload)
+            raw_items = cast(list[dict[str, Any]], payload["likes"])
+            payload["likes"] = [MsgEmojiLike._from_dict(item) for item in raw_items]
+        return super(GroupMsgEmojiLikeEvent, cls)._from_dict(payload)

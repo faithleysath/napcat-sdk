@@ -29,4 +29,4 @@ class GroupUploadNoticeEvent(GroupNoticeEvent):
         file_raw = payload.get("file")
         if isinstance(file_raw, dict):
             payload["file"] = GroupUploadFile._from_dict(cast(dict[str, Any], file_raw))
-        return super()._from_dict(payload)
+        return super(GroupUploadNoticeEvent, cls)._from_dict(payload)
