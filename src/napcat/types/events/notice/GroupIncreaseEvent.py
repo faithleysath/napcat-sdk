@@ -12,5 +12,5 @@ from .GroupNoticeEvent import GroupNoticeEvent
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GroupIncreaseEvent(GroupNoticeEvent):
     notice_type: Literal["group_increase"] = "group_increase"
-    sub_type: Literal["approve", "invite"] = "approve"
     operator_id: int
+    sub_type: Literal["approve", "invite"] = "approve"

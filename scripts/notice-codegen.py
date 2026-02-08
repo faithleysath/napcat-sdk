@@ -20,7 +20,7 @@ IGNORE_FILES = {
 API_BASE = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "google/gemini-3-flash")
-CONCURRENCY_LIMIT = 2
+CONCURRENCY_LIMIT = 5
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
@@ -47,8 +47,11 @@ So generated event classes must implement `_from_dict` when custom nested conver
 **Import Strategy:**
 1.  **Standard/Shared Imports**: **DO NOT** import `dataclasses`, `typing`, `__future__`, or `FromDictMixin`. The wrapper script handles these.
 2.  **Local Imports**:
-    -   If extends `BaseNoticeEvent` -> Add `from .base import NoticeEvent` at the top.
-    -   If extends `xxxNoticeEvent` -> Add `from .xxxNoticeEvent import xxxNoticeEvent`.
+    -   **Highest priority special mapping**: If TS extends `BaseNoticeEvent`, Python MUST use `NoticeEvent` and `from .base import NoticeEvent`.
+    -   `BaseNoticeEvent` is TS-only name. Do NOT output `BaseNoticeEvent` in Python code (neither import nor base class).
+    -   For other parent classes (e.g. `GroupNoticeEvent`), use local import `from .xxxNoticeEvent import xxxNoticeEvent`.
+    -   For those other parent classes, use exact local module filename (case-sensitive, PascalCase).
+    -   Example: `from .GroupNoticeEvent import GroupNoticeEvent` (NOT `from .group_notice_event import GroupNoticeEvent`).
 
 **Helper Structures (CRITICAL):**
 1.  **Interfaces**: If the TS file defines an `interface` (e.g., `GroupUploadFile`) used by the main class:
@@ -77,7 +80,16 @@ So generated event classes must implement `_from_dict` when custom nested conver
         -   `field: HelperDataclass` (payload is `dict`)
         -   `field: list[HelperDataclass]` (payload is `list[dict]`)
     -   If no nested helper conversion is needed, do not generate `_from_dict`.
-    -   When `_from_dict` is present, convert only those nested fields (prefer `HelperDataclass._from_dict(...)`), keep others unchanged, then return `super()._from_dict(converted_payload)`.
+    -   When `_from_dict` is present, create a typed copy first: `payload: dict[str, Any] = dict(data)`.
+    -   Convert only required nested fields on `payload` (prefer `HelperDataclass._from_dict(...)`), keep others unchanged, then return `super()._from_dict(payload)`.
+    -   For single nested dict conversion, cast before calling helper `_from_dict`.
+        -   Example:
+            -   `file_raw = payload.get("file")`
+            -   `if isinstance(file_raw, dict): payload["file"] = HelperDataclass._from_dict(cast(dict[str, Any], file_raw))`
+    -   For list conversion, cast the whole list before iterating so `item` has a known type.
+        -   Example:
+            -   `raw_items = cast(list[dict[str, Any]], payload["likes"])`
+            -   `converted = [HelperDataclass._from_dict(item) for item in raw_items]`
 5.  **Method annotations:**
     -   Since `from __future__ import annotations` is already enabled, do NOT quote return types.
     -   Example: use `-> GroupMsgEmojiLikeEvent`, NOT `-> "GroupMsgEmojiLikeEvent"`.
@@ -192,7 +204,7 @@ async def main():
             # 统一写入标准头，不再依赖检测代码内容
             f.write("from __future__ import annotations\n")
             f.write("from dataclasses import dataclass\n")
-            f.write("from typing import Literal, Any\n")
+            f.write("from typing import Literal, Any, cast\n")
             f.write("from ...utils import FromDictMixin\n")
 
             f.write("\n")

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from ...utils import FromDictMixin
 from .GroupNoticeEvent import GroupNoticeEvent
@@ -25,6 +25,8 @@ class GroupUploadNoticeEvent(GroupNoticeEvent):
 
     @classmethod
     def _from_dict(cls, data: dict[str, Any]) -> GroupUploadNoticeEvent:
-        if isinstance(data.get("file"), dict):
-            data["file"] = GroupUploadFile._from_dict(data["file"])
-        return super()._from_dict(data)
+        payload: dict[str, Any] = dict(data)
+        file_raw = payload.get("file")
+        if isinstance(file_raw, dict):
+            payload["file"] = GroupUploadFile._from_dict(cast(dict[str, Any], file_raw))
+        return super()._from_dict(payload)

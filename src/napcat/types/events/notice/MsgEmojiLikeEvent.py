@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from ...utils import FromDictMixin
 from .GroupNoticeEvent import GroupNoticeEvent
@@ -26,6 +26,9 @@ class GroupMsgEmojiLikeEvent(GroupNoticeEvent):
 
     @classmethod
     def _from_dict(cls, data: dict[str, Any]) -> GroupMsgEmojiLikeEvent:
-        if "likes" in data and isinstance(data["likes"], list):
-            data["likes"] = [MsgEmojiLike._from_dict(item) for item in data["likes"]]
-        return super()._from_dict(data)
+        payload: dict[str, Any] = dict(data)
+        likes_raw = payload.get("likes")
+        if isinstance(likes_raw, list):
+            raw_items = cast(list[dict[str, Any]], likes_raw)
+            payload["likes"] = [MsgEmojiLike._from_dict(item) for item in raw_items]
+        return super()._from_dict(payload)
