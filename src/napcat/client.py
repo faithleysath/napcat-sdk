@@ -68,6 +68,9 @@ class NapCatClient:
             object.__setattr__(event, "_client", self)
             yield event
 
+    def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
+        return self.events()
+
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
             raise RuntimeError("Client not connected")
