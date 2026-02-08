@@ -64,4 +64,4 @@ NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类�
 
 ---
 
-> 提示：如果你想直接浏览完整示例与截图，可参考项目 README。该文档更偏向结构化学习与上手。
+> 提示：如果你在使用过程中遇到任何问题，欢迎加入 QQ 群或在 GitHub 上提交 issue！

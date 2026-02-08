@@ -26,13 +26,13 @@ pip install napcat-sdk
 
 ```python
 import asyncio
-from napcat import NapCatClient, PrivateMessageEvent
+from napcat import NapCatClient, PrivateMessageEvent, Text
 
 async def main():
     async for event in NapCatClient(ws_url="ws://localhost:3001", token="token"):
         match event:
-            case PrivateMessageEvent():
-                await event.send_msg("收到你的私聊消息")
+            case PrivateMessageEvent(message=[Text(text=msg)]):
+                await event.send_msg(f"收到你的私聊消息: {msg}")
             case _:
                 pass
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 ### 运行效果
 
-- 连接成功后，SDK 会自动拉取登录信息并填充 `client.self_id`。
+- 当用户发送私聊消息时，机器人会回复一条消息，内容为 "收到你的私聊消息: {用户消息}"。
 - 事件流以异步迭代器的方式提供，适合直接在循环中处理。
 
 ## 下一步推荐
