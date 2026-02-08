@@ -3,6 +3,8 @@ from __future__ import annotations
 import shutil
 import subprocess
 
+import pytest
+
 
 def _run(cmd: list[str]) -> tuple[int, str]:
     completed = subprocess.run(cmd, capture_output=True, text=True)
@@ -10,6 +12,7 @@ def _run(cmd: list[str]) -> tuple[int, str]:
     return completed.returncode, output
 
 
+@pytest.mark.static
 def test_ruff_strict_all_rules() -> None:
     assert shutil.which("uv"), "uv not found in PATH"
 
@@ -17,6 +20,7 @@ def test_ruff_strict_all_rules() -> None:
     assert code == 0, f"Ruff check failed (exit={code})\n\n{output}"
 
 
+@pytest.mark.static
 def test_pyright_strict_type_check() -> None:
     assert shutil.which("uv"), "uv not found in PATH"
 

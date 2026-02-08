@@ -7,8 +7,33 @@ on:
       - v*
 
 jobs:
-  run:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install dev dependencies
+        run: uv sync --frozen --group dev --python ${{ matrix.python-version }}
+      - name: Run source tests
+        run: uv run --python ${{ matrix.python-version }} pytest -q src/tests -m "not static"
+      - name: Build
+        run: uv build
+      - name: Run tests against wheel package (${{ matrix.python-version }})
+        run: uv run --python ${{ matrix.python-version }} --isolated --no-project --with dist/*.whl --with pytest pytest -q src/tests -m "not static"
+      - name: Run tests against source distribution package (${{ matrix.python-version }})
+        run: uv run --python ${{ matrix.python-version }} --isolated --no-project --with dist/*.tar.gz --with pytest pytest -q src/tests -m "not static"
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
     environment:
       name: pypi
     permissions:
@@ -21,24 +46,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.12
         run: uv python install 3.12
-      - name: Install dev dependencies
-        run: uv sync --frozen --group dev
-      - name: Static checks (ruff + pyright)
-        run: uv run pytest -q src/tests/test_static_checks.py
       - name: Build
         run: uv build
-      # Check that basic features work and we didn't miss to include crucial files
-      - name: Smoke test (wheel) 3.12
-        run: uv run --python 3.12 --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
-      - name: Smoke test (source distribution) 3.12
-        run: uv run --python 3.12 --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
-      - name: Smoke test (wheel) 3.13
-        run: uv run --python 3.13 --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
-      - name: Smoke test (source distribution) 3.13
-        run: uv run --python 3.13 --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
-      - name: Smoke test (wheel)
-        run: uv run --isolated --no-project --with dist/*.whl src/tests/smoke_test.py
-      - name: Smoke test (source distribution)
-        run: uv run --isolated --no-project --with dist/*.tar.gz src/tests/smoke_test.py
       - name: Publish
         run: uv publish
