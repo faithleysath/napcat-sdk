@@ -11,7 +11,7 @@ from .GroupNoticeEvent import GroupNoticeEvent
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class GroupBanEvent(GroupNoticeEvent):
+    notice_type: Literal["group_ban"] = "group_ban"
     operator_id: int
     duration: int
     sub_type: Literal["ban", "lift_ban"]
-    notice_type: Literal["group_ban"] = "group_ban"
