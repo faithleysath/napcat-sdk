@@ -25,6 +25,7 @@ class NapCatClient:
         self._ws_ctx: ws_connect | None = None
         self._entered = False
         self._auto_iter_refs = 0
+        self._auto_iter_close_on_zero = False
         self._lifecycle_lock = asyncio.Lock()
 
         self.api = NapCatAPI(self)
@@ -105,9 +106,17 @@ class NapCatClient:
                     acquired_ref = True
                     try:
                         if self._auto_iter_refs == 1:
+                            # 记录“本轮引用计数从 0 到 1”时，生命周期是否由 __aiter__ 接管
+                            self._auto_iter_close_on_zero = not self._entered
+
+                        # 自动连接只看连接是否在运行。
+                        # 这样在 async with 作用域内断线后，再次迭代也会重建连接。
+                        if not self._connection_running():
                             await self.__aenter__()
                     except Exception:
                         self._auto_iter_refs -= 1
+                        if self._auto_iter_refs == 0:
+                            self._auto_iter_close_on_zero = False
                         acquired_ref = False
                         raise
 
@@ -119,7 +128,10 @@ class NapCatClient:
                     async with self._lifecycle_lock:
                         self._auto_iter_refs -= 1
                         if self._auto_iter_refs == 0:
-                            await self.__aexit__(None, None, None)
+                            should_close = self._auto_iter_close_on_zero
+                            self._auto_iter_close_on_zero = False
+                            if should_close:
+                                await self.__aexit__(None, None, None)
 
         return _iter()
 
