@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
+from ...utils import FromDictMixin
 from .GroupNoticeEvent import GroupNoticeEvent
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class GroupUploadFile:
+class GroupUploadFile(FromDictMixin):
     id: str
     name: str
     size: int
@@ -21,3 +22,9 @@ class GroupUploadFile:
 class GroupUploadNoticeEvent(GroupNoticeEvent):
     notice_type: Literal["group_upload"] = "group_upload"
     file: GroupUploadFile
+
+    @classmethod
+    def _from_dict(cls, data: dict[str, Any]) -> GroupUploadNoticeEvent:
+        if isinstance(data.get("file"), dict):
+            data["file"] = GroupUploadFile._from_dict(data["file"])
+        return super()._from_dict(data)

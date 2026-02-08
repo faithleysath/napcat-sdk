@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
+from ...utils import FromDictMixin
 from .GroupNoticeEvent import GroupNoticeEvent
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class MsgEmojiLike:
+class MsgEmojiLike(FromDictMixin):
     emoji_id: str
     count: int
 
@@ -22,3 +23,9 @@ class GroupMsgEmojiLikeEvent(GroupNoticeEvent):
     likes: list[MsgEmojiLike]
     is_add: bool
     message_seq: str | None = None
+
+    @classmethod
+    def _from_dict(cls, data: dict[str, Any]) -> GroupMsgEmojiLikeEvent:
+        if "likes" in data and isinstance(data["likes"], list):
+            data["likes"] = [MsgEmojiLike._from_dict(item) for item in data["likes"]]
+        return super()._from_dict(data)

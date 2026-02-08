@@ -45,7 +45,7 @@ So generated event classes must implement `_from_dict` when custom nested conver
 4.  **Mapping**: unknown / any -> Any
 
 **Import Strategy:**
-1.  **Standard Libs**: **DO NOT** import `dataclasses`, `typing`, or `__future__`. The wrapper script handles these.
+1.  **Standard/Shared Imports**: **DO NOT** import `dataclasses`, `typing`, `__future__`, or `FromDictMixin`. The wrapper script handles these.
 2.  **Local Imports**:
     -   If extends `BaseNoticeEvent` -> Add `from .base import NoticeEvent` at the top.
     -   If extends `xxxNoticeEvent` -> Add `from .xxxNoticeEvent import xxxNoticeEvent`.
@@ -53,6 +53,7 @@ So generated event classes must implement `_from_dict` when custom nested conver
 **Helper Structures (CRITICAL):**
 1.  **Interfaces**: If the TS file defines an `interface` (e.g., `GroupUploadFile`) used by the main class:
     -   Convert it into a separate `@dataclass`.
+    -   Helper dataclass should inherit `FromDictMixin` (it is already available in scope).
     -   Place it **BEFORE** the main event class.
 2.  **Types (Inline Strategy)**:
     -   If a field uses a defined `type` alias (e.g., `sub_type: GroupDecreaseSubType`), **do NOT** generate a separate Python type alias.
@@ -76,7 +77,10 @@ So generated event classes must implement `_from_dict` when custom nested conver
         -   `field: HelperDataclass` (payload is `dict`)
         -   `field: list[HelperDataclass]` (payload is `list[dict]`)
     -   If no nested helper conversion is needed, do not generate `_from_dict`.
-    -   When `_from_dict` is present, convert only those nested fields, keep others unchanged, then return `super()._from_dict(converted_payload)`.
+    -   When `_from_dict` is present, convert only those nested fields (prefer `HelperDataclass._from_dict(...)`), keep others unchanged, then return `super()._from_dict(converted_payload)`.
+5.  **Method annotations:**
+    -   Since `from __future__ import annotations` is already enabled, do NOT quote return types.
+    -   Example: use `-> GroupMsgEmojiLikeEvent`, NOT `-> "GroupMsgEmojiLikeEvent"`.
 
 **Output:**
 -   Return **ONLY** the valid Python code.
@@ -189,6 +193,7 @@ async def main():
             f.write("from __future__ import annotations\n")
             f.write("from dataclasses import dataclass\n")
             f.write("from typing import Literal, Any\n")
+            f.write("from ...utils import FromDictMixin\n")
 
             f.write("\n")
             f.write(code)
