@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncGenerator, Mapping
 from types import TracebackType
 from typing import Any, cast
@@ -20,14 +21,26 @@ class NapCatClient:
         self.ws_url = ws_url
         self.token = token
         self._conn = _existing_conn
+        self._has_external_conn = _existing_conn is not None
         self._ws_ctx: ws_connect | None = None
+        self._entered = False
+        self._auto_iter_refs = 0
+        self._lifecycle_lock = asyncio.Lock()
 
         self.api = NapCatAPI(self)
         self.self_id: int = -1  # 连接后更新
 
+    def _connection_running(self) -> bool:
+        return bool(self._conn and self._conn.is_running)
+
     async def __aenter__(self):
+        if self._entered and self._connection_running():
+            return self
+
         # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
-        if self._conn:
+        if self._has_external_conn:
+            if not self._conn:
+                raise ValueError("Invalid Client: Missing existing connection")
             await self._conn.__aenter__()
         # 如果是 Client 模式（主动连接），建立连接并包装
         elif self.ws_url:
@@ -38,6 +51,8 @@ class NapCatClient:
             await self._conn.__aenter__()
         else:
             raise ValueError("Invalid Client: No URL and no existing connection")
+
+        self._entered = True
         # 2. 获取自身 ID (增加容错处理)
         try:
             resp = await self.api.get_login_info()
@@ -55,14 +70,25 @@ class NapCatClient:
         exc_tb: TracebackType | None,
     ):
         # 级联关闭：Client -> Connection -> WebSocket
-        if self._conn:
-            await self._conn.__aexit__(exc_type, exc_val, exc_tb)
-        if self._ws_ctx:
-            await self._ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+        conn = self._conn
+        ws_ctx = self._ws_ctx
+
+        if conn:
+            await conn.__aexit__(exc_type, exc_val, exc_tb)
+        if ws_ctx:
+            await ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+
+        self._entered = False
+        if not self._has_external_conn:
+            self._conn = None
+        self._ws_ctx = None
 
     async def events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
             raise RuntimeError("Client not connected")
+        if not self._connection_running():
+            raise RuntimeError("Client not connected or already closed")
+
         async for event in self._conn.events():
             event = NapCatEvent.from_dict(event)
             object.__setattr__(event, "_client", self)
@@ -70,15 +96,30 @@ class NapCatClient:
 
     def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
         async def _iter() -> AsyncGenerator[NapCatEvent, None]:
-            should_manage_lifecycle = self._conn is None
+            should_manage_lifecycle = not self._has_external_conn
+            acquired_ref = False
+
             if should_manage_lifecycle:
-                await self.__aenter__()
+                async with self._lifecycle_lock:
+                    self._auto_iter_refs += 1
+                    acquired_ref = True
+                    try:
+                        if self._auto_iter_refs == 1:
+                            await self.__aenter__()
+                    except Exception:
+                        self._auto_iter_refs -= 1
+                        acquired_ref = False
+                        raise
+
             try:
                 async for event in self.events():
                     yield event
             finally:
-                if should_manage_lifecycle:
-                    await self.__aexit__(None, None, None)
+                if should_manage_lifecycle and acquired_ref:
+                    async with self._lifecycle_lock:
+                        self._auto_iter_refs -= 1
+                        if self._auto_iter_refs == 0:
+                            await self.__aexit__(None, None, None)
 
         return _iter()
 
