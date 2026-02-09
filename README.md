@@ -177,11 +177,11 @@ async def send_rich_media(client: NapCatClient, group_id: int):
 ```python
 async def managing_bot(client: NapCatClient):
     # 获取登录号信息
-    login_info = await client.api.get_login_info()
+    login_info = await client.get_login_info()
     print(f"当前登录: {login_info['nickname']}")
 
     # 获取群成员列表
-    members = await client.api.get_group_member_list(
+    members = await client.get_group_member_list(
         group_id=123456, 
         no_cache=True
     )

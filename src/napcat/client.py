@@ -5,13 +5,13 @@ from typing import Any, cast
 
 from websockets.asyncio.client import connect as ws_connect
 
-from .client_api import NapCatAPI
+from .client_api import NapCatAPIMixin
 from .connection import Connection
 from .types import NapCatEvent
 from .types.messages import Message
 
 
-class NapCatClient:
+class NapCatClient(NapCatAPIMixin):
     def __init__(
         self,
         ws_url: str | None = None,
@@ -26,8 +26,6 @@ class NapCatClient:
         self._entered = False
         self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
-
-        self.api = NapCatAPI(self)
         self.self_id: int = -1  # 连接后更新
 
     def _connection_running(self) -> bool:
@@ -73,8 +71,8 @@ class NapCatClient:
                 self._entered = True
                 # 获取自身 ID (增加容错处理)
                 try:
-                    resp = await self.api.get_login_info()
-                    self.self_id = resp['user_id']
+                    resp = await self.get_login_info()
+                    self.self_id = resp["user_id"]
                 except Exception as e:
                     print(f"Warning: Failed to get self_id: {e}")
                     self.self_id = -1
@@ -203,26 +201,6 @@ class NapCatClient:
         if isinstance(message, list):
             return [dict(segment) for segment in message]
         return dict(message)
-
-    async def send_private_msg(self, user_id: int, message: str | list[Message] | Message) -> int:
-        """
-        发送私聊消息，返回消息 ID
-        """
-        resp = await self.api.send_private_msg(
-            user_id=str(user_id),
-            message=message
-        )
-        return resp["message_id"]
-
-    async def send_group_msg(self, group_id: int, message: str | list[Message] | Message) -> int:
-        """
-        发送群消息，返回消息 ID
-        """
-        resp = await self.api.send_group_msg(
-            group_id=str(group_id),
-            message=message
-        )
-        return resp["message_id"]
 
 
     # --- 黑魔法区域 ---

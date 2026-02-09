@@ -128,33 +128,33 @@ await asyncio.gather(
 NapCatClient 提供了 `send_private_msg` 和 `send_group_msg` 方法来发送私聊消息和群消息：
 
 ```python
-# 发送私聊消息，返回消息 ID
-msg_id = await client.send_private_msg(
-    user_id=123456789,
+# 发送私聊消息，返回数据字典，包含消息 ID 等信息
+resp = await client.send_private_msg(
+    user_id="123456789",
     message="Hello from NapCat!"
 )
 
-# 发送群消息，返回消息 ID
-group_msg_id = await client.send_group_msg(
-    group_id=987654321,
+# 发送群消息，返回数据字典，包含消息 ID 等信息
+resp = await client.send_group_msg(
+    group_id="987654321",
     message="Hello, group!"
 )
+
+print(f"消息发送成功，消息 ID: {resp['message_id']}")
 ```
 
 ### API 调用
 
-NapCat-SDK 采用了 codegen 的方式根据上游 API 定义自动生成了 160+ API 调用方法，这些方法都定义在 NapCatClient.api 属性中，你可以通过 NapCatClient 实例来访问这些方法：
+NapCat-SDK 采用了 codegen 的方式根据上游 API 定义自动生成了 160+ API 调用方法，你可以通过 NapCatClient 实例来访问这些方法：
 
 ```python
-user_info = await client.api.get_login_info()
+user_info = await client.get_login_info()
 self_id = user_info["user_id"]
 ```
 
 api 方法的返回值通常是一个字典，包含了 API 调用的结果数据。得益于完善的 `TypedDict` 类型定义，你可以享受到完整的类型提示和自动补全功能，极大地提升了开发效率和代码质量。
 
-部分 api 方法会在 client 中进行包装，提供更友好的接口，例如 `send_private_msg` 和 `send_group_msg` 方法就是对底层 API 的包装，提供了更简洁的参数和返回值。你可以根据需要选择使用底层 API 方法或者包装后的方法。
-
-同时，NapCatClient 还实现了动态拦截方法调用的黑魔法，你可以直接通过 `client.api.method_name(a=..., b=...) ` 的方式来调用任何一个存在或不存在的 API 方法，只是后者会缺失类型提示。当sdk版本更新后，你无需变更任何代码就能享受到新增方法的类型检查。
+同时，NapCatClient 还实现了动态拦截方法调用的黑魔法，你可以直接通过 `client.method_name(...) ` 的方式来调用任何一个存在或不存在的 API 方法，只是会缺失类型提示。当sdk版本更新后，你无需变更任何代码就能享受到新增方法的类型检查。
 
 ```python
 # --- 黑魔法区域 ---

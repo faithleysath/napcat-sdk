@@ -456,7 +456,7 @@ def run_client_api_codegen(
     schemas_path: str | os.PathLike[str],
     output_path: str | os.PathLike[str],
 ) -> None:
-    """Generate src/napcat/client_api.py from openapi + schemas.py."""
+    """Generate src/napcat/client_api.py mixin from openapi + schemas.py."""
     script = str(script_path)
     openapi = str(openapi_path)
     schemas = str(schemas_path)
@@ -1471,7 +1471,7 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
             schemas_path=cfg.schemas_output_path,
             output_path=cfg.client_api_output_path,
         )
-        logger.info("✅ Wrote client API module to: %s", cfg.client_api_output_path)
+        logger.info("✅ Wrote client API mixin module to: %s", cfg.client_api_output_path)
 
     # Format with Ruff
     if cfg.format_with_ruff:

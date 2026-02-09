@@ -186,10 +186,11 @@ class PrivateMessageEvent(MessageEvent):
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        return await self._client.send_private_msg(
-            user_id=int(self.user_id),
+        resp = await self._client.send_private_msg(
+            user_id=str(self.user_id),
             message=message
         )
+        return resp["message_id"]
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -205,7 +206,8 @@ class GroupMessageEvent(MessageEvent):
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        return await self._client.send_group_msg(
-            group_id=self.group_id,
+        resp = await self._client.send_group_msg(
+            group_id=str(self.group_id),
             message=message
         )
+        return resp["message_id"]

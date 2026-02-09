@@ -14,10 +14,10 @@ NapCat-SDK 提供两种调用方式：
 所有 API 定义都被自动生成，并带有类型提示。
 
 ```python
-login_info = await client.api.get_login_info()
+login_info = await client.get_login_info()
 print(login_info["nickname"])
 
-members = await client.api.get_group_member_list(
+members = await client.get_group_member_list(
     group_id=123456,
     no_cache=True,
 )
@@ -58,7 +58,7 @@ await client.send_group_msg(
 
 ```python
 try:
-    await client.api.get_login_info()
+    await client.get_login_info()
 except RuntimeError as exc:
     logger.error("API 调用失败: %s", exc)
 ```

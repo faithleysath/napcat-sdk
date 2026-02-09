@@ -108,7 +108,10 @@ def build_docstring(
     if description:
         lines.extend(["", "        描述:"])
         for part in description.splitlines() or [description]:
-            lines.append(f"        {part}")
+            if part.strip() == "":
+                lines.append("")
+            else:
+                lines.append(f"        {part}")
 
     lines.extend(["", f"        标签: {tag or ''}"])
 
@@ -116,13 +119,19 @@ def build_docstring(
         lines.extend(["", "        请求示例:"])
         req_block = _format_json_block(request_example)
         for line in req_block.splitlines():
-            lines.append(f"        {line}")
+            if line.strip() == "":
+                lines.append("")
+            else:
+                lines.append(f"        {line}")
 
     if success_data_example is not None:
         lines.extend(["", "        成功响应 data 示例:"])
         resp_block = _format_json_block(success_data_example)
         for line in resp_block.splitlines():
-            lines.append(f"        {line}")
+            if line.strip() == "":
+                lines.append("")
+            else:
+                lines.append(f"        {line}")
 
     lines.append('        """')
     return "\n".join(lines)
@@ -212,7 +221,7 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
                 f"""
     async def {method_name}(self, payload: {payload_ann}) -> {response_ann}:
 {doc}
-        return await self._client.call_action({action!r}, payload)
+        return await self.call_action({action!r}, payload)
     """
             )
         elif request_schema:
@@ -222,7 +231,7 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
                     f"""
     async def {method_name}(self, **kwargs: Unpack[{request_type}]) -> {response_ann}:
 {doc}
-        return await self._client.call_action({action!r}, kwargs)
+        return await self.call_action({action!r}, kwargs)
     """
                 )
             else:
@@ -230,7 +239,7 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
                     f"""
     async def {method_name}(self, **kwargs: Any) -> {response_ann}:
 {doc}
-        return await self._client.call_action({action!r}, kwargs)
+        return await self.call_action({action!r}, kwargs)
     """
                 )
         else:
@@ -238,13 +247,13 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
                 f"""
     async def {method_name}(self, **kwargs: Any) -> {response_ann}:
 {doc}
-        return await self._client.call_action({action!r}, kwargs)
+        return await self.call_action({action!r}, kwargs)
     """
             )
 
-    typing_import = "from typing import Any, Protocol"
+    typing_import = "from typing import Any"
     if uses_unpack:
-        typing_import = "from typing import Any, Unpack, Protocol"
+        typing_import = "from typing import Any, Unpack"
 
     schemas_import = ""
     if imported_types:
@@ -260,19 +269,16 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
 from collections.abc import Mapping
 {typing_import}
 {schemas_import}
-# 定义一个 Protocol，避免循环导入 Client 类，同时保证类型提示
-class CallActionProtocol(Protocol):
-    async def call_action(self, action: str, params: Mapping[str, Any] | None = None) -> Any: ...
-
-
-class NapCatAPI:
+class NapCatAPIMixin:
     """
-    NapCat API 命名空间。
-    所有自动生成的方法都挂载于此，通过 client.api.xxx 调用。
+    NapCat API mixin。
+    所有自动生成的方法都混入 NapCatClient，通过 client.xxx 调用。
     """
 
-    def __init__(self, client: CallActionProtocol):
-        self._client = client
+    async def call_action(
+        self, action: str, params: Mapping[str, Any] | None = None
+    ) -> Any:
+        raise NotImplementedError
 
 {methods_code}
 '''

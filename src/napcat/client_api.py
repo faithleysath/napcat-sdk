@@ -2,7 +2,7 @@
 # 自动生成的文件。请勿直接修改。
 
 from collections.abc import Mapping
-from typing import Any, Protocol, Unpack
+from typing import Any, Unpack
 
 from .types.schemas import (
     ArkShareGroupPostRequest,
@@ -330,21 +330,16 @@ from .types.schemas import (
 )
 
 
-# 定义一个 Protocol，避免循环导入 Client 类，同时保证类型提示
-class CallActionProtocol(Protocol):
+class NapCatAPIMixin:
+    """
+    NapCat API mixin。
+    所有自动生成的方法都混入 NapCatClient，通过 client.xxx 调用。
+    """
+
     async def call_action(
         self, action: str, params: Mapping[str, Any] | None = None
-    ) -> Any: ...
-
-
-class NapCatAPI:
-    """
-    NapCat API 命名空间。
-    所有自动生成的方法都挂载于此，通过 client.api.xxx 调用。
-    """
-
-    def __init__(self, client: CallActionProtocol):
-        self._client = client
+    ) -> Any:
+        raise NotImplementedError
 
     async def clean_stream_temp_file(
         self, **kwargs: Unpack[CleanStreamTempFilePostRequest]
@@ -362,7 +357,7 @@ class NapCatAPI:
           "message": "success"
         }
         """
-        return await self._client.call_action("clean_stream_temp_file", kwargs)
+        return await self.call_action("clean_stream_temp_file", kwargs)
 
     async def download_file_stream(
         self, **kwargs: Unpack[DownloadFileStreamPostRequest]
@@ -388,7 +383,7 @@ class NapCatAPI:
           "file_size": 1024
         }
         """
-        return await self._client.call_action("download_file_stream", kwargs)
+        return await self.call_action("download_file_stream", kwargs)
 
     async def download_file_record_stream(
         self, **kwargs: Unpack[DownloadFileRecordStreamPostRequest]
@@ -408,7 +403,7 @@ class NapCatAPI:
           "file": "temp_record_path"
         }
         """
-        return await self._client.call_action("download_file_record_stream", kwargs)
+        return await self.call_action("download_file_record_stream", kwargs)
 
     async def download_file_image_stream(
         self, **kwargs: Unpack[DownloadFileImageStreamPostRequest]
@@ -428,7 +423,7 @@ class NapCatAPI:
           "file": "temp_image_path"
         }
         """
-        return await self._client.call_action("download_file_image_stream", kwargs)
+        return await self.call_action("download_file_image_stream", kwargs)
 
     async def test_download_stream(
         self, **kwargs: Unpack[TestDownloadStreamPostRequest]
@@ -448,7 +443,7 @@ class NapCatAPI:
           "success": true
         }
         """
-        return await self._client.call_action("test_download_stream", kwargs)
+        return await self.call_action("test_download_stream", kwargs)
 
     async def upload_file_stream(
         self, **kwargs: Unpack[UploadFileStreamPostRequest]
@@ -479,7 +474,7 @@ class NapCatAPI:
           "total_chunks": 1
         }
         """
-        return await self._client.call_action("upload_file_stream", kwargs)
+        return await self.call_action("upload_file_stream", kwargs)
 
     async def del_group_album_media(
         self, **kwargs: Unpack[DelGroupAlbumMediaPostRequest]
@@ -501,7 +496,7 @@ class NapCatAPI:
           "result": {}
         }
         """
-        return await self._client.call_action("del_group_album_media", kwargs)
+        return await self.call_action("del_group_album_media", kwargs)
 
     async def set_group_album_media_like(
         self, **kwargs: Unpack[SetGroupAlbumMediaLikePostRequest]
@@ -524,7 +519,7 @@ class NapCatAPI:
           "result": {}
         }
         """
-        return await self._client.call_action("set_group_album_media_like", kwargs)
+        return await self.call_action("set_group_album_media_like", kwargs)
 
     async def do_group_album_comment(
         self, **kwargs: Unpack[DoGroupAlbumCommentPostRequest]
@@ -547,7 +542,7 @@ class NapCatAPI:
           "result": {}
         }
         """
-        return await self._client.call_action("do_group_album_comment", kwargs)
+        return await self.call_action("do_group_album_comment", kwargs)
 
     async def get_group_album_media_list(
         self, **kwargs: Unpack[GetGroupAlbumMediaListPostRequest]
@@ -573,7 +568,7 @@ class NapCatAPI:
           ]
         }
         """
-        return await self._client.call_action("get_group_album_media_list", kwargs)
+        return await self.call_action("get_group_album_media_list", kwargs)
 
     async def get_qun_album_list(
         self, **kwargs: Unpack[GetQunAlbumListPostRequest]
@@ -598,7 +593,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_qun_album_list", kwargs)
+        return await self.call_action("get_qun_album_list", kwargs)
 
     async def upload_image_to_qun_album(
         self, **kwargs: Unpack[UploadImageToQunAlbumPostRequest]
@@ -621,7 +616,7 @@ class NapCatAPI:
           "result": null
         }
         """
-        return await self._client.call_action("upload_image_to_qun_album", kwargs)
+        return await self.call_action("upload_image_to_qun_album", kwargs)
 
     async def set_group_todo(
         self, **kwargs: Unpack[SetGroupTodoPostRequest]
@@ -640,7 +635,7 @@ class NapCatAPI:
           "message_id": "123456789"
         }
         """
-        return await self._client.call_action("set_group_todo", kwargs)
+        return await self.call_action("set_group_todo", kwargs)
 
     async def get_group_detail_info(
         self, **kwargs: Unpack[GetGroupDetailInfoPostRequest]
@@ -666,7 +661,7 @@ class NapCatAPI:
           "max_member_count": 500
         }
         """
-        return await self._client.call_action("get_group_detail_info", kwargs)
+        return await self.call_action("get_group_detail_info", kwargs)
 
     async def set_group_kick_members(
         self, **kwargs: Unpack[SetGroupKickMembersPostRequest]
@@ -688,7 +683,7 @@ class NapCatAPI:
           "reject_add_request": false
         }
         """
-        return await self._client.call_action("set_group_kick_members", kwargs)
+        return await self.call_action("set_group_kick_members", kwargs)
 
     async def set_group_add_option(
         self, **kwargs: Unpack[SetGroupAddOptionPostRequest]
@@ -704,7 +699,7 @@ class NapCatAPI:
           "add_type": 1
         }
         """
-        return await self._client.call_action("set_group_add_option", kwargs)
+        return await self.call_action("set_group_add_option", kwargs)
 
     async def set_group_robot_add_option(
         self, **kwargs: Unpack[SetGroupRobotAddOptionPostRequest]
@@ -719,7 +714,7 @@ class NapCatAPI:
           "group_id": "123456"
         }
         """
-        return await self._client.call_action("set_group_robot_add_option", kwargs)
+        return await self.call_action("set_group_robot_add_option", kwargs)
 
     async def set_group_search(
         self, **kwargs: Unpack[SetGroupSearchPostRequest]
@@ -734,7 +729,7 @@ class NapCatAPI:
           "group_id": "123456"
         }
         """
-        return await self._client.call_action("set_group_search", kwargs)
+        return await self.call_action("set_group_search", kwargs)
 
     async def set_doubt_friends_add_request(
         self, **kwargs: Unpack[SetDoubtFriendsAddRequestPostRequest]
@@ -753,7 +748,7 @@ class NapCatAPI:
           "approve": true
         }
         """
-        return await self._client.call_action("set_doubt_friends_add_request", kwargs)
+        return await self.call_action("set_doubt_friends_add_request", kwargs)
 
     async def get_doubt_friends_add_request(
         self, **kwargs: Unpack[GetDoubtFriendsAddRequestPostRequest]
@@ -783,7 +778,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_doubt_friends_add_request", kwargs)
+        return await self.call_action("get_doubt_friends_add_request", kwargs)
 
     async def set_friend_remark(
         self, **kwargs: Unpack[SetFriendRemarkPostRequest]
@@ -802,7 +797,7 @@ class NapCatAPI:
           "remark": "测试备注"
         }
         """
-        return await self._client.call_action("set_friend_remark", kwargs)
+        return await self.call_action("set_friend_remark", kwargs)
 
     async def get_rkey(
         self, **kwargs: Unpack[GetRkeyPostRequest]
@@ -825,7 +820,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_rkey", kwargs)
+        return await self.call_action("get_rkey", kwargs)
 
     async def get_rkey_server(
         self, **kwargs: Unpack[GetRkeyServerPostRequest]
@@ -846,7 +841,7 @@ class NapCatAPI:
           "name": "NapCat 4"
         }
         """
-        return await self._client.call_action("get_rkey_server", kwargs)
+        return await self.call_action("get_rkey_server", kwargs)
 
     async def set_group_remark(
         self, **kwargs: Unpack[SetGroupRemarkPostRequest]
@@ -865,7 +860,7 @@ class NapCatAPI:
           "remark": "测试群备注"
         }
         """
-        return await self._client.call_action("set_group_remark", kwargs)
+        return await self.call_action("set_group_remark", kwargs)
 
     async def get_group_info_ex(
         self, **kwargs: Unpack[GetGroupInfoExPostRequest]
@@ -880,7 +875,7 @@ class NapCatAPI:
           "group_id": "123456"
         }
         """
-        return await self._client.call_action("get_group_info_ex", kwargs)
+        return await self.call_action("get_group_info_ex", kwargs)
 
     async def fetch_emoji_like(
         self, **kwargs: Unpack[FetchEmojiLikePostRequest]
@@ -915,7 +910,7 @@ class NapCatAPI:
           "errMsg": ""
         }
         """
-        return await self._client.call_action("fetch_emoji_like", kwargs)
+        return await self.call_action("fetch_emoji_like", kwargs)
 
     async def get_emoji_likes(
         self, **kwargs: Unpack[GetEmojiLikesPostRequest]
@@ -941,7 +936,7 @@ class NapCatAPI:
           ]
         }
         """
-        return await self._client.call_action("get_emoji_likes", kwargs)
+        return await self.call_action("get_emoji_likes", kwargs)
 
     async def get_file(
         self, **kwargs: Unpack[GetFilePostRequest]
@@ -967,7 +962,7 @@ class NapCatAPI:
           "file_name": "test.jpg"
         }
         """
-        return await self._client.call_action("get_file", kwargs)
+        return await self.call_action("get_file", kwargs)
 
     async def set_qq_profile(
         self, **kwargs: Unpack[SetQqProfilePostRequest]
@@ -986,7 +981,7 @@ class NapCatAPI:
           "personal_note": "个性签名"
         }
         """
-        return await self._client.call_action("set_qq_profile", kwargs)
+        return await self.call_action("set_qq_profile", kwargs)
 
     async def ArkShareGroup(
         self, **kwargs: Unpack[ArkShareGroupPostRequest]
@@ -1007,7 +1002,7 @@ class NapCatAPI:
         成功响应 data 示例:
         "{\"app\": \"com.tencent.structmsg\", ...}"
         """
-        return await self._client.call_action("ArkShareGroup", kwargs)
+        return await self.call_action("ArkShareGroup", kwargs)
 
     async def ArkSharePeer(
         self, **kwargs: Unpack[ArkSharePeerPostRequest]
@@ -1031,7 +1026,7 @@ class NapCatAPI:
           "ark": "..."
         }
         """
-        return await self._client.call_action("ArkSharePeer", kwargs)
+        return await self.call_action("ArkSharePeer", kwargs)
 
     async def send_group_ark_share(
         self, **kwargs: Unpack[SendGroupArkSharePostRequest]
@@ -1052,7 +1047,7 @@ class NapCatAPI:
         成功响应 data 示例:
         "{\"app\": \"com.tencent.structmsg\", ...}"
         """
-        return await self._client.call_action("send_group_ark_share", kwargs)
+        return await self.call_action("send_group_ark_share", kwargs)
 
     async def send_ark_share(
         self, **kwargs: Unpack[SendArkSharePostRequest]
@@ -1076,7 +1071,7 @@ class NapCatAPI:
           "ark": "..."
         }
         """
-        return await self._client.call_action("send_ark_share", kwargs)
+        return await self.call_action("send_ark_share", kwargs)
 
     async def create_collection(
         self, **kwargs: Unpack[CreateCollectionPostRequest]
@@ -1098,7 +1093,7 @@ class NapCatAPI:
           "errMsg": ""
         }
         """
-        return await self._client.call_action("create_collection", kwargs)
+        return await self.call_action("create_collection", kwargs)
 
     async def set_self_longnick(
         self, **kwargs: Unpack[SetSelfLongnickPostRequest]
@@ -1116,7 +1111,7 @@ class NapCatAPI:
           "longNick": "个性签名"
         }
         """
-        return await self._client.call_action("set_self_longnick", kwargs)
+        return await self.call_action("set_self_longnick", kwargs)
 
     async def forward_friend_single_msg(
         self, **kwargs: Unpack[ForwardFriendSingleMsgPostRequest]
@@ -1135,7 +1130,7 @@ class NapCatAPI:
           "group_id": "123456"
         }
         """
-        return await self._client.call_action("forward_friend_single_msg", kwargs)
+        return await self.call_action("forward_friend_single_msg", kwargs)
 
     async def forward_group_single_msg(
         self, **kwargs: Unpack[ForwardGroupSingleMsgPostRequest]
@@ -1154,7 +1149,7 @@ class NapCatAPI:
           "group_id": "123456"
         }
         """
-        return await self._client.call_action("forward_group_single_msg", kwargs)
+        return await self.call_action("forward_group_single_msg", kwargs)
 
     async def mark_group_msg_as_read(
         self, **kwargs: Unpack[MarkGroupMsgAsReadPostRequest]
@@ -1172,7 +1167,7 @@ class NapCatAPI:
           "message_id": 12345
         }
         """
-        return await self._client.call_action("mark_group_msg_as_read", kwargs)
+        return await self.call_action("mark_group_msg_as_read", kwargs)
 
     async def mark_private_msg_as_read(
         self, **kwargs: Unpack[MarkPrivateMsgAsReadPostRequest]
@@ -1190,7 +1185,7 @@ class NapCatAPI:
           "message_id": 12345
         }
         """
-        return await self._client.call_action("mark_private_msg_as_read", kwargs)
+        return await self.call_action("mark_private_msg_as_read", kwargs)
 
     async def set_qq_avatar(
         self, **kwargs: Unpack[SetQqAvatarPostRequest]
@@ -1208,7 +1203,7 @@ class NapCatAPI:
           "file": "base64://..."
         }
         """
-        return await self._client.call_action("set_qq_avatar", kwargs)
+        return await self.call_action("set_qq_avatar", kwargs)
 
     async def translate_en2zh(
         self, **kwargs: Unpack[TranslateEn2zhPostRequest]
@@ -1235,7 +1230,7 @@ class NapCatAPI:
           ]
         }
         """
-        return await self._client.call_action("translate_en2zh", kwargs)
+        return await self.call_action("translate_en2zh", kwargs)
 
     async def get_group_root_files(
         self, **kwargs: Unpack[GetGroupRootFilesPostRequest]
@@ -1259,7 +1254,7 @@ class NapCatAPI:
           "folders": []
         }
         """
-        return await self._client.call_action("get_group_root_files", kwargs)
+        return await self.call_action("get_group_root_files", kwargs)
 
     async def set_group_sign(
         self, **kwargs: Unpack[SetGroupSignPostRequest]
@@ -1274,7 +1269,7 @@ class NapCatAPI:
           "group_id": "123456789"
         }
         """
-        return await self._client.call_action("set_group_sign", kwargs)
+        return await self.call_action("set_group_sign", kwargs)
 
     async def send_group_sign(
         self, **kwargs: Unpack[SendGroupSignPostRequest]
@@ -1289,7 +1284,7 @@ class NapCatAPI:
           "group_id": "123456789"
         }
         """
-        return await self._client.call_action("send_group_sign", kwargs)
+        return await self.call_action("send_group_sign", kwargs)
 
     async def get_clientkey(
         self, **kwargs: Unpack[GetClientkeyPostRequest]
@@ -1310,7 +1305,7 @@ class NapCatAPI:
           "clientkey": "abcdef123456"
         }
         """
-        return await self._client.call_action("get_clientkey", kwargs)
+        return await self.call_action("get_clientkey", kwargs)
 
     async def move_group_file(
         self, **kwargs: Unpack[MoveGroupFilePostRequest]
@@ -1333,7 +1328,7 @@ class NapCatAPI:
           "ok": true
         }
         """
-        return await self._client.call_action("move_group_file", kwargs)
+        return await self.call_action("move_group_file", kwargs)
 
     async def rename_group_file(
         self, **kwargs: Unpack[RenameGroupFilePostRequest]
@@ -1356,7 +1351,7 @@ class NapCatAPI:
           "ok": true
         }
         """
-        return await self._client.call_action("rename_group_file", kwargs)
+        return await self.call_action("rename_group_file", kwargs)
 
     async def trans_group_file(
         self, **kwargs: Unpack[TransGroupFilePostRequest]
@@ -1377,7 +1372,7 @@ class NapCatAPI:
           "ok": true
         }
         """
-        return await self._client.call_action("trans_group_file", kwargs)
+        return await self.call_action("trans_group_file", kwargs)
 
     async def send_like(
         self, **kwargs: Unpack[SendLikePostRequest]
@@ -1396,7 +1391,7 @@ class NapCatAPI:
           "times": 10
         }
         """
-        return await self._client.call_action("send_like", kwargs)
+        return await self.call_action("send_like", kwargs)
 
     async def get_msg(self, **kwargs: Unpack[GetMsgPostRequest]) -> GetMsgPostResponse:
         """
@@ -1425,7 +1420,7 @@ class NapCatAPI:
           "message": "hello"
         }
         """
-        return await self._client.call_action("get_msg", kwargs)
+        return await self.call_action("get_msg", kwargs)
 
     async def get_login_info(
         self, **kwargs: Unpack[GetLoginInfoPostRequest]
@@ -1447,7 +1442,7 @@ class NapCatAPI:
           "nickname": "机器人"
         }
         """
-        return await self._client.call_action("get_login_info", kwargs)
+        return await self.call_action("get_login_info", kwargs)
 
     async def get_friend_list(
         self, **kwargs: Unpack[GetFriendListPostRequest]
@@ -1472,7 +1467,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_friend_list", kwargs)
+        return await self.call_action("get_friend_list", kwargs)
 
     async def get_group_list(
         self, **kwargs: Unpack[GetGroupListPostRequest]
@@ -1498,7 +1493,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_group_list", kwargs)
+        return await self.call_action("get_group_list", kwargs)
 
     async def get_group_info(
         self, **kwargs: Unpack[GetGroupInfoPostRequest]
@@ -1524,7 +1519,7 @@ class NapCatAPI:
           "max_member_count": 500
         }
         """
-        return await self._client.call_action("get_group_info", kwargs)
+        return await self.call_action("get_group_info", kwargs)
 
     async def get_group_member_list(
         self, **kwargs: Unpack[GetGroupMemberListPostRequest]
@@ -1553,7 +1548,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_group_member_list", kwargs)
+        return await self.call_action("get_group_member_list", kwargs)
 
     async def get_group_member_info(
         self, **kwargs: Unpack[GetGroupMemberInfoPostRequest]
@@ -1581,7 +1576,7 @@ class NapCatAPI:
           "role": "member"
         }
         """
-        return await self._client.call_action("get_group_member_info", kwargs)
+        return await self.call_action("get_group_member_info", kwargs)
 
     async def send_group_msg(
         self, **kwargs: Unpack[SendGroupMsgPostRequest]
@@ -1605,7 +1600,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_group_msg", kwargs)
+        return await self.call_action("send_group_msg", kwargs)
 
     async def send_private_msg(
         self, **kwargs: Unpack[SendPrivateMsgPostRequest]
@@ -1629,7 +1624,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_private_msg", kwargs)
+        return await self.call_action("send_private_msg", kwargs)
 
     async def send_msg(
         self, **kwargs: Unpack[SendMsgPostRequest]
@@ -1654,7 +1649,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_msg", kwargs)
+        return await self.call_action("send_msg", kwargs)
 
     async def delete_msg(
         self, **kwargs: Unpack[DeleteMsgPostRequest]
@@ -1672,7 +1667,7 @@ class NapCatAPI:
           "message_id": 12345
         }
         """
-        return await self._client.call_action("delete_msg", kwargs)
+        return await self.call_action("delete_msg", kwargs)
 
     async def set_group_add_request(
         self, **kwargs: Unpack[SetGroupAddRequestPostRequest]
@@ -1692,7 +1687,7 @@ class NapCatAPI:
           "approve": true
         }
         """
-        return await self._client.call_action("set_group_add_request", kwargs)
+        return await self.call_action("set_group_add_request", kwargs)
 
     async def set_friend_add_request(
         self, **kwargs: Unpack[SetFriendAddRequestPostRequest]
@@ -1712,7 +1707,7 @@ class NapCatAPI:
           "remark": "新朋友"
         }
         """
-        return await self._client.call_action("set_friend_add_request", kwargs)
+        return await self.call_action("set_friend_add_request", kwargs)
 
     async def set_group_leave(
         self, **kwargs: Unpack[SetGroupLeavePostRequest]
@@ -1731,7 +1726,7 @@ class NapCatAPI:
           "is_dismiss": false
         }
         """
-        return await self._client.call_action("set_group_leave", kwargs)
+        return await self.call_action("set_group_leave", kwargs)
 
     async def get_version_info(
         self, **kwargs: Unpack[GetVersionInfoPostRequest]
@@ -1754,7 +1749,7 @@ class NapCatAPI:
           "app_version": "1.0.0"
         }
         """
-        return await self._client.call_action("get_version_info", kwargs)
+        return await self.call_action("get_version_info", kwargs)
 
     async def can_send_record(
         self, **kwargs: Unpack[CanSendRecordPostRequest]
@@ -1775,7 +1770,7 @@ class NapCatAPI:
           "yes": true
         }
         """
-        return await self._client.call_action("can_send_record", kwargs)
+        return await self.call_action("can_send_record", kwargs)
 
     async def can_send_image(
         self, **kwargs: Unpack[CanSendImagePostRequest]
@@ -1796,7 +1791,7 @@ class NapCatAPI:
           "yes": true
         }
         """
-        return await self._client.call_action("can_send_image", kwargs)
+        return await self.call_action("can_send_image", kwargs)
 
     async def get_status(
         self, **kwargs: Unpack[GetStatusPostRequest]
@@ -1819,7 +1814,7 @@ class NapCatAPI:
           "stat": {}
         }
         """
-        return await self._client.call_action("get_status", kwargs)
+        return await self.call_action("get_status", kwargs)
 
     async def set_group_whole_ban(
         self, **kwargs: Unpack[SetGroupWholeBanPostRequest]
@@ -1838,7 +1833,7 @@ class NapCatAPI:
           "enable": true
         }
         """
-        return await self._client.call_action("set_group_whole_ban", kwargs)
+        return await self.call_action("set_group_whole_ban", kwargs)
 
     async def set_group_ban(
         self, **kwargs: Unpack[SetGroupBanPostRequest]
@@ -1858,7 +1853,7 @@ class NapCatAPI:
           "duration": 1800
         }
         """
-        return await self._client.call_action("set_group_ban", kwargs)
+        return await self.call_action("set_group_ban", kwargs)
 
     async def set_group_kick(
         self, **kwargs: Unpack[SetGroupKickPostRequest]
@@ -1878,7 +1873,7 @@ class NapCatAPI:
           "reject_add_request": false
         }
         """
-        return await self._client.call_action("set_group_kick", kwargs)
+        return await self.call_action("set_group_kick", kwargs)
 
     async def set_group_admin(
         self, **kwargs: Unpack[SetGroupAdminPostRequest]
@@ -1898,7 +1893,7 @@ class NapCatAPI:
           "enable": true
         }
         """
-        return await self._client.call_action("set_group_admin", kwargs)
+        return await self.call_action("set_group_admin", kwargs)
 
     async def set_group_name(
         self, **kwargs: Unpack[SetGroupNamePostRequest]
@@ -1917,7 +1912,7 @@ class NapCatAPI:
           "group_name": "新群名"
         }
         """
-        return await self._client.call_action("set_group_name", kwargs)
+        return await self.call_action("set_group_name", kwargs)
 
     async def set_group_card(
         self, **kwargs: Unpack[SetGroupCardPostRequest]
@@ -1937,7 +1932,7 @@ class NapCatAPI:
           "card": "新名片"
         }
         """
-        return await self._client.call_action("set_group_card", kwargs)
+        return await self.call_action("set_group_card", kwargs)
 
     async def get_image(
         self, **kwargs: Unpack[GetImagePostRequest]
@@ -1961,7 +1956,7 @@ class NapCatAPI:
           "url": "http://..."
         }
         """
-        return await self._client.call_action("get_image", kwargs)
+        return await self.call_action("get_image", kwargs)
 
     async def get_record(
         self, **kwargs: Unpack[GetRecordPostRequest]
@@ -1986,7 +1981,7 @@ class NapCatAPI:
           "url": "http://..."
         }
         """
-        return await self._client.call_action("get_record", kwargs)
+        return await self.call_action("get_record", kwargs)
 
     async def set_msg_emoji_like(
         self, **kwargs: Unpack[SetMsgEmojiLikePostRequest]
@@ -2008,7 +2003,7 @@ class NapCatAPI:
           "result": true
         }
         """
-        return await self._client.call_action("set_msg_emoji_like", kwargs)
+        return await self.call_action("set_msg_emoji_like", kwargs)
 
     async def get_cookies(
         self, **kwargs: Unpack[GetCookiesPostRequest]
@@ -2032,7 +2027,7 @@ class NapCatAPI:
           "bkn": "123456789"
         }
         """
-        return await self._client.call_action("get_cookies", kwargs)
+        return await self.call_action("get_cookies", kwargs)
 
     async def set_online_status(
         self, **kwargs: Unpack[SetOnlineStatusPostRequest]
@@ -2261,7 +2256,7 @@ class NapCatAPI:
           "battery_status": 100
         }
         """
-        return await self._client.call_action("set_online_status", kwargs)
+        return await self.call_action("set_online_status", kwargs)
 
     async def get_robot_uin_range(
         self, **kwargs: Unpack[GetRobotUinRangePostRequest]
@@ -2282,7 +2277,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_robot_uin_range", kwargs)
+        return await self.call_action("get_robot_uin_range", kwargs)
 
     async def get_friends_with_category(
         self, **kwargs: Unpack[GetFriendsWithCategoryPostRequest]
@@ -2305,7 +2300,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_friends_with_category", kwargs)
+        return await self.call_action("get_friends_with_category", kwargs)
 
     async def delete_friend(
         self, **kwargs: Unpack[DeleteFriendPostRequest]
@@ -2323,7 +2318,7 @@ class NapCatAPI:
           "user_id": "123456789"
         }
         """
-        return await self._client.call_action("delete_friend", kwargs)
+        return await self.call_action("delete_friend", kwargs)
 
     async def check_url_safely(
         self, **kwargs: Unpack[CheckUrlSafelyPostRequest]
@@ -2346,7 +2341,7 @@ class NapCatAPI:
           "level": 1
         }
         """
-        return await self._client.call_action("check_url_safely", kwargs)
+        return await self.call_action("check_url_safely", kwargs)
 
     async def get_online_clients(
         self, **kwargs: Unpack[GetOnlineClientsPostRequest]
@@ -2364,7 +2359,7 @@ class NapCatAPI:
           "no_cache": false
         }
         """
-        return await self._client.call_action("get_online_clients", kwargs)
+        return await self.call_action("get_online_clients", kwargs)
 
     async def ocr_image(
         self, **kwargs: Unpack[OcrImagePostRequest]
@@ -2392,7 +2387,7 @@ class NapCatAPI:
           ]
         }
         """
-        return await self._client.call_action("ocr_image", kwargs)
+        return await self.call_action("ocr_image", kwargs)
 
     async def dot_ocr_image(
         self, **kwargs: Unpack[FieldOcrImagePostRequest]
@@ -2420,7 +2415,7 @@ class NapCatAPI:
           ]
         }
         """
-        return await self._client.call_action(".ocr_image", kwargs)
+        return await self.call_action(".ocr_image", kwargs)
 
     async def get_group_honor_info(
         self, **kwargs: Unpack[GetGroupHonorInfoPostRequest]
@@ -2446,7 +2441,7 @@ class NapCatAPI:
           "talkative_list": []
         }
         """
-        return await self._client.call_action("get_group_honor_info", kwargs)
+        return await self.call_action("get_group_honor_info", kwargs)
 
     async def _send_group_notice(
         self, **kwargs: Unpack[FieldSendGroupNoticePostRequest]
@@ -2466,7 +2461,7 @@ class NapCatAPI:
           "image": "base64://..."
         }
         """
-        return await self._client.call_action("_send_group_notice", kwargs)
+        return await self.call_action("_send_group_notice", kwargs)
 
     async def _get_group_notice(
         self, **kwargs: Unpack[FieldGetGroupNoticePostRequest]
@@ -2497,7 +2492,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("_get_group_notice", kwargs)
+        return await self.call_action("_get_group_notice", kwargs)
 
     async def get_essence_msg_list(
         self, **kwargs: Unpack[GetEssenceMsgListPostRequest]
@@ -2528,7 +2523,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_essence_msg_list", kwargs)
+        return await self.call_action("get_essence_msg_list", kwargs)
 
     async def get_group_at_all_remain(
         self, **kwargs: Unpack[GetGroupAtAllRemainPostRequest]
@@ -2553,7 +2548,7 @@ class NapCatAPI:
           "remain_at_all_count_for_self": 10
         }
         """
-        return await self._client.call_action("get_group_at_all_remain", kwargs)
+        return await self.call_action("get_group_at_all_remain", kwargs)
 
     async def send_forward_msg(
         self, **kwargs: Unpack[SendForwardMsgPostRequest]
@@ -2577,7 +2572,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_forward_msg", kwargs)
+        return await self.call_action("send_forward_msg", kwargs)
 
     async def send_group_forward_msg(
         self, **kwargs: Unpack[SendGroupForwardMsgPostRequest]
@@ -2598,7 +2593,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_group_forward_msg", kwargs)
+        return await self.call_action("send_group_forward_msg", kwargs)
 
     async def send_private_forward_msg(
         self, **kwargs: Unpack[SendPrivateForwardMsgPostRequest]
@@ -2619,7 +2614,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_private_forward_msg", kwargs)
+        return await self.call_action("send_private_forward_msg", kwargs)
 
     async def get_stranger_info(
         self, **kwargs: Unpack[GetStrangerInfoPostRequest]
@@ -2644,7 +2639,7 @@ class NapCatAPI:
           "sex": "unknown"
         }
         """
-        return await self._client.call_action("get_stranger_info", kwargs)
+        return await self.call_action("get_stranger_info", kwargs)
 
     async def download_file(
         self, **kwargs: Unpack[DownloadFilePostRequest]
@@ -2669,7 +2664,7 @@ class NapCatAPI:
           "file": "/path/to/downloaded/file"
         }
         """
-        return await self._client.call_action("download_file", kwargs)
+        return await self.call_action("download_file", kwargs)
 
     async def get_guild_list(
         self, **kwargs: Unpack[GetGuildListPostRequest]
@@ -2693,7 +2688,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_guild_list", kwargs)
+        return await self.call_action("get_guild_list", kwargs)
 
     async def mark_msg_as_read(
         self, **kwargs: Unpack[MarkMsgAsReadPostRequest]
@@ -2711,7 +2706,7 @@ class NapCatAPI:
           "message_id": 12345
         }
         """
-        return await self._client.call_action("mark_msg_as_read", kwargs)
+        return await self.call_action("mark_msg_as_read", kwargs)
 
     async def upload_group_file(
         self, **kwargs: Unpack[UploadGroupFilePostRequest]
@@ -2736,7 +2731,7 @@ class NapCatAPI:
           "file_id": "file_uuid_123"
         }
         """
-        return await self._client.call_action("upload_group_file", kwargs)
+        return await self.call_action("upload_group_file", kwargs)
 
     async def get_group_msg_history(
         self, **kwargs: Unpack[GetGroupMsgHistoryPostRequest]
@@ -2761,7 +2756,7 @@ class NapCatAPI:
           "messages": []
         }
         """
-        return await self._client.call_action("get_group_msg_history", kwargs)
+        return await self.call_action("get_group_msg_history", kwargs)
 
     async def get_forward_msg(
         self, **kwargs: Unpack[GetForwardMsgPostRequest]
@@ -2784,7 +2779,7 @@ class NapCatAPI:
           "messages": []
         }
         """
-        return await self._client.call_action("get_forward_msg", kwargs)
+        return await self.call_action("get_forward_msg", kwargs)
 
     async def get_friend_msg_history(
         self, **kwargs: Unpack[GetFriendMsgHistoryPostRequest]
@@ -2809,7 +2804,7 @@ class NapCatAPI:
           "messages": []
         }
         """
-        return await self._client.call_action("get_friend_msg_history", kwargs)
+        return await self.call_action("get_friend_msg_history", kwargs)
 
     async def dot_handle_quick_operation(
         self, **kwargs: Unpack[FieldHandleQuickOperationPostRequest]
@@ -2828,7 +2823,7 @@ class NapCatAPI:
           "operation": {}
         }
         """
-        return await self._client.call_action(".handle_quick_operation", kwargs)
+        return await self.call_action(".handle_quick_operation", kwargs)
 
     async def get_group_ignored_notifies(
         self, **kwargs: Unpack[GetGroupIgnoredNotifiesPostRequest]
@@ -2851,7 +2846,7 @@ class NapCatAPI:
           "join_requests": []
         }
         """
-        return await self._client.call_action("get_group_ignored_notifies", kwargs)
+        return await self.call_action("get_group_ignored_notifies", kwargs)
 
     async def delete_essence_msg(
         self, **kwargs: Unpack[DeleteEssenceMsgPostRequest]
@@ -2869,7 +2864,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("delete_essence_msg", kwargs)
+        return await self.call_action("delete_essence_msg", kwargs)
 
     async def set_essence_msg(
         self, **kwargs: Unpack[SetEssenceMsgPostRequest]
@@ -2887,7 +2882,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("set_essence_msg", kwargs)
+        return await self.call_action("set_essence_msg", kwargs)
 
     async def get_recent_contact(
         self, **kwargs: Unpack[GetRecentContactPostRequest]
@@ -2916,7 +2911,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_recent_contact", kwargs)
+        return await self.call_action("get_recent_contact", kwargs)
 
     async def _mark_all_as_read(
         self, **kwargs: Unpack[FieldMarkAllAsReadPostRequest]
@@ -2929,7 +2924,7 @@ class NapCatAPI:
         请求示例:
         {}
         """
-        return await self._client.call_action("_mark_all_as_read", kwargs)
+        return await self.call_action("_mark_all_as_read", kwargs)
 
     async def get_profile_like(
         self, **kwargs: Unpack[GetProfileLikePostRequest]
@@ -2965,7 +2960,7 @@ class NapCatAPI:
           }
         }
         """
-        return await self._client.call_action("get_profile_like", kwargs)
+        return await self.call_action("get_profile_like", kwargs)
 
     async def set_group_portrait(
         self, **kwargs: Unpack[SetGroupPortraitPostRequest]
@@ -2990,7 +2985,7 @@ class NapCatAPI:
           "errMsg": ""
         }
         """
-        return await self._client.call_action("set_group_portrait", kwargs)
+        return await self.call_action("set_group_portrait", kwargs)
 
     async def fetch_custom_face(
         self, **kwargs: Unpack[FetchCustomFacePostRequest]
@@ -3010,7 +3005,7 @@ class NapCatAPI:
           "http://example.com/face1.png"
         ]
         """
-        return await self._client.call_action("fetch_custom_face", kwargs)
+        return await self.call_action("fetch_custom_face", kwargs)
 
     async def upload_private_file(
         self, **kwargs: Unpack[UploadPrivateFilePostRequest]
@@ -3035,7 +3030,7 @@ class NapCatAPI:
           "file_id": "file_uuid_123"
         }
         """
-        return await self._client.call_action("upload_private_file", kwargs)
+        return await self.call_action("upload_private_file", kwargs)
 
     async def get_guild_service_profile(
         self, **kwargs: Unpack[GetGuildServiceProfilePostRequest]
@@ -3060,7 +3055,7 @@ class NapCatAPI:
           "guild_display_id": "123"
         }
         """
-        return await self._client.call_action("get_guild_service_profile", kwargs)
+        return await self.call_action("get_guild_service_profile", kwargs)
 
     async def _get_model_show(
         self, **kwargs: Unpack[FieldGetModelShowPostRequest]
@@ -3083,7 +3078,7 @@ class NapCatAPI:
           "variants": []
         }
         """
-        return await self._client.call_action("_get_model_show", kwargs)
+        return await self.call_action("_get_model_show", kwargs)
 
     async def _set_model_show(
         self, **kwargs: Unpack[FieldSetModelShowPostRequest]
@@ -3102,7 +3097,7 @@ class NapCatAPI:
           "model_show": "iPhone 13"
         }
         """
-        return await self._client.call_action("_set_model_show", kwargs)
+        return await self.call_action("_set_model_show", kwargs)
 
     async def set_input_status(
         self, **kwargs: Unpack[SetInputStatusPostRequest]
@@ -3118,7 +3113,7 @@ class NapCatAPI:
           "event_type": 1
         }
         """
-        return await self._client.call_action("set_input_status", kwargs)
+        return await self.call_action("set_input_status", kwargs)
 
     async def get_csrf_token(
         self, **kwargs: Unpack[GetCsrfTokenPostRequest]
@@ -3139,7 +3134,7 @@ class NapCatAPI:
           "token": 123456789
         }
         """
-        return await self._client.call_action("get_csrf_token", kwargs)
+        return await self.call_action("get_csrf_token", kwargs)
 
     async def get_credentials(
         self, **kwargs: Unpack[GetCredentialsPostRequest]
@@ -3163,7 +3158,7 @@ class NapCatAPI:
           "token": 123456789
         }
         """
-        return await self._client.call_action("get_credentials", kwargs)
+        return await self.call_action("get_credentials", kwargs)
 
     async def _del_group_notice(
         self, **kwargs: Unpack[FieldDelGroupNoticePostRequest]
@@ -3182,7 +3177,7 @@ class NapCatAPI:
           "notice_id": "notice_123"
         }
         """
-        return await self._client.call_action("_del_group_notice", kwargs)
+        return await self.call_action("_del_group_notice", kwargs)
 
     async def delete_group_file(
         self, **kwargs: Unpack[DeleteGroupFilePostRequest]
@@ -3201,7 +3196,7 @@ class NapCatAPI:
           "file_id": "file_uuid_123"
         }
         """
-        return await self._client.call_action("delete_group_file", kwargs)
+        return await self.call_action("delete_group_file", kwargs)
 
     async def create_group_file_folder(
         self, **kwargs: Unpack[CreateGroupFileFolderPostRequest]
@@ -3226,7 +3221,7 @@ class NapCatAPI:
           "groupItem": {}
         }
         """
-        return await self._client.call_action("create_group_file_folder", kwargs)
+        return await self.call_action("create_group_file_folder", kwargs)
 
     async def delete_group_folder(
         self, **kwargs: Unpack[DeleteGroupFolderPostRequest]
@@ -3245,7 +3240,7 @@ class NapCatAPI:
           "folder_id": "folder_uuid_123"
         }
         """
-        return await self._client.call_action("delete_group_folder", kwargs)
+        return await self.call_action("delete_group_folder", kwargs)
 
     async def get_group_file_system_info(
         self, **kwargs: Unpack[GetGroupFileSystemInfoPostRequest]
@@ -3271,7 +3266,7 @@ class NapCatAPI:
           "total_space": 10737418240
         }
         """
-        return await self._client.call_action("get_group_file_system_info", kwargs)
+        return await self.call_action("get_group_file_system_info", kwargs)
 
     async def get_group_files_by_folder(
         self, **kwargs: Unpack[GetGroupFilesByFolderPostRequest]
@@ -3296,7 +3291,7 @@ class NapCatAPI:
           "folders": []
         }
         """
-        return await self._client.call_action("get_group_files_by_folder", kwargs)
+        return await self.call_action("get_group_files_by_folder", kwargs)
 
     async def nc_get_packet_status(
         self, **kwargs: Unpack[NcGetPacketStatusPostRequest]
@@ -3312,7 +3307,7 @@ class NapCatAPI:
         请求示例:
         {}
         """
-        return await self._client.call_action("nc_get_packet_status", kwargs)
+        return await self.call_action("nc_get_packet_status", kwargs)
 
     async def set_restart(
         self, **kwargs: Unpack[SetRestartPostRequest]
@@ -3328,7 +3323,7 @@ class NapCatAPI:
         请求示例:
         {}
         """
-        return await self._client.call_action("set_restart", kwargs)
+        return await self.call_action("set_restart", kwargs)
 
     async def group_poke(
         self, **kwargs: Unpack[GroupPokePostRequest]
@@ -3346,7 +3341,7 @@ class NapCatAPI:
           "user_id": "123456789"
         }
         """
-        return await self._client.call_action("group_poke", kwargs)
+        return await self.call_action("group_poke", kwargs)
 
     async def friend_poke(
         self, **kwargs: Unpack[FriendPokePostRequest]
@@ -3364,7 +3359,7 @@ class NapCatAPI:
           "user_id": "123456789"
         }
         """
-        return await self._client.call_action("friend_poke", kwargs)
+        return await self.call_action("friend_poke", kwargs)
 
     async def nc_get_user_status(
         self, **kwargs: Unpack[NcGetUserStatusPostRequest]
@@ -3385,7 +3380,7 @@ class NapCatAPI:
           "ext_status": 0
         }
         """
-        return await self._client.call_action("nc_get_user_status", kwargs)
+        return await self.call_action("nc_get_user_status", kwargs)
 
     async def nc_get_rkey(
         self, **kwargs: Unpack[NcGetRkeyPostRequest]
@@ -3406,7 +3401,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("nc_get_rkey", kwargs)
+        return await self.call_action("nc_get_rkey", kwargs)
 
     async def set_group_special_title(
         self, **kwargs: Unpack[SetGroupSpecialTitlePostRequest]
@@ -3426,7 +3421,7 @@ class NapCatAPI:
           "special_title": "头衔"
         }
         """
-        return await self._client.call_action("set_group_special_title", kwargs)
+        return await self.call_action("set_group_special_title", kwargs)
 
     async def set_diy_online_status(
         self, **kwargs: Unpack[SetDiyOnlineStatusPostRequest]
@@ -3449,7 +3444,7 @@ class NapCatAPI:
         成功响应 data 示例:
         ""
         """
-        return await self._client.call_action("set_diy_online_status", kwargs)
+        return await self.call_action("set_diy_online_status", kwargs)
 
     async def get_group_shut_list(
         self, **kwargs: Unpack[GetGroupShutListPostRequest]
@@ -3473,7 +3468,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_group_shut_list", kwargs)
+        return await self.call_action("get_group_shut_list", kwargs)
 
     async def get_group_file_url(
         self, **kwargs: Unpack[GetGroupFileUrlPostRequest]
@@ -3498,7 +3493,7 @@ class NapCatAPI:
           "url": "http://..."
         }
         """
-        return await self._client.call_action("get_group_file_url", kwargs)
+        return await self.call_action("get_group_file_url", kwargs)
 
     async def get_mini_app_ark(
         self, payload: GetMiniAppArkPostRequest
@@ -3524,7 +3519,7 @@ class NapCatAPI:
           }
         }
         """
-        return await self._client.call_action("get_mini_app_ark", payload)
+        return await self.call_action("get_mini_app_ark", payload)
 
     async def get_ai_record(
         self, **kwargs: Unpack[GetAiRecordPostRequest]
@@ -3547,7 +3542,7 @@ class NapCatAPI:
         成功响应 data 示例:
         "http://example.com/ai_voice.silk"
         """
-        return await self._client.call_action("get_ai_record", kwargs)
+        return await self.call_action("get_ai_record", kwargs)
 
     async def send_group_ai_record(
         self, **kwargs: Unpack[SendGroupAiRecordPostRequest]
@@ -3567,7 +3562,7 @@ class NapCatAPI:
           "text": "你好"
         }
         """
-        return await self._client.call_action("send_group_ai_record", kwargs)
+        return await self.call_action("send_group_ai_record", kwargs)
 
     async def get_ai_characters(
         self, **kwargs: Unpack[GetAiCharactersPostRequest]
@@ -3599,7 +3594,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_ai_characters", kwargs)
+        return await self.call_action("get_ai_characters", kwargs)
 
     async def send_packet(
         self, **kwargs: Unpack[SendPacketPostRequest]
@@ -3619,7 +3614,7 @@ class NapCatAPI:
         成功响应 data 示例:
         "123456"
         """
-        return await self._client.call_action("send_packet", kwargs)
+        return await self.call_action("send_packet", kwargs)
 
     async def send_poke(
         self, **kwargs: Unpack[SendPokePostRequest]
@@ -3637,7 +3632,7 @@ class NapCatAPI:
           "user_id": "123456789"
         }
         """
-        return await self._client.call_action("send_poke", kwargs)
+        return await self.call_action("send_poke", kwargs)
 
     async def get_group_system_msg(
         self, **kwargs: Unpack[GetGroupSystemMsgPostRequest]
@@ -3662,7 +3657,7 @@ class NapCatAPI:
           "join_requests": []
         }
         """
-        return await self._client.call_action("get_group_system_msg", kwargs)
+        return await self.call_action("get_group_system_msg", kwargs)
 
     async def bot_exit(
         self, **kwargs: Unpack[BotExitPostRequest]
@@ -3675,7 +3670,7 @@ class NapCatAPI:
         请求示例:
         {}
         """
-        return await self._client.call_action("bot_exit", kwargs)
+        return await self.call_action("bot_exit", kwargs)
 
     async def click_inline_keyboard_button(
         self, **kwargs: Unpack[ClickInlineKeyboardButtonPostRequest]
@@ -3694,7 +3689,7 @@ class NapCatAPI:
           "msg_seq": "10086"
         }
         """
-        return await self._client.call_action("click_inline_keyboard_button", kwargs)
+        return await self.call_action("click_inline_keyboard_button", kwargs)
 
     async def get_private_file_url(
         self, **kwargs: Unpack[GetPrivateFileUrlPostRequest]
@@ -3718,7 +3713,7 @@ class NapCatAPI:
           "url": "http://..."
         }
         """
-        return await self._client.call_action("get_private_file_url", kwargs)
+        return await self.call_action("get_private_file_url", kwargs)
 
     async def get_unidirectional_friend_list(
         self, **kwargs: Unpack[GetUnidirectionalFriendListPostRequest]
@@ -3742,7 +3737,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_unidirectional_friend_list", kwargs)
+        return await self.call_action("get_unidirectional_friend_list", kwargs)
 
     async def clean_cache(
         self, **kwargs: Unpack[CleanCachePostRequest]
@@ -3758,7 +3753,7 @@ class NapCatAPI:
         请求示例:
         {}
         """
-        return await self._client.call_action("clean_cache", kwargs)
+        return await self.call_action("clean_cache", kwargs)
 
     async def get_group_ignore_add_request(
         self, **kwargs: Unpack[GetGroupIgnoreAddRequestPostRequest]
@@ -3786,7 +3781,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_group_ignore_add_request", kwargs)
+        return await self.call_action("get_group_ignore_add_request", kwargs)
 
     async def get_collection_list(
         self, **kwargs: Unpack[GetCollectionListPostRequest]
@@ -3855,7 +3850,7 @@ class NapCatAPI:
           }
         }
         """
-        return await self._client.call_action("get_collection_list", kwargs)
+        return await self.call_action("get_collection_list", kwargs)
 
     async def create_flash_task(
         self, **kwargs: Unpack[CreateFlashTaskPostRequest]
@@ -3876,7 +3871,7 @@ class NapCatAPI:
           "task_id": "task_123"
         }
         """
-        return await self._client.call_action("create_flash_task", kwargs)
+        return await self.call_action("create_flash_task", kwargs)
 
     async def get_flash_file_list(
         self, **kwargs: Unpack[GetFlashFileListPostRequest]
@@ -3899,7 +3894,7 @@ class NapCatAPI:
           }
         ]
         """
-        return await self._client.call_action("get_flash_file_list", kwargs)
+        return await self.call_action("get_flash_file_list", kwargs)
 
     async def get_flash_file_url(
         self, **kwargs: Unpack[GetFlashFileUrlPostRequest]
@@ -3919,7 +3914,7 @@ class NapCatAPI:
           "url": "http://example.com/flash.jpg"
         }
         """
-        return await self._client.call_action("get_flash_file_url", kwargs)
+        return await self.call_action("get_flash_file_url", kwargs)
 
     async def send_flash_msg(
         self, **kwargs: Unpack[SendFlashMsgPostRequest]
@@ -3940,7 +3935,7 @@ class NapCatAPI:
           "message_id": 123456
         }
         """
-        return await self._client.call_action("send_flash_msg", kwargs)
+        return await self.call_action("send_flash_msg", kwargs)
 
     async def get_share_link(
         self, **kwargs: Unpack[GetShareLinkPostRequest]
@@ -3958,7 +3953,7 @@ class NapCatAPI:
         成功响应 data 示例:
         "http://example.com/share"
         """
-        return await self._client.call_action("get_share_link", kwargs)
+        return await self.call_action("get_share_link", kwargs)
 
     async def get_fileset_info(
         self, **kwargs: Unpack[GetFilesetInfoPostRequest]
@@ -3979,7 +3974,7 @@ class NapCatAPI:
           "file_list": []
         }
         """
-        return await self._client.call_action("get_fileset_info", kwargs)
+        return await self.call_action("get_fileset_info", kwargs)
 
     async def get_online_file_msg(
         self, **kwargs: Unpack[GetOnlineFileMsgPostRequest]
@@ -3994,7 +3989,7 @@ class NapCatAPI:
           "user_id": "123456789"
         }
         """
-        return await self._client.call_action("get_online_file_msg", kwargs)
+        return await self.call_action("get_online_file_msg", kwargs)
 
     async def send_online_file(
         self, **kwargs: Unpack[SendOnlineFilePostRequest]
@@ -4011,7 +4006,7 @@ class NapCatAPI:
           "file_name": "test.txt"
         }
         """
-        return await self._client.call_action("send_online_file", kwargs)
+        return await self.call_action("send_online_file", kwargs)
 
     async def send_online_folder(
         self, **kwargs: Unpack[SendOnlineFolderPostRequest]
@@ -4027,7 +4022,7 @@ class NapCatAPI:
           "folder_path": "C:\\path\\to\\folder"
         }
         """
-        return await self._client.call_action("send_online_folder", kwargs)
+        return await self.call_action("send_online_folder", kwargs)
 
     async def receive_online_file(
         self, **kwargs: Unpack[ReceiveOnlineFilePostRequest]
@@ -4044,7 +4039,7 @@ class NapCatAPI:
           "save_path": "C:\\save"
         }
         """
-        return await self._client.call_action("receive_online_file", kwargs)
+        return await self.call_action("receive_online_file", kwargs)
 
     async def refuse_online_file(
         self, **kwargs: Unpack[RefuseOnlineFilePostRequest]
@@ -4060,7 +4055,7 @@ class NapCatAPI:
           "msg_id": "123"
         }
         """
-        return await self._client.call_action("refuse_online_file", kwargs)
+        return await self.call_action("refuse_online_file", kwargs)
 
     async def cancel_online_file(
         self, **kwargs: Unpack[CancelOnlineFilePostRequest]
@@ -4076,7 +4071,7 @@ class NapCatAPI:
           "msg_id": "123"
         }
         """
-        return await self._client.call_action("cancel_online_file", kwargs)
+        return await self.call_action("cancel_online_file", kwargs)
 
     async def download_fileset(
         self, **kwargs: Unpack[DownloadFilesetPostRequest]
@@ -4091,7 +4086,7 @@ class NapCatAPI:
           "fileset_id": "set_123"
         }
         """
-        return await self._client.call_action("download_fileset", kwargs)
+        return await self.call_action("download_fileset", kwargs)
 
     async def get_fileset_id(
         self, **kwargs: Unpack[GetFilesetIdPostRequest]
@@ -4111,4 +4106,4 @@ class NapCatAPI:
           "fileset_id": "set_123"
         }
         """
-        return await self._client.call_action("get_fileset_id", kwargs)
+        return await self.call_action("get_fileset_id", kwargs)

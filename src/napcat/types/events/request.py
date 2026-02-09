@@ -38,13 +38,13 @@ class FriendRequestEvent(RequestEvent):
         """同意好友请求"""
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        await self._client.api.set_friend_add_request(flag=self.flag, approve=True, remark=remark)
+        await self._client.set_friend_add_request(flag=self.flag, approve=True, remark=remark)
 
     async def reject(self) -> None:
         """拒绝好友请求"""
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        await self._client.api.set_friend_add_request(flag=self.flag, approve=False)
+        await self._client.set_friend_add_request(flag=self.flag, approve=False)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -61,7 +61,7 @@ class GroupRequestEvent(RequestEvent):
         """同意入群/邀请请求"""
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        await self._client.api.set_group_add_request(
+        await self._client.set_group_add_request(
             flag=self.flag,
             approve=True
         )
@@ -70,7 +70,7 @@ class GroupRequestEvent(RequestEvent):
         """拒绝入群/邀请请求"""
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-        await self._client.api.set_group_add_request(
+        await self._client.set_group_add_request(
             flag=self.flag,
             approve=False,
             reason=reason
