@@ -101,7 +101,7 @@ class ReverseWebSocketServer:
                         asyncio.gather(*self._active_tasks, return_exceptions=True),
                         timeout=self.shutdown_timeout
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(f"Some connections did not close within {self.shutdown_timeout}s")
                 self._active_tasks.clear()
 
