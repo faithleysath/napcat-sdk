@@ -40,7 +40,7 @@
 | :---: | :---: |
 | ![API Completion](https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/docs/img/api-completion.gif) | ![Native Dev](https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/docs/img/native-dev.gif) |
 
-> 👆 真正的 **140+ API** 全量类型覆盖，每一次按键都有 IDE 的守护。
+> 👆 真正的 **160+ API** 全量类型覆盖，每一次按键都有 IDE 的守护。
 
 ---
 
