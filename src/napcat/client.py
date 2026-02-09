@@ -145,7 +145,7 @@ class NapCatClient:
                 if exc_type is None:
                     raise cleanup_errors[0]
 
-    async def events(self) -> AsyncGenerator[NapCatEvent, None]:
+    async def _events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
             raise RuntimeError("Client not connected")
         if not self._connection_running():
@@ -159,12 +159,12 @@ class NapCatClient:
     def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
         async def _iter() -> AsyncGenerator[NapCatEvent, None]:
             if self._has_external_conn:
-                async for event in self.events():
+                async for event in self._events():
                     yield event
                 return
 
             async with self:
-                async for event in self.events():
+                async for event in self._events():
                     yield event
 
         return _iter()
