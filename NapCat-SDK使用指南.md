@@ -286,3 +286,126 @@ async def handler(client: NapCatClient):
 
 1. 不捕获异常：首次断连后，`async for` 退出；下一轮循环会在已关闭连接上抛出 `RuntimeError`，然后 `handler` 被异常结束。
 2. 捕获并吞掉异常继续循环：会在无效连接上反复重试，可能导致空转（CPU 占用升高）和日志刷屏。
+
+
+## 事件与消息模型
+
+前面我们已经讲了如何建立连接以及接收事件：
+
+```python
+async for event in client:
+    ...
+```
+
+接下来需要理解的是：`event` 到底是什么、消息内容如何表示、以及怎么优雅地回复。
+
+### 事件类型分发
+
+NapCat-SDK 会把上游事件反序列化为强类型对象。最常见的是消息事件：
+
+- `PrivateMessageEvent`：私聊消息
+- `GroupMessageEvent`：群消息
+
+同时还包含请求类、通知类、元事件等类型，例如：
+
+- `FriendRequestEvent` / `GroupRequestEvent`
+- `NoticeEvent`（及其子类）
+- `MetaEvent`（如心跳）
+
+建议使用 `isinstance` 或 `match` 做分发：
+
+```python
+from napcat import (
+    PrivateMessageEvent,
+    GroupMessageEvent,
+    FriendRequestEvent,
+    MetaEvent,
+)
+
+async for event in client:
+    if isinstance(event, PrivateMessageEvent):
+        ...
+    elif isinstance(event, GroupMessageEvent):
+        ...
+    elif isinstance(event, FriendRequestEvent):
+        ...
+    elif isinstance(event, MetaEvent):
+        ...
+```
+
+### 事件对象与上下文
+
+每个事件对象都会带有本次事件的上下文信息，并且可通过 `event.client` 拿到当前连接对应的 `NapCatClient` 实例。
+
+这意味着你既可以：
+
+- 在循环外直接使用 `client.send_*` 主动发消息
+- 也可以在事件处理里通过 `event.client` 调用 API
+
+```python
+async for event in client:
+    # event.client 与当前 client 指向同一个连接上下文
+    me = await event.client.get_login_info()
+    ...
+```
+
+### 消息段（MessageSegment）
+
+NapCat-SDK 使用“消息段”来表达富文本消息，而不是让你手动拼 CQ 码。
+
+常见消息段包括：
+
+- `Text`
+- `At`
+- `Image`
+- `Reply`
+- `Record` / `Video` 等
+
+例如发送一条“@ + 文本 + 图片”的群消息：
+
+```python
+from napcat import Text, At, Image
+
+message = [
+    At(qq="123456"),
+    Text(text=" 来看这张图"),
+    Image(file="https://example.com/image.png"),
+]
+
+await client.send_group_msg(group_id="987654321", message=message)
+```
+
+你也可以直接传字符串：
+
+```python
+await client.send_private_msg(user_id="123456789", message="Hello")
+```
+
+### `event.reply(...)` 与 `client.send_*` 的区别
+
+对于消息事件，推荐优先使用 `event.reply(...)` 做“就地回复”。
+
+```python
+from napcat import GroupMessageEvent
+
+async for event in client:
+    if isinstance(event, GroupMessageEvent):
+        await event.reply("收到你的消息了")
+```
+
+二者区别可以简单理解为：
+
+- `event.reply(...)`：基于当前事件上下文回复（语义更清晰）
+- `client.send_private_msg(...)` / `client.send_group_msg(...)`：主动向任意目标发送（更通用）
+
+如果你的逻辑是“收到什么就回什么”，`event.reply(...)` 往往更简洁。
+
+### 类型提示带来的收益
+
+因为事件和消息段都提供了良好的类型定义，你会获得：
+
+- 更完整的自动补全
+- 更早的类型错误发现
+- 更清晰的事件处理代码结构
+
+这也是推荐使用具体事件类型（如 `GroupMessageEvent`）而不是直接操作原始字典的核心原因。
