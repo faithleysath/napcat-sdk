@@ -169,6 +169,31 @@ def __getattr__(self, item: str):
     return dynamic_api_call
 ```
 
+### 异常处理
+
+由于网络波动、权限不足或参数错误，API 调用可能会失败。SDK 使用原生异常来表示错误：
+
+1. **逻辑错误 (`RuntimeError`)**: 当 API 返回非 `ok` 状态或 `retcode != 0` 时抛出。
+2. **网络超时 (`TimeoutError`)**: 默认 10 秒超时。
+3. **连接断开 (`ConnectionError`)**: 连接意外断开时调用 API 抛出。
+
+```python
+import asyncio
+
+try:
+    await client.send_private_msg(
+        user_id="123456", 
+        message="Hello"
+    )
+except RuntimeError as e:
+    # 比如对方拒收消息、被禁言等
+    print(f"API 调用失败: {e}")
+except asyncio.TimeoutError:
+    print("API 调用超时")
+except ConnectionError:
+    print("连接已断开")
+```
+
 ## ReverseWebSocketServer
 
 `ReverseWebSocketServer` 用于 **Server 模式（反向连接）**，也就是 NapCat 主动连到你的程序。
