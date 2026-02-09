@@ -157,13 +157,10 @@ class MessageEvent(NapCatEvent):
     async def reply(self, message: str | list[Message] | Message, at: bool = False) -> int:
         if self._client is None:
             raise RuntimeError("Event not bound to a client")
-
         if isinstance(message, str):
             message = Text(text=message)
-
         if not isinstance(message, list):
             message = [message]
-
         segments: list[Message] = [Reply(id=str(self.message_id))]
 
         if at:

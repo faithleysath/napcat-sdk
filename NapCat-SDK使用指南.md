@@ -315,23 +315,24 @@ NapCat-SDK 会把上游事件反序列化为强类型对象。最常见的是消
 建议使用 `isinstance` 或 `match` 做分发：
 
 ```python
-from napcat import (
-    PrivateMessageEvent,
-    GroupMessageEvent,
-    FriendRequestEvent,
-    MetaEvent,
-)
-
 async for event in client:
-    if isinstance(event, PrivateMessageEvent):
-        ...
-    elif isinstance(event, GroupMessageEvent):
-        ...
-    elif isinstance(event, FriendRequestEvent):
-        ...
-    elif isinstance(event, MetaEvent):
-        ...
+    match event:
+        case GroupMessageEvent():
+            await event.reply("收到群消息了")
+        case PrivateMessageEvent():
+            await event.reply("收到私聊消息了")
+        case _:
+            print(f"其他事件：{event}")
+
+    if isinstance(event, GroupMessageEvent):
+        await event.reply("收到群消息了")
+    elif isinstance(event, PrivateMessageEvent):
+        await event.reply("收到私聊消息了")
+    else:
+        print(f"其他事件：{event}")
 ```
+
+> 所有事件都可以从 `napcat` 模块中导入，例如 `from napcat import GroupMessageEvent`
 
 ### 事件对象与上下文
 
@@ -395,17 +396,8 @@ async for event in client:
 
 二者区别可以简单理解为：
 
-- `event.reply(...)`：基于当前事件上下文回复（语义更清晰）
+- `event.reply(...)`：基于当前事件上下文做回复，SDK 会自动帮你填充目标 ID（如 user_id / group_id）和 Reply 消息段。
 - `client.send_private_msg(...)` / `client.send_group_msg(...)`：主动向任意目标发送（更通用）
 
 如果你的逻辑是“收到什么就回什么”，`event.reply(...)` 往往更简洁。
 
-### 类型提示带来的收益
-
-因为事件和消息段都提供了良好的类型定义，你会获得：
-
-- 更完整的自动补全
-- 更早的类型错误发现
-- 更清晰的事件处理代码结构
-
-这也是推荐使用具体事件类型（如 `GroupMessageEvent`）而不是直接操作原始字典的核心原因。
