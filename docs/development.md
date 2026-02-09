@@ -11,7 +11,7 @@ icon: lucide/wrench
 项目使用 [uv](https://github.com/astral-sh/uv) 管理依赖：
 
 ```bash
-git clone https://github.com/faithleysath/napcat-sdk.git
+git clone --recursive https://github.com/faithleysath/napcat-sdk.git
 cd napcat-sdk
 uv sync
 ```
@@ -33,7 +33,7 @@ uv run scripts/schema-codegen.py
 ## 运行测试
 
 ```bash
-uv run pytest src/tests -m "not static" -q
+uv run pytest src/tests -q
 ```
 
 ## 提交规范建议
