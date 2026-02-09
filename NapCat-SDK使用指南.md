@@ -91,7 +91,7 @@ async for event in client:
 
 # 2. 或者使用海象运算符在 async for 循环中直接创建client实例
 
-async for event in (client := NapCatClient()):
+async for event in (client := NapCatClient(ws_url="ws://xxx", token="your_token")):
     ...
 
 # 3. 或者通过event.client来访问
@@ -119,7 +119,7 @@ await asyncio.gather(
 )
 ```
 
-在这个例子中，多个协程同时使用 async for 来接收事件，NapCatClient 会将事件广播给所有的迭代器，因此每个事件都会被所有的协程接收到。
+在这个例子中，多个协程同时使用 async for 来接收事件，NapCatClient 会将事件广播给所有的迭代器，因此每个事件都会被所有的协程接收到（如果某个协程消费过慢，其可能会丢弃最旧事件）。
 
 同时，NapCatClient 内部实现了引用计数，确保在所有迭代器都被销毁后才会真正关闭连接，因此你不需要担心连接被过早关闭的问题。
 
