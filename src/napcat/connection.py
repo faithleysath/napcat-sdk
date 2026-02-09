@@ -24,6 +24,11 @@ class Connection:
         self._closed = asyncio.Event()
 
     async def __aenter__(self):
+        # 幂等保护：如果已经在运行，直接返回
+        if self._task is not None and not self._task.done():
+            return self
+        # 重置 _closed 事件（支持重复进入）
+        self._closed.clear()
         self._task = asyncio.create_task(self._loop())
         return self
 
@@ -40,7 +45,17 @@ class Connection:
         await self.close()
 
     async def close(self):
-        if self._task and not self._task.done():
+        # 如果 _loop 从未启动，直接设置 _closed 并返回
+        if self._task is None:
+            self._closed.set()
+            try:
+                await self.ws.close()
+            except Exception:
+                pass
+            return
+
+        # 正常关闭路径
+        if not self._task.done():
             self._task.cancel()
         try:
             await self.ws.close()

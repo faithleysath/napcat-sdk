@@ -47,33 +47,54 @@ class NapCatClient:
                 self._entered = True
                 return self
 
+            # 用于跟踪已打开的资源，便于异常时回滚
+            ws_ctx_entered = False
+            conn_entered = False
+
             try:
                 # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
                 if self._has_external_conn:
                     if not self._conn:
                         raise ValueError("Invalid Client: Missing existing connection")
                     await self._conn.__aenter__()
+                    conn_entered = True
                 # 如果是 Client 模式（主动连接），建立连接并包装
                 elif self.ws_url:
                     headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
                     self._ws_ctx = ws_connect(self.ws_url, additional_headers=headers)
                     ws = await self._ws_ctx.__aenter__()
+                    ws_ctx_entered = True
                     self._conn = Connection(ws)
                     await self._conn.__aenter__()
+                    conn_entered = True
                 else:
                     raise ValueError("Invalid Client: No URL and no existing connection")
 
                 self._entered = True
-                # 2. 获取自身 ID (增加容错处理)
+                # 获取自身 ID (增加容错处理)
                 try:
                     resp = await self.api.get_login_info()
                     self.self_id = resp['user_id']
-
                 except Exception as e:
                     print(f"Warning: Failed to get self_id: {e}")
                     self.self_id = -1
                 return self
             except Exception:
+                # 异常时回滚已打开的资源
+                if conn_entered and self._conn:
+                    try:
+                        await self._conn.__aexit__(None, None, None)
+                    except Exception:
+                        pass
+                if ws_ctx_entered and self._ws_ctx:
+                    try:
+                        await self._ws_ctx.__aexit__(None, None, None)
+                    except Exception:
+                        pass
+                # 清理状态
+                if not self._has_external_conn:
+                    self._conn = None
+                self._ws_ctx = None
                 self._context_refs -= 1
                 if self._context_refs == 0:
                     self._entered = False
