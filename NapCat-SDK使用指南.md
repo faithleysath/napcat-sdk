@@ -169,3 +169,120 @@ def __getattr__(self, item: str):
     return dynamic_api_call
 ```
 
+## ReverseWebSocketServer
+
+`ReverseWebSocketServer` 用于 **Server 模式（反向连接）**，也就是 NapCat 主动连到你的程序。
+
+```python
+class ReverseWebSocketServer:
+    def __init__(
+        self,
+        handler: Callable[[NapCatClient], Awaitable[None]],
+        host: str = "0.0.0.0",
+        port: int = 8080,
+        token: str | None = None,
+        shutdown_timeout: float = 5.0,
+    ):
+```
+
+- `handler`: 每个新连接会触发一次，参数是一个独立的 `NapCatClient`
+- `host` / `port`: 监听地址和端口
+- `token`: 鉴权 token，要求请求头为 `Authorization: Bearer <token>`
+- `shutdown_timeout`: 关闭服务时等待连接结束的超时时间
+
+### 基本使用
+
+```python
+import asyncio
+from napcat import ReverseWebSocketServer, NapCatClient, GroupMessageEvent
+
+async def handler(client: NapCatClient):
+    # 每个连接都会获得一个独立 client
+    print(f"Bot Connected: self_id={client.self_id}")
+
+    async for event in client:
+        if isinstance(event, GroupMessageEvent):
+            await event.reply("Server 模式已收到消息")
+
+async def main():
+    server = ReverseWebSocketServer(
+        handler=handler,
+        host="0.0.0.0",
+        port=8080,
+        token="your_token",
+    )
+    await server.run_forever()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### 生命周期管理
+
+`ReverseWebSocketServer` 同样支持异步上下文管理器：
+
+```python
+async with ReverseWebSocketServer(handler, host="0.0.0.0", port=8080, token="your_token"):
+    await asyncio.Event().wait()
+```
+
+或者用 `run_forever()` 配合 `stop()`：
+
+```python
+server = ReverseWebSocketServer(handler, token="your_token")
+
+# 在其他协程或信号处理器中调用 server.stop() 后，run_forever() 会退出
+await server.run_forever()
+```
+
+### Server 模式下的 NapCatClient 连接语义
+
+在 Server 模式中，`handler` 收到的 `client` 是这样构造出来的：
+
+- `client = NapCatClient(_existing_conn=conn)`
+- 这个 `client` 不携带 `ws_url` / `token`
+- 它的连接对象由外部注入（`Connection(ws)`）
+
+因此在这个模式下：
+
+- `async for event in client` **不会**自动建立连接
+- `async for` 结束时也**不会**自动关闭连接
+- 连接的开启和关闭由 `ReverseWebSocketServer` 在 `handler` 外层统一管理
+
+也就是当 `handler` 退出后，外层的 `async with client` 会触发退出逻辑并关闭连接。核心代码如下：
+
+```python
+# 2. 创建连接对象并追踪任务
+conn = Connection(ws)
+client = NapCatClient(_existing_conn=conn)
+try:
+    async with client:
+        await self.handler(client)
+```
+
+### 多连接与关闭行为
+
+- 每条连接都会创建独立的 `NapCatClient`，互不影响
+- handler 中对 `client` 的用法与 Client 模式基本一致（`async for event in client`、`client.send_*` 等）
+- 调用 `server.close()`（或退出 `async with`）时，服务端会取消活跃连接任务并等待其结束（等待时长受 `shutdown_timeout` 控制）
+
+### 连接意外关闭时会发生什么
+
+当连接因为网络波动、NapCat 重启等原因意外关闭时，`async for event in client` 会正常结束并退出循环，随后 `handler` 自然返回。
+
+在 Server 模式中，**不要**在 `handler` 里把 `async for` 套在 `while True` 外层，例如：
+
+```python
+# 不推荐（Server 模式）
+async def handler(client: NapCatClient):
+    while True:
+        async for event in client:
+            ...
+```
+
+正确做法是让 `handler` 在断开后结束，把“重连”交给 NapCat 端。NapCat 重新连上来时，`ReverseWebSocketServer` 会创建新的连接并再次调用你的 `handler`。
+
+如果你在 Server 模式里坚持使用 `while True`，通常会出现下面两种情况：
+
+1. 不捕获异常：首次断连后，`async for` 退出；下一轮循环会在已关闭连接上抛出 `RuntimeError`，然后 `handler` 被异常结束。
+2. 捕获并吞掉异常继续循环：会在无效连接上反复重试，可能导致空转（CPU 占用升高）和日志刷屏。
