@@ -4,7 +4,7 @@ icon: lucide/rocket
 
 <div align="center" style="display:flex; flex-direction: column;">
 
-  <img src="/img/logo.png" width="250" height="200" alt="NapCat Logo" />
+  <img src="img/logo.png" width="250" height="200" alt="NapCat Logo" />
 
   <h1 align="center" style="margin-bottom: 0.5em;">
     NapCat-SDK for Python
