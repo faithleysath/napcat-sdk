@@ -88,22 +88,30 @@ class ReverseWebSocketServer:
     async def close(self):
         if self._server:
             self._server.close()
-            await self._server.wait_closed()
 
             # 取消所有活跃连接并等待它们结束
             if self._active_tasks:
                 logger.info(f"Cancelling {len(self._active_tasks)} active connections...")
-                for task in self._active_tasks:
+                tasks = list(self._active_tasks)
+                for task in tasks:
                     task.cancel()
                 # 等待所有任务结束，带超时
                 try:
                     await asyncio.wait_for(
-                        asyncio.gather(*self._active_tasks, return_exceptions=True),
+                        asyncio.gather(*tasks, return_exceptions=True),
                         timeout=self.shutdown_timeout
                     )
                 except TimeoutError:
                     logger.warning(f"Some connections did not close within {self.shutdown_timeout}s")
                 self._active_tasks.clear()
+
+            try:
+                await asyncio.wait_for(self._server.wait_closed(), timeout=self.shutdown_timeout)
+            except TimeoutError:
+                logger.warning(
+                    f"Server did not close within {self.shutdown_timeout}s"
+                )
+            self._server = None
 
             logger.info("Server closed")
 

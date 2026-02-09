@@ -142,7 +142,8 @@ class NapCatClient:
                 for err in cleanup_errors:
                     import logging
                     logging.getLogger("napcat.client").warning(f"Cleanup error: {err}")
-                raise cleanup_errors[0]
+                if exc_type is None:
+                    raise cleanup_errors[0]
 
     async def events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
@@ -191,7 +192,7 @@ class NapCatClient:
             params = normalized_params
 
         resp = await self.send({"action": action, "params": params})
-        if resp.get("status") != "ok" and resp.get("retcode") != 0:
+        if resp.get("status") != "ok" or resp.get("retcode") != 0:
             raise RuntimeError(f"API call failed: {resp}")
         return resp.get("data", None)
 

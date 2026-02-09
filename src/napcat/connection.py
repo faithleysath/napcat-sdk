@@ -71,8 +71,8 @@ class Connection:
         fut: Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
         try:
-            await self.ws.send(orjson.dumps(data))
             async with asyncio.timeout(timeout):
+                await self.ws.send(orjson.dumps(data))
                 return await fut
         finally:
             self._futures.pop(echo, None)
