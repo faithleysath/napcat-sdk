@@ -24,8 +24,7 @@ class NapCatClient:
         self._has_external_conn = _existing_conn is not None
         self._ws_ctx: ws_connect | None = None
         self._entered = False
-        self._auto_iter_refs = 0
-        self._auto_iter_close_on_zero = False
+        self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
 
         self.api = NapCatAPI(self)
@@ -34,35 +33,51 @@ class NapCatClient:
     def _connection_running(self) -> bool:
         return bool(self._conn and self._conn.is_running)
 
+    @property
+    def is_running(self) -> bool:
+        return self._connection_running()
+
     async def __aenter__(self):
-        if self._entered and self._connection_running():
-            return self
+        async with self._lifecycle_lock:
+            self._context_refs += 1
 
-        # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
-        if self._has_external_conn:
-            if not self._conn:
-                raise ValueError("Invalid Client: Missing existing connection")
-            await self._conn.__aenter__()
-        # 如果是 Client 模式（主动连接），建立连接并包装
-        elif self.ws_url:
-            headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
-            self._ws_ctx = ws_connect(self.ws_url, additional_headers=headers)
-            ws = await self._ws_ctx.__aenter__()
-            self._conn = Connection(ws)
-            await self._conn.__aenter__()
-        else:
-            raise ValueError("Invalid Client: No URL and no existing connection")
+            # 已有活跃连接时，仅增加上下文引用计数即可
+            # 不依赖引用计数值判断复用，直接以连接运行状态为准
+            if self._connection_running():
+                self._entered = True
+                return self
 
-        self._entered = True
-        # 2. 获取自身 ID (增加容错处理)
-        try:
-            resp = await self.api.get_login_info()
-            self.self_id = resp['user_id']
+            try:
+                # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
+                if self._has_external_conn:
+                    if not self._conn:
+                        raise ValueError("Invalid Client: Missing existing connection")
+                    await self._conn.__aenter__()
+                # 如果是 Client 模式（主动连接），建立连接并包装
+                elif self.ws_url:
+                    headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
+                    self._ws_ctx = ws_connect(self.ws_url, additional_headers=headers)
+                    ws = await self._ws_ctx.__aenter__()
+                    self._conn = Connection(ws)
+                    await self._conn.__aenter__()
+                else:
+                    raise ValueError("Invalid Client: No URL and no existing connection")
 
-        except Exception as e:
-            print(f"Warning: Failed to get self_id: {e}")
-            self.self_id = -1
-        return self
+                self._entered = True
+                # 2. 获取自身 ID (增加容错处理)
+                try:
+                    resp = await self.api.get_login_info()
+                    self.self_id = resp['user_id']
+
+                except Exception as e:
+                    print(f"Warning: Failed to get self_id: {e}")
+                    self.self_id = -1
+                return self
+            except Exception:
+                self._context_refs -= 1
+                if self._context_refs == 0:
+                    self._entered = False
+                raise
 
     async def __aexit__(
         self,
@@ -70,19 +85,28 @@ class NapCatClient:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ):
-        # 级联关闭：Client -> Connection -> WebSocket
-        conn = self._conn
-        ws_ctx = self._ws_ctx
+        async with self._lifecycle_lock:
+            if self._context_refs == 0:
+                return
 
-        if conn:
-            await conn.__aexit__(exc_type, exc_val, exc_tb)
-        if ws_ctx:
-            await ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+            self._context_refs -= 1
+            if self._context_refs > 0:
+                return
 
-        self._entered = False
-        if not self._has_external_conn:
-            self._conn = None
-        self._ws_ctx = None
+            # 级联关闭：Client -> Connection -> WebSocket
+            conn = self._conn
+            ws_ctx = self._ws_ctx
+
+            try:
+                if conn:
+                    await conn.__aexit__(exc_type, exc_val, exc_tb)
+                if ws_ctx:
+                    await ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+            finally:
+                self._entered = False
+                if not self._has_external_conn:
+                    self._conn = None
+                self._ws_ctx = None
 
     async def events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
@@ -97,41 +121,14 @@ class NapCatClient:
 
     def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
         async def _iter() -> AsyncGenerator[NapCatEvent, None]:
-            should_manage_lifecycle = not self._has_external_conn
-            acquired_ref = False
-
-            if should_manage_lifecycle:
-                async with self._lifecycle_lock:
-                    self._auto_iter_refs += 1
-                    acquired_ref = True
-                    try:
-                        if self._auto_iter_refs == 1:
-                            # 记录“本轮引用计数从 0 到 1”时，生命周期是否由 __aiter__ 接管
-                            self._auto_iter_close_on_zero = not self._entered
-
-                        # 自动连接只看连接是否在运行。
-                        # 这样在 async with 作用域内断线后，再次迭代也会重建连接。
-                        if not self._connection_running():
-                            await self.__aenter__()
-                    except Exception:
-                        self._auto_iter_refs -= 1
-                        if self._auto_iter_refs == 0:
-                            self._auto_iter_close_on_zero = False
-                        acquired_ref = False
-                        raise
-
-            try:
+            if self._has_external_conn:
                 async for event in self.events():
                     yield event
-            finally:
-                if should_manage_lifecycle and acquired_ref:
-                    async with self._lifecycle_lock:
-                        self._auto_iter_refs -= 1
-                        if self._auto_iter_refs == 0:
-                            should_close = self._auto_iter_close_on_zero
-                            self._auto_iter_close_on_zero = False
-                            if should_close:
-                                await self.__aexit__(None, None, None)
+                return
+
+            async with self:
+                async for event in self.events():
+                    yield event
 
         return _iter()
 
