@@ -3,7 +3,7 @@ icon: lucide/plug
 ---
 
 
-# NapCatClient 核心指南
+# NapCatClient 客户端
 
 `NapCatClient` 是与 NapCat 交互的智能中枢。
 

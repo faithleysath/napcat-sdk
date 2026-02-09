@@ -52,8 +52,8 @@ nav = [
   { "首页" = "index.md" },
   { "快速开始" = "getting-started.md" },
   { "核心概念" = [
-    { "Client 模式" = "key-concept/NapCatClient.md" },
-    { "Server 模式" = "server-mode.md" },
+    { "Client 模式" = "key-concept/client.md" },
+    { "Server 模式" = "key-concept/server.md" },
     { "事件与消息" = "events-messages.md" },
   ] },
   { "API 调用" = "api-usage.md" },
