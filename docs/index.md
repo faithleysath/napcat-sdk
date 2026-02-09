@@ -4,7 +4,7 @@ icon: lucide/rocket
 
 <div align="center" style="display:flex; flex-direction: column;">
 
-  <img src="https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/docs/img/logo.png" width="250" height="200" alt="NapCat Logo" />
+  <img src="/img/logo.png" width="250" height="200" alt="NapCat Logo" />
 
   <h1 align="center" style="margin-bottom: 0.5em;">
     NapCat-SDK for Python
@@ -57,10 +57,10 @@ NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类�
 
 ## 下一步
 
-- 阅读 **[快速开始](getting-started.md)**，完成第一个可运行的 Bot。
-- 了解 **[Client 模式](client-mode.md)** 与 **[Server 模式](server-mode.md)** 的差异。
-- 学习 **[事件与消息](events-messages.md)**，高效构建消息处理逻辑。
-- 查看 **[API 调用](api-usage.md)**，了解强类型 API 的使用方式。
+- 阅读 **[快速开始](./getting-started/first-bot.md)**，完成第一个可运行的 Bot。
+- 了解 **[Client 模式](./key-concept/client.md)** 与 **[Server 模式](./key-concept/server.md)** 的差异。
+- 学习 **[事件与消息](./key-concept/events-messages.md)**，高效构建消息处理逻辑。
+- 查看 **[API 调用](./api-usage.md)**，了解强类型 API 的使用方式。
 
 ---
 
