@@ -2,7 +2,7 @@
 icon: lucide/rocket
 ---
 
-<div align="center" style="display:flex; flex-direction: column;">
+<div align="center" style="display:flex; flex-direction: column; align-items: center;">
 
   <img src="img/logo.png" width="250" height="200" alt="NapCat Logo" />
 
