@@ -14,6 +14,8 @@ icon: lucide/wrench
 git clone --recursive https://github.com/faithleysath/napcat-sdk.git
 cd napcat-sdk
 uv sync
+cd NapCatQQ
+pnpm install
 ```
 
 ## 协议同步与代码生成

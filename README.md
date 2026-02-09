@@ -202,12 +202,14 @@ async def managing_bot(client: NapCatClient):
 
 1. **克隆项目并同步环境**:
 ```
-git clone https://github.com/faithleysath/napcat-sdk.git
+git clone --recursive https://github.com/faithleysath/napcat-sdk.git
 cd napcat-sdk
 uv sync
+cd NapCatQQ
+pnpm install
 ```
 
-2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成。如果你更新了 `NapCatQQ/packages/napcat-schema/dist/openapi.json`，请运行以下命令重新生成代码：
+2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成，请运行以下命令重新生成代码：
 ```
 uv run scripts/schema-codegen.py
 ```
@@ -215,8 +217,8 @@ uv run scripts/schema-codegen.py
 
 3. **运行测试**:
 ```
-# 运行 tests（排除 static 检查）
-uv run pytest src/tests -m "not static" -q
+# 运行 tests
+uv run pytest src/tests -q
 ```
 
 ---
