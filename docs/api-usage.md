@@ -6,7 +6,7 @@ icon: lucide/code
 
 NapCat-SDK 提供两种调用方式：
 
-1. **强类型 API**：通过 `client.api` 调用
+1. **强类型 API**：通过 `client.<api_method>(...)` 直接调用
 2. **动态调用**：通过 `client.call_action` 或直接调用 `client.some_action()`
 
 ## 强类型 API

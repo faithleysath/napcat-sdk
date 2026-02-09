@@ -172,7 +172,7 @@ async def send_rich_media(client: NapCatClient, group_id: int):
 
 <details> <summary><b>🔗 调用 OneBot API (100% 类型提示)</b></summary>
 
-所有 API 都挂载在 `client.api` 下，拥有完整的参数类型检查。
+所有 API 方法都直接挂载在 `client` 上，拥有完整的参数类型检查。
 
 ```python
 async def managing_bot(client: NapCatClient):

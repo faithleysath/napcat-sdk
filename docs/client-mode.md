@@ -54,7 +54,7 @@ async with NapCatClient(ws_url="ws://localhost:3001") as client:
 | 属性 | 说明 |
 | --- | --- |
 | `client.self_id` | 登录账号 ID（连接后自动获取） |
-| `client.api` | 强类型 API 入口（`NapCatAPI`） |
+| `client.<api_method>(...)` | 强类型 API 方法入口（由 `NapCatAPIMixin` 混入） |
 
 ## 适合人群
 
