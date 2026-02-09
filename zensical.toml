@@ -27,7 +27,7 @@ site_author = "NapCat-SDK Contributors"
 # The site_url is the canonical URL for your site. When building online
 # documentation you should set this.
 # Read more: https://zensical.org/docs/setup/basics/#site_url
-#site_url = "https://www.example.com/"
+site_url = "https://faithleysath.github.io/napcat-sdk/"
 
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
@@ -210,7 +210,7 @@ features = [
   # In order to provide a better user experience on slow connections when
   # using instant navigation, a progress indicator can be enabled.
   # https://zensical.org/docs/setup/navigation/#progress-indicator
-  #"navigation.instant.progress",
+  "navigation.instant.progress",
 
   # When navigation paths are activated, a breadcrumb navigation is rendered
   # above the title of each page
