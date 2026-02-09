@@ -103,7 +103,7 @@ async for event in NapCatClient(ws_url="ws://xxx", token="your_token"):
 
 ### 并发接收事件
 
-NapCatClient 的 async for 循环是线程安全的，因此你可以在多个协程中同时使用 async for 来接收事件：
+在同一个 event loop 内，NapCatClient 的 async for 循环支持被多个协程并发迭代，因此你可以在多个协程中同时使用 async for 来接收事件。NapCatClient 本身并未针对跨线程场景做特殊设计，请不要在多个线程之间直接共享同一个 NapCatClient 实例；如确有需要，请在应用层自行加锁或为每个线程创建独立的 NapCatClient。
 
 ```python
 async def handle_events(client: NapCatClient):
@@ -128,25 +128,17 @@ await asyncio.gather(
 NapCatClient 提供了 `send_private_msg` 和 `send_group_msg` 方法来发送私聊消息和群消息：
 
 ```python
-async def send_private_msg(self, user_id: int, message: str | list[Message] | Message) -> int:
-    """
-    发送私聊消息，返回消息 ID
-    """
-    resp = await self.api.send_private_msg(
-        user_id=str(user_id),
-        message=message
-    )
-    return resp["message_id"]
+# 发送私聊消息，返回消息 ID
+msg_id = await client.send_private_msg(
+    user_id=123456789,
+    message="Hello from NapCat!"
+)
 
-async def send_group_msg(self, group_id: int, message: str | list[Message] | Message) -> int:
-    """
-    发送群消息，返回消息 ID
-    """
-    resp = await self.api.send_group_msg(
-        group_id=str(group_id),
-        message=message
-    )
-    return resp["message_id"]
+# 发送群消息，返回消息 ID
+group_msg_id = await client.send_group_msg(
+    group_id=987654321,
+    message="Hello, group!"
+)
 ```
 
 ### API 调用
