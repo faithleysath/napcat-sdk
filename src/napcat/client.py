@@ -96,17 +96,32 @@ class NapCatClient:
             # 级联关闭：Client -> Connection -> WebSocket
             conn = self._conn
             ws_ctx = self._ws_ctx
+            cleanup_errors: list[BaseException] = []
 
             try:
                 if conn:
-                    await conn.__aexit__(exc_type, exc_val, exc_tb)
-                if ws_ctx:
-                    await ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+                    try:
+                        await conn.__aexit__(exc_type, exc_val, exc_tb)
+                    except Exception as e:
+                        cleanup_errors.append(e)
+                # 仅在 Client 模式下关闭 ws_ctx（Server 模式由外部管理）
+                if ws_ctx and not self._has_external_conn:
+                    try:
+                        await ws_ctx.__aexit__(exc_type, exc_val, exc_tb)
+                    except Exception as e:
+                        cleanup_errors.append(e)
             finally:
                 self._entered = False
                 if not self._has_external_conn:
                     self._conn = None
                 self._ws_ctx = None
+
+            # 如果有清理错误，记录并抛出第一个
+            if cleanup_errors:
+                for err in cleanup_errors:
+                    import logging
+                    logging.getLogger("napcat.client").warning(f"Cleanup error: {err}")
+                raise cleanup_errors[0]
 
     async def events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:

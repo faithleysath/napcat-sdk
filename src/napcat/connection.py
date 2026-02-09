@@ -76,6 +76,7 @@ class Connection:
             self._queues.discard(q)
 
     async def _loop(self) -> None:
+        cancelled = False
         try:
             async for msg in self.ws:
                 try:
@@ -95,10 +96,14 @@ class Connection:
                     continue
                 else:
                     self._broadcast(data)
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError:
+            cancelled = True
+        except Exception:
             pass
         finally:
             await self._cleanup()
+            if cancelled:
+                raise asyncio.CancelledError()
 
     async def _cleanup(self):
         for f in self._futures.values():
