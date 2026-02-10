@@ -1,5 +1,7 @@
+import datetime
 import sys
-from typing import Any
+from typing import Any, cast
+from urllib.parse import urlparse
 
 import orjson
 
@@ -43,8 +45,14 @@ def send_response(response: dict[str, Any]):
     sys.stdout.buffer.write(orjson.dumps(response) + b"\n")
     sys.stdout.buffer.flush()
 
+def log(msg: str):
+    """输出带时间戳的日志到 stderr（不干扰 MCP stdout）"""
+    timestamp = datetime.datetime.now().isoformat()
+    sys.stderr.write(f"[{timestamp}] {msg}\n")
+    sys.stderr.flush()
+
 def main():
-    sys.stderr.write("Starting Modern NapCat Docs Server (stdio/orjson)...\n")
+    log("Starting Modern NapCat Docs Server (stdio/orjson)...")
 
     # 预定义常量
     PROTOCOL_VERSION = "2024-11-05"
@@ -54,7 +62,15 @@ def main():
     for line in sys.stdin.buffer:
         msg_id: Any | None = None
         try:
-            req = orjson.loads(line)
+            # 去除首尾空白，避免空行导致 JSON 解析异常
+            line_content = line.strip()
+            if not line_content:
+                continue
+
+            req_obj = orjson.loads(line_content)
+            if not isinstance(req_obj, dict):
+                raise ValueError("Invalid JSON-RPC request: payload must be an object")
+            req = cast(dict[str, Any], req_obj)
             msg_id = req.get("id")
 
             # 默认响应结构
@@ -99,14 +115,26 @@ def main():
 
                 # --- 资源读取 (Resource Read) ---
                 case "resources/read":
-                    uri = req["params"]["uri"]
+                    params = req.get("params")
+                    if not isinstance(params, dict):
+                        raise ValueError("Invalid params for resources/read")
+                    params = cast(dict[str, Any], params)
+
+                    uri = cast(str | None, params.get("uri"))
+                    if not isinstance(uri, str):
+                        raise ValueError("Invalid or missing 'uri' in resources/read")
+
                     content = ""
 
                     if uri == URI_INDEX:
                         content = logic_get_index()
                     elif uri.startswith("napcat-docs://api/"):
-                        # 解析 URI 提取单个 name
-                        api_name = uri.split("/")[-1]
+                        # 更稳健地解析 URI，避免查询参数影响结果
+                        parsed = urlparse(uri)
+                        path = parsed.path
+                        api_name: str = path.rsplit("/", 1)[-1]
+                        if not api_name:
+                            raise ValueError(f"Invalid API URI: {uri}")
                         content = logic_get_details([api_name])
                     else:
                         raise ValueError(f"Unknown URI: {uri}")
@@ -145,15 +173,34 @@ def main():
                 # --- 工具调用 (Tool Call) ---
                 case "tools/call":
                     params = req.get("params", {})
-                    name = params.get("name")
+                    if not isinstance(params, dict):
+                        raise ValueError("Invalid params for tools/call")
+                    params = cast(dict[str, Any], params)
+
+                    name = cast(str | None, params.get("name"))
                     args = params.get("arguments", {})
+                    if not isinstance(args, dict):
+                        raise ValueError("Invalid 'arguments' for tools/call")
+                    args = cast(dict[str, Any], args)
 
                     match name:
                         case "list_apis":
                             result_text = logic_get_index()
                         case "get_api_details":
                             # 即使客户端传了单个字符串，也尽量兼容处理，但标准是列表
-                            names = args.get("names", [])
+                            raw_names = cast(Any, args.get("names"))
+                            names: list[str]
+                            if isinstance(raw_names, str):
+                                names = [raw_names]
+                            elif isinstance(raw_names, list):
+                                candidate_names = cast(list[Any], raw_names)
+                                if not all(isinstance(item, str) for item in candidate_names):
+                                    raise ValueError("Argument 'names' must be a list of strings.")
+                                names = [cast(str, item) for item in candidate_names]
+                            else:
+                                raise ValueError("Argument 'names' is required and cannot be empty.")
+                            if not names:
+                                raise ValueError("Argument 'names' is required and cannot be empty.")
                             result_text = logic_get_details(names)
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
@@ -166,7 +213,8 @@ def main():
                     if msg_id is not None:
                         raise ValueError("Method not found")
 
-            if resp.get("result") or resp.get("error"):
+            # 仅对 request（有 id）回复，且按键存在性判断 result/error
+            if msg_id is not None and ("result" in resp or "error" in resp):
                 send_response(resp)
 
         except Exception as e:
@@ -177,7 +225,7 @@ def main():
                     "error": {"code": -32000, "message": str(e)}
                 }
                 send_response(err_resp)
-            sys.stderr.write(f"Error processing: {e}\n")
+            log(f"Error processing request: {e}")
 
 if __name__ == "__main__":
     main()
