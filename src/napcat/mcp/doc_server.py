@@ -72,11 +72,12 @@ def main():
                 raise ValueError("Invalid JSON-RPC request: payload must be an object")
             req = cast(dict[str, Any], req_obj)
             msg_id = req.get("id")
+            method = cast(str | None, req.get("method"))
 
             # 默认响应结构
             resp = {"jsonrpc": "2.0", "id": msg_id}
 
-            match req.get("method"):
+            match method:
 
                 # --- 握手 ---
                 case "initialize":
@@ -84,7 +85,8 @@ def main():
                         "protocolVersion": PROTOCOL_VERSION,
                         "capabilities": {
                             "tools": {},
-                            "resources": {}
+                            "resources": {},
+                            "logging": {}
                         },
                         "serverInfo": {"name": "napcat-docs", "version": "2.0"}
                     }
@@ -96,6 +98,24 @@ def main():
                 case "ping":
                     # 返回空对象即可，表明存活
                     resp["result"] = {}
+
+                # --- 兼容客户端常见请求 ---
+                case "logging/setLevel":
+                    # 静默接受日志等级设置
+                    resp["result"] = {}
+
+                case "prompts/list":
+                    # 当前未提供 prompts，返回空列表
+                    resp["result"] = {"prompts": []}
+
+                case "notifications/cancelled":
+                    params = req.get("params", {})
+                    if isinstance(params, dict):
+                        params = cast(dict[str, Any], params)
+                        request_id: Any | None = params.get("requestId")
+                    else:
+                        request_id: Any | None = None
+                    log(f"Client cancelled request: {request_id}")
 
                 # --- 资源发现 (Resource Discovery) ---
                 case "resources/list":
@@ -214,9 +234,13 @@ def main():
 
                 # --- 未知请求 ---
                 case _:
-                    # 仅当有 id 时才报错，避免回复 notification
+                    # 仅对 request 返回 Method not found；notification 静默忽略
                     if msg_id is not None:
-                        raise ValueError("Method not found")
+                        log(f"Method not found: {method}")
+                        resp["error"] = {
+                            "code": -32601,
+                            "message": f"Method not found: {method}"
+                        }
 
             # 仅对 request（有 id）回复，且按键存在性判断 result/error
             if msg_id is not None and ("result" in resp or "error" in resp):
