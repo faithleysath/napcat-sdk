@@ -14,6 +14,7 @@ from ..client_api import NapCatAPIMixin
 class ApiDoc(TypedDict):
     description: str
     sig: str
+    response_type: str
     typed_dict_codes: list[str]
 
 
@@ -50,6 +51,38 @@ def _iter_type_nodes(tp: Any, globalns: dict[str, Any] | None = None) -> Iterabl
 
     for arg in get_args(tp):
         yield from _iter_type_nodes(arg, globalns)
+
+
+def _format_type_expr(tp: Any, globalns: dict[str, Any] | None = None) -> str:
+    tp = _resolve_forward_ref(tp, globalns)
+
+    if isinstance(tp, TypeAliasType):
+        return tp.__name__
+
+    origin = get_origin(tp)
+    if origin is None:
+        if isinstance(tp, ForwardRef):
+            return tp.__forward_arg__
+        return getattr(tp, "__name__", repr(tp))
+
+    args = get_args(tp)
+    origin_name = getattr(origin, "__name__", repr(origin).replace("typing.", ""))
+    if not args:
+        return origin_name
+    return f"{origin_name}[{', '.join(_format_type_expr(arg, globalns) for arg in args)}]"
+
+
+def _build_response_type_text(func: Any) -> str:
+    signature = inspect.signature(func)
+    return_ann = signature.return_annotation
+    if return_ann is inspect.Signature.empty:
+        return ""
+
+    func_globals = getattr(func, "__globals__", {})
+    resolved = _resolve_forward_ref(return_ann, func_globals)
+    if isinstance(resolved, TypeAliasType):
+        return f"{resolved.__name__} = {_format_type_expr(resolved.__value__, func_globals)}"
+    return _format_type_expr(resolved, func_globals)
 
 
 def _collect_referenced_typed_dicts(func: Any) -> list[type[Any]]:
@@ -143,12 +176,14 @@ def _build_api_data() -> dict[str, ApiDoc]:
         if name == "set_online_status":
             description = "设置在线状态"
         sig = _build_signature_text(name, func)
+        response_type = _build_response_type_text(func)
         typed_dicts = _collect_referenced_typed_dicts(func)
         typed_dict_codes = [_get_typed_dict_source(td) for td in typed_dicts]
 
         api_data[name] = {
             "description": description,
             "sig": sig,
+            "response_type": response_type,
             "typed_dict_codes": typed_dict_codes,
         }
 
@@ -176,6 +211,13 @@ def logic_get_details(api_names: list[str]) -> str:
     results: list[str] = []
     for name in api_names:
         if info := api_data.get(name):
+            response_type_section = ""
+            if info["response_type"]:
+                response_type_section = (
+                    "\n\n### Response Type\n\n"
+                    f"```python\n{info['response_type']}\n```"
+                )
+
             typed_dict_section = ""
             if info["typed_dict_codes"]:
                 typed_dict_blocks = "\n\n".join(
@@ -186,6 +228,7 @@ def logic_get_details(api_names: list[str]) -> str:
             results.append(
                 f"## {name}\n"
                 f"```python\n{info['sig']}\n```"
+                f"{response_type_section}"
                 f"{typed_dict_section}"
             )
         else:
