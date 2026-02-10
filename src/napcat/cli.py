@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+import argparse
+from collections.abc import Sequence
+
+from . import __version__
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="napcat-sdk",
+        description="NapCat SDK command line interface",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"napcat-sdk {__version__}",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.add_parser("help", help="Show help message")
+    subparsers.add_parser("version", help="Show napcat-sdk version")
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command in (None, "help"):
+        parser.print_help()
+        return 0
+
+    if args.command == "version":
+        print(f"napcat-sdk {__version__}")
+        return 0
+
+    parser.error(f"Unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
