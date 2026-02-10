@@ -1,40 +1,158 @@
 import datetime
+import inspect
+import re
 import sys
-from typing import Any, cast
+from collections.abc import Iterable
+from typing import Any, TypeAliasType, TypedDict, cast, get_args, get_origin
 from urllib.parse import urlparse
 
 import orjson
 
-# --- 1. 数据层 (模拟 NapCat 文档数据) ---
-API_DATA: dict[str, dict[str, str]] = {
-    "send_private_msg": {
-        "api_code": "def send_private_msg(user_id: int, message: str) -> dict:\n    # 发送私聊消息...",
-        "description": "向指定用户发送私聊消息。"
-    },
-    "send_group_msg": {
-        "api_code": "def send_group_msg(group_id: int, message: str) -> dict:\n    # 发送群消息...",
-        "description": "向指定群组发送消息。"
-    },
-    "get_login_info": {
-        "api_code": "def get_login_info() -> dict:\n    # 获取登录号信息...",
-        "description": "获取当前登录机器人的详细信息。"
-    }
-}
+from ..client_api import NapCatAPIMixin
+
+
+class ApiDoc(TypedDict):
+    description: str
+    sig: str
+    typed_dict_codes: list[str]
+
+
+_api_data_cache: dict[str, ApiDoc] | None = None
+
+
+def _is_typed_dict_class(tp: Any) -> bool:
+    return isinstance(tp, type) and hasattr(tp, "__required_keys__") and hasattr(tp, "__optional_keys__")
+
+
+def _iter_type_nodes(tp: Any) -> Iterable[Any]:
+    """递归展开类型注解节点（包含 TypeAliasType、泛型参数等）"""
+    yield tp
+
+    if isinstance(tp, TypeAliasType):
+        yield from _iter_type_nodes(tp.__value__)
+        return
+
+    origin = get_origin(tp)
+    if origin is not None:
+        yield from _iter_type_nodes(origin)
+
+    for arg in get_args(tp):
+        yield from _iter_type_nodes(arg)
+
+
+def _collect_referenced_typed_dicts(func: Any) -> list[type[Any]]:
+    found: dict[str, type[Any]] = {}
+    signature = inspect.signature(func)
+
+    for param in signature.parameters.values():
+        if param.annotation is inspect.Signature.empty:
+            continue
+        for node in _iter_type_nodes(param.annotation):
+            if _is_typed_dict_class(node):
+                found[node.__name__] = node
+
+    if signature.return_annotation is not inspect.Signature.empty:
+        for node in _iter_type_nodes(signature.return_annotation):
+            if _is_typed_dict_class(node):
+                found[node.__name__] = node
+
+    return [found[name] for name in sorted(found.keys())]
+
+
+def _get_typed_dict_source(td_cls: type[Any]) -> str:
+    try:
+        return inspect.getsource(td_cls).rstrip()
+    except (OSError, TypeError):
+        return f"class {td_cls.__name__}(TypedDict):\n    ..."
+
+
+def _extract_description(full_doc: str) -> str:
+    """截取 docstring 到“标签”行（包含该行）"""
+    if not full_doc.strip():
+        return "(No description)"
+
+    lines = full_doc.splitlines()
+    keep: list[str] = []
+    for line in lines:
+        keep.append(line)
+        if re.match(r"^\s*标签\s*[：:]", line):
+            break
+
+    text = "\n".join(keep).strip()
+    return text if text else "(No description)"
+
+
+def _build_signature_text(func_name: str, func: Any) -> str:
+    signature = inspect.signature(func)
+    params = list(signature.parameters.values())
+    if params and params[0].name == "self":
+        signature = signature.replace(parameters=params[1:])
+
+    doc = inspect.getdoc(func) or ""
+    if doc:
+        return f"async def {func_name}{signature}:\n    \"\"\"\n{doc}\n    \"\"\""
+    return f"async def {func_name}{signature}:\n    pass"
+
+
+def _build_api_data() -> dict[str, ApiDoc]:
+    api_data: dict[str, ApiDoc] = {}
+
+    members = inspect.getmembers(NapCatAPIMixin, predicate=inspect.isfunction)
+    for name, func in members:
+        # _ 开头方法也是公开 API；仅排除内部基类入口
+        if name == "call_action":
+            continue
+        if name.startswith("__"):
+            continue
+
+        full_doc = inspect.getdoc(func) or ""
+        description = _extract_description(full_doc)
+        sig = _build_signature_text(name, func)
+        typed_dicts = _collect_referenced_typed_dicts(func)
+        typed_dict_codes = [_get_typed_dict_source(td) for td in typed_dicts]
+
+        api_data[name] = {
+            "description": description,
+            "sig": sig,
+            "typed_dict_codes": typed_dict_codes,
+        }
+
+    return dict(sorted(api_data.items(), key=lambda item: item[0]))
+
+
+def _get_api_data() -> dict[str, ApiDoc]:
+    global _api_data_cache
+    if _api_data_cache is None:
+        _api_data_cache = _build_api_data()
+    return _api_data_cache
 
 # --- 2. 业务逻辑层 (复用核心) ---
 def logic_get_index() -> str:
     """生成 API 目录索引"""
+    api_data = _get_api_data()
     lines: list[str] = ["# NapCat API Index"]
-    for name, info in API_DATA.items():
+    for name, info in api_data.items():
         lines.append(f"- **{name}**: {info['description']}")
     return "\n".join(lines)
 
 def logic_get_details(api_names: list[str]) -> str:
     """批量获取 API 详情"""
+    api_data = _get_api_data()
     results: list[str] = []
     for name in api_names:
-        if info := API_DATA.get(name):
-            results.append(f"## {name}\n> {info['description']}\n\n```python\n{info['api_code']}\n```")
+        if info := api_data.get(name):
+            typed_dict_section = ""
+            if info["typed_dict_codes"]:
+                typed_dict_blocks = "\n\n".join(
+                    f"```python\n{code}\n```" for code in info["typed_dict_codes"]
+                )
+                typed_dict_section = f"\n\n### Referenced TypedDicts\n\n{typed_dict_blocks}"
+
+            results.append(
+                f"## {name}\n"
+                f"```python\n{info['sig']}\n```"
+                f"{typed_dict_section}"
+            )
         else:
             results.append(f"## {name}\n(API not found)")
     return "\n---\n".join(results)
