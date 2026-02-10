@@ -320,7 +320,7 @@ def main():
                             "uri": URI_INDEX,
                             "name": "NapCat API Index",
                             "mimeType": "text/markdown",
-                            "description": "API 列表概览"
+                            "description": "NapCat SDK API 列表概览"
                         }]
                     }
 
@@ -328,9 +328,9 @@ def main():
                     resp["result"] = {
                         "resourceTemplates": [{
                             "uriTemplate": URI_TEMPLATE,
-                            "name": "API Detail",
+                            "name": "NapCat API Detail",
                             "mimeType": "text/markdown",
-                            "description": "API 源码与详情"
+                            "description": "NapCat SDK API 的函数签名、返回类型与相关 TypedDict 源码"
                         }]
                     }
 
@@ -370,19 +370,19 @@ def main():
                         "tools": [
                             {
                                 "name": "list_apis",
-                                "description": "查看所有可用 API 的列表",
+                                "description": "列出 NapCat SDK 的全部 API",
                                 "inputSchema": {"type": "object", "properties": {}}
                             },
                             {
                                 "name": "get_api_details",
-                                "description": "获取一个或多个 API 的详细源码定义",
+                                "description": "获取 NapCat SDK API 的函数签名、返回类型与相关 TypedDict 定义",
                                 "inputSchema": {
                                     "type": "object",
                                     "properties": {
                                         "names": {
                                             "type": "array",
                                             "items": {"type": "string"},
-                                            "description": "API 名称列表 (例如 ['send_private_msg'])"
+                                            "description": "NapCat API 名称列表 (例如 ['send_private_msg'])"
                                         }
                                     },
                                     "required": ["names"]
