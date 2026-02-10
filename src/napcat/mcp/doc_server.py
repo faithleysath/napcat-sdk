@@ -92,6 +92,11 @@ def main():
                 case "notifications/initialized":
                     continue # 通知无需回复
 
+                # --- 心跳检测 (Ping) ---
+                case "ping":
+                    # 返回空对象即可，表明存活
+                    resp["result"] = {}
+
                 # --- 资源发现 (Resource Discovery) ---
                 case "resources/list":
                     resp["result"] = {
