@@ -69,11 +69,11 @@ pip install napcat-sdk
 
 <div align="center"> <img src="https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/docs/img/code-snapshot.png" alt="Code Example" width="800"> </div>
 
-<details> <summary><b>🖱️ 点击复制代码文本</b></summary>
-
 > [!IMPORTANT]
 > `client.events()` 方法已移除，请直接使用 `async for event in client` 监听事件。
 > 当前截图因录制成本暂未更新，代码示例请以本文文本为准。
+
+<details> <summary><b>🖱️ 点击复制代码文本</b></summary>
 
 ```python
 import asyncio
