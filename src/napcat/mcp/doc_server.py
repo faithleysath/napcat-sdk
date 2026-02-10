@@ -3,7 +3,7 @@ import inspect
 import re
 import sys
 from collections.abc import Iterable
-from typing import Any, TypeAliasType, TypedDict, cast, get_args, get_origin
+from typing import Any, ForwardRef, TypeAliasType, TypedDict, cast, get_args, get_origin
 from urllib.parse import urlparse
 
 import orjson
@@ -24,39 +24,72 @@ def _is_typed_dict_class(tp: Any) -> bool:
     return isinstance(tp, type) and hasattr(tp, "__required_keys__") and hasattr(tp, "__optional_keys__")
 
 
-def _iter_type_nodes(tp: Any) -> Iterable[Any]:
+def _resolve_forward_ref(tp: Any, globalns: dict[str, Any] | None) -> Any:
+    if not isinstance(tp, ForwardRef):
+        return tp
+    if not globalns:
+        return tp
+    try:
+        return eval(tp.__forward_arg__, globalns, globalns)
+    except Exception:
+        return tp
+
+
+def _iter_type_nodes(tp: Any, globalns: dict[str, Any] | None = None) -> Iterable[Any]:
     """递归展开类型注解节点（包含 TypeAliasType、泛型参数等）"""
+    tp = _resolve_forward_ref(tp, globalns)
     yield tp
 
     if isinstance(tp, TypeAliasType):
-        yield from _iter_type_nodes(tp.__value__)
+        yield from _iter_type_nodes(tp.__value__, globalns)
         return
 
     origin = get_origin(tp)
     if origin is not None:
-        yield from _iter_type_nodes(origin)
+        yield from _iter_type_nodes(origin, globalns)
 
     for arg in get_args(tp):
-        yield from _iter_type_nodes(arg)
+        yield from _iter_type_nodes(arg, globalns)
 
 
 def _collect_referenced_typed_dicts(func: Any) -> list[type[Any]]:
-    found: dict[str, type[Any]] = {}
+    direct_found: dict[str, type[Any]] = {}
     signature = inspect.signature(func)
+    func_globals = getattr(func, "__globals__", {})
 
     for param in signature.parameters.values():
         if param.annotation is inspect.Signature.empty:
             continue
-        for node in _iter_type_nodes(param.annotation):
+        for node in _iter_type_nodes(param.annotation, func_globals):
             if _is_typed_dict_class(node):
-                found[node.__name__] = node
+                direct_found[node.__name__] = node
 
     if signature.return_annotation is not inspect.Signature.empty:
-        for node in _iter_type_nodes(signature.return_annotation):
+        for node in _iter_type_nodes(signature.return_annotation, func_globals):
             if _is_typed_dict_class(node):
-                found[node.__name__] = node
+                direct_found[node.__name__] = node
 
-    return [found[name] for name in sorted(found.keys())]
+    # 递归展开 TypedDict 字段上的依赖（例如 list[OtherTypedDict]）
+    resolved: dict[str, type[Any]] = dict(direct_found)
+    queue: list[type[Any]] = list(direct_found.values())
+
+    while queue:
+        current = queue.pop(0)
+
+        try:
+            field_annotations = inspect.get_annotations(current, eval_str=True)
+        except Exception:
+            field_annotations = getattr(current, "__annotations__", {})
+
+        td_module_globals = vars(sys.modules.get(current.__module__)) if sys.modules.get(current.__module__) else {}
+
+        for field_type in field_annotations.values():
+            for node in _iter_type_nodes(field_type, td_module_globals):
+                if _is_typed_dict_class(node) and node.__name__ not in resolved:
+                    resolved[node.__name__] = node
+                    queue.append(node)
+
+    return [resolved[name] for name in sorted(resolved.keys())]
 
 
 def _get_typed_dict_source(td_cls: type[Any]) -> str:
