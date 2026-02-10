@@ -140,6 +140,8 @@ def _build_api_data() -> dict[str, ApiDoc]:
 
         full_doc = inspect.getdoc(func) or ""
         description = _extract_description(full_doc)
+        if name == "set_online_status":
+            description = "设置在线状态"
         sig = _build_signature_text(name, func)
         typed_dicts = _collect_referenced_typed_dicts(func)
         typed_dict_codes = [_get_typed_dict_source(td) for td in typed_dicts]
