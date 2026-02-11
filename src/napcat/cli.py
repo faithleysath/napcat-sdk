@@ -1,3 +1,10 @@
+"""
+命令行接口模块
+
+提供 napcat-sdk 的命令行工具入口。
+目前支持查看版本、启动 MCP 文档服务器等功能。
+"""
+
 from __future__ import annotations
 
 import argparse

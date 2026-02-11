@@ -1,3 +1,15 @@
+"""
+NapCat Python SDK
+
+NapCat SDK 是一个用于与 NapCatQQ (OneBot 11) 进行交互的 Python SDK。
+它提供了基于 WebSocket 的客户端和反向 WebSocket 服务器实现，以及完整的类型定义。
+
+主要组件:
+- NapCatClient: 主动连接 NapCat 的客户端
+- ReverseWebSocketServer: 接收 NapCat 反向连接的服务器
+- types: 包含所有 OneBot 11 事件和消息类型的定义
+"""
+
 # src/napcat/__init__.py
 
 __version__ = "0.4.9"

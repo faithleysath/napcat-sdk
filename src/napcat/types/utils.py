@@ -1,3 +1,10 @@
+"""
+类型辅助工具
+
+提供用于处理 Dataclass 和 TypedDict 的辅助函数和 Mixin 类。
+FromDictMixin 用于安全地将字典转换为 Dataclass 实例，忽略多余字段。
+"""
+
 from __future__ import annotations
 
 import logging
@@ -43,6 +50,7 @@ def get_dataclass_field_default(
         return None
 
     return None
+
 
 class FromDictMixin:
     """Safe dataclass constructor with cached field names.

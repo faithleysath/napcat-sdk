@@ -137,7 +137,9 @@ def build_docstring(
     return "\n".join(lines)
 
 
-def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) -> tuple[str, int]:
+def generate_client_api_code(
+    openapi: dict[str, Any], schema_symbols: set[str]
+) -> tuple[str, int]:
     paths = get_dict(openapi.get("paths"))
 
     method_chunks: list[str] = []
@@ -154,7 +156,9 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
             continue
 
         raw_operation_id = post_dict.get("operationId")
-        action = raw_operation_id if isinstance(raw_operation_id, str) else path.lstrip("/")
+        action = (
+            raw_operation_id if isinstance(raw_operation_id, str) else path.lstrip("/")
+        )
         if not action:
             continue
 
@@ -177,7 +181,9 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
         raw_summary = post_dict.get("summary")
         summary = raw_summary if isinstance(raw_summary, str) else ""
         raw_description = post_dict.get("description")
-        description = raw_description.strip() if isinstance(raw_description, str) else ""
+        description = (
+            raw_description.strip() if isinstance(raw_description, str) else ""
+        )
         raw_tags = post_dict.get("tags")
         tags: list[str] = []
         if isinstance(raw_tags, list):
@@ -187,14 +193,18 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
         first_tag = tags[0] if tags else ""
 
         request_examples = app_json.get("examples") if app_json else None
-        request_example = _extract_example_value(request_examples, preferred_key="Default")
+        request_example = _extract_example_value(
+            request_examples, preferred_key="Default"
+        )
 
         responses = get_dict(post_dict.get("responses"))
         response_200 = get_dict(responses.get("200"))
         response_content = get_dict(response_200.get("content"))
         response_app_json = get_dict(response_content.get("application/json"))
         response_examples = response_app_json.get("examples")
-        success_response_example = _extract_example_value(response_examples, preferred_key="Success")
+        success_response_example = _extract_example_value(
+            response_examples, preferred_key="Success"
+        )
         success_data_example = None
         if isinstance(success_response_example, dict):
             success_data_example = get_dict(success_response_example).get("data")
@@ -266,6 +276,13 @@ def generate_client_api_code(openapi: dict[str, Any], schema_symbols: set[str]) 
     code = f'''# Auto-generated file. Do not modify directly.
 # 自动生成的文件。请勿直接修改。
 
+"""
+NapCat 客户端 API Mixin
+
+自动生成的 API 方法，实现了 OneBot 11 (以及扩展) 的所有 API 调用接口。
+混入到 NapCatClient 类中使用。
+"""
+
 from collections.abc import Mapping
 {typing_import}
 {schemas_import}
@@ -287,9 +304,15 @@ class NapCatAPIMixin:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate src/napcat/client_api.py")
-    parser.add_argument("--openapi", default=str(DEFAULT_OPENAPI), help="Path to openapi.json")
-    parser.add_argument("--schemas", default=str(DEFAULT_SCHEMAS), help="Path to schemas.py")
-    parser.add_argument("--out", default=str(DEFAULT_OUTPUT), help="Path to client_api.py")
+    parser.add_argument(
+        "--openapi", default=str(DEFAULT_OPENAPI), help="Path to openapi.json"
+    )
+    parser.add_argument(
+        "--schemas", default=str(DEFAULT_SCHEMAS), help="Path to schemas.py"
+    )
+    parser.add_argument(
+        "--out", default=str(DEFAULT_OUTPUT), help="Path to client_api.py"
+    )
     return parser.parse_args()
 
 

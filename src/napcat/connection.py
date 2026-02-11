@@ -1,3 +1,10 @@
+"""
+WebSocket 连接管理
+
+Connection 类封装了底层的 WebSocket 连接，处理消息收发、请求响应匹配 (Echo 机制) 和事件分发。
+支持异步上下文管理器，确保连接资源的正确释放。
+"""
+
 import asyncio
 import itertools
 import logging

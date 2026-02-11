@@ -1,3 +1,10 @@
+"""
+NapCat 文档 MCP 服务器
+
+实现了基于 MCP 协议的文档查询服务，允许 LLM 通过工具调用查询 NapCat SDK 的 API 定义、签名和 TypedDict 结构。
+支持 stdio 通信模式。
+"""
+
 import datetime
 import inspect
 import re
@@ -22,7 +29,11 @@ _api_data_cache: dict[str, ApiDoc] | None = None
 
 
 def _is_typed_dict_class(tp: Any) -> bool:
-    return isinstance(tp, type) and hasattr(tp, "__required_keys__") and hasattr(tp, "__optional_keys__")
+    return (
+        isinstance(tp, type)
+        and hasattr(tp, "__required_keys__")
+        and hasattr(tp, "__optional_keys__")
+    )
 
 
 def _resolve_forward_ref(tp: Any, globalns: dict[str, Any] | None) -> Any:
@@ -69,7 +80,9 @@ def _format_type_expr(tp: Any, globalns: dict[str, Any] | None = None) -> str:
     origin_name = getattr(origin, "__name__", repr(origin).replace("typing.", ""))
     if not args:
         return origin_name
-    return f"{origin_name}[{', '.join(_format_type_expr(arg, globalns) for arg in args)}]"
+    return (
+        f"{origin_name}[{', '.join(_format_type_expr(arg, globalns) for arg in args)}]"
+    )
 
 
 def _build_response_type_text(func: Any) -> str:
@@ -114,7 +127,11 @@ def _collect_referenced_typed_dicts(func: Any) -> list[type[Any]]:
         except Exception:
             field_annotations = getattr(current, "__annotations__", {})
 
-        td_module_globals = vars(sys.modules.get(current.__module__)) if sys.modules.get(current.__module__) else {}
+        td_module_globals = (
+            vars(sys.modules.get(current.__module__))
+            if sys.modules.get(current.__module__)
+            else {}
+        )
 
         for field_type in field_annotations.values():
             for node in _iter_type_nodes(field_type, td_module_globals):
@@ -156,7 +173,7 @@ def _build_signature_text(func_name: str, func: Any) -> str:
 
     doc = inspect.getdoc(func) or ""
     if doc:
-        return f"async def {func_name}{signature}:\n    \"\"\"\n{doc}\n    \"\"\""
+        return f'async def {func_name}{signature}:\n    """\n{doc}\n    """'
     return f"async def {func_name}{signature}:\n    pass"
 
 
@@ -196,6 +213,7 @@ def _get_api_data() -> dict[str, ApiDoc]:
         _api_data_cache = _build_api_data()
     return _api_data_cache
 
+
 # --- 2. 业务逻辑层 (复用核心) ---
 def logic_get_index() -> str:
     """生成 API 目录索引"""
@@ -204,6 +222,7 @@ def logic_get_index() -> str:
     for name, info in api_data.items():
         lines.append(f"- **{name}**: {info['description']}")
     return "\n".join(lines)
+
 
 def logic_get_details(api_names: list[str]) -> str:
     """批量获取 API 详情"""
@@ -214,8 +233,7 @@ def logic_get_details(api_names: list[str]) -> str:
             response_type_section = ""
             if info["response_type"]:
                 response_type_section = (
-                    "\n\n### Response Type\n\n"
-                    f"```python\n{info['response_type']}\n```"
+                    f"\n\n### Response Type\n\n```python\n{info['response_type']}\n```"
                 )
 
             typed_dict_section = ""
@@ -223,7 +241,9 @@ def logic_get_details(api_names: list[str]) -> str:
                 typed_dict_blocks = "\n\n".join(
                     f"```python\n{code}\n```" for code in info["typed_dict_codes"]
                 )
-                typed_dict_section = f"\n\n### Referenced TypedDicts\n\n{typed_dict_blocks}"
+                typed_dict_section = (
+                    f"\n\n### Referenced TypedDicts\n\n{typed_dict_blocks}"
+                )
 
             results.append(
                 f"## {name}\n"
@@ -235,17 +255,20 @@ def logic_get_details(api_names: list[str]) -> str:
             results.append(f"## {name}\n(API not found)")
     return "\n---\n".join(results)
 
+
 # --- 3. 协议工具层 ---
 def send_response(response: dict[str, Any]):
     """使用 orjson 快速序列化并写入 stdout"""
     sys.stdout.buffer.write(orjson.dumps(response) + b"\n")
     sys.stdout.buffer.flush()
 
+
 def log(msg: str):
     """输出带时间戳的日志到 stderr（不干扰 MCP stdout）"""
     timestamp = datetime.datetime.now().isoformat()
     sys.stderr.write(f"[{timestamp}] {msg}\n")
     sys.stderr.flush()
+
 
 def main():
     log("Starting Modern NapCat Docs Server (stdio/orjson)...")
@@ -274,21 +297,16 @@ def main():
             resp = {"jsonrpc": "2.0", "id": msg_id}
 
             match method:
-
                 # --- 握手 ---
                 case "initialize":
                     resp["result"] = {
                         "protocolVersion": PROTOCOL_VERSION,
-                        "capabilities": {
-                            "tools": {},
-                            "resources": {},
-                            "logging": {}
-                        },
-                        "serverInfo": {"name": "napcat-docs", "version": "2.0"}
+                        "capabilities": {"tools": {}, "resources": {}, "logging": {}},
+                        "serverInfo": {"name": "napcat-docs", "version": "2.0"},
                     }
 
                 case "notifications/initialized":
-                    continue # 通知无需回复
+                    continue  # 通知无需回复
 
                 # --- 心跳检测 (Ping) ---
                 case "ping":
@@ -316,22 +334,26 @@ def main():
                 # --- 资源发现 (Resource Discovery) ---
                 case "resources/list":
                     resp["result"] = {
-                        "resources": [{
-                            "uri": URI_INDEX,
-                            "name": "NapCat API Index",
-                            "mimeType": "text/markdown",
-                            "description": "NapCat SDK API 列表概览"
-                        }]
+                        "resources": [
+                            {
+                                "uri": URI_INDEX,
+                                "name": "NapCat API Index",
+                                "mimeType": "text/markdown",
+                                "description": "NapCat SDK API 列表概览",
+                            }
+                        ]
                     }
 
                 case "resources/templates/list":
                     resp["result"] = {
-                        "resourceTemplates": [{
-                            "uriTemplate": URI_TEMPLATE,
-                            "name": "NapCat API Detail",
-                            "mimeType": "text/markdown",
-                            "description": "NapCat SDK API 的函数签名、返回类型与相关 TypedDict 源码"
-                        }]
+                        "resourceTemplates": [
+                            {
+                                "uriTemplate": URI_TEMPLATE,
+                                "name": "NapCat API Detail",
+                                "mimeType": "text/markdown",
+                                "description": "NapCat SDK API 的函数签名、返回类型与相关 TypedDict 源码",
+                            }
+                        ]
                     }
 
                 # --- 资源读取 (Resource Read) ---
@@ -361,7 +383,9 @@ def main():
                         raise ValueError(f"Unknown URI: {uri}")
 
                     resp["result"] = {
-                        "contents": [{"uri": uri, "mimeType": "text/markdown", "text": content}]
+                        "contents": [
+                            {"uri": uri, "mimeType": "text/markdown", "text": content}
+                        ]
                     }
 
                 # --- 工具发现 (Tool Discovery) ---
@@ -371,7 +395,7 @@ def main():
                             {
                                 "name": "list_apis",
                                 "description": "列出 NapCat SDK 的全部 API",
-                                "inputSchema": {"type": "object", "properties": {}}
+                                "inputSchema": {"type": "object", "properties": {}},
                             },
                             {
                                 "name": "get_api_details",
@@ -382,12 +406,12 @@ def main():
                                         "names": {
                                             "type": "array",
                                             "items": {"type": "string"},
-                                            "description": "NapCat API 名称列表 (例如 ['send_private_msg'])"
+                                            "description": "NapCat API 名称列表 (例如 ['send_private_msg'])",
                                         }
                                     },
-                                    "required": ["names"]
-                                }
-                            }
+                                    "required": ["names"],
+                                },
+                            },
                         ]
                     }
 
@@ -415,18 +439,28 @@ def main():
                                 names = [raw_names]
                             elif isinstance(raw_names, list):
                                 candidate_names = cast(list[Any], raw_names)
-                                if not all(isinstance(item, str) for item in candidate_names):
-                                    raise ValueError("Argument 'names' must be a list of strings.")
+                                if not all(
+                                    isinstance(item, str) for item in candidate_names
+                                ):
+                                    raise ValueError(
+                                        "Argument 'names' must be a list of strings."
+                                    )
                                 names = [cast(str, item) for item in candidate_names]
                             else:
-                                raise ValueError("Argument 'names' is required and cannot be empty.")
+                                raise ValueError(
+                                    "Argument 'names' is required and cannot be empty."
+                                )
                             if not names:
-                                raise ValueError("Argument 'names' is required and cannot be empty.")
+                                raise ValueError(
+                                    "Argument 'names' is required and cannot be empty."
+                                )
                             result_text = logic_get_details(names)
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 
-                    resp["result"] = {"content": [{"type": "text", "text": result_text}]}
+                    resp["result"] = {
+                        "content": [{"type": "text", "text": result_text}]
+                    }
 
                 # --- 未知请求 ---
                 case _:
@@ -435,7 +469,7 @@ def main():
                         log(f"Method not found: {method}")
                         resp["error"] = {
                             "code": -32601,
-                            "message": f"Method not found: {method}"
+                            "message": f"Method not found: {method}",
                         }
 
             # 仅对 request（有 id）回复，且按键存在性判断 result/error
@@ -447,10 +481,11 @@ def main():
                 err_resp = {
                     "jsonrpc": "2.0",
                     "id": msg_id,
-                    "error": {"code": -32000, "message": str(e)}
+                    "error": {"code": -32000, "message": str(e)},
                 }
                 send_response(err_resp)
             log(f"Error processing request: {e}")
+
 
 if __name__ == "__main__":
     main()

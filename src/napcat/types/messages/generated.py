@@ -1,3 +1,10 @@
+"""
+OneBot 11 Message Segments
+
+自动生成的消息段定义 (dataclass)。
+包含所有支持的消息段类型，例如 Text, Image, Face 等。
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

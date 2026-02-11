@@ -145,6 +145,7 @@ logger = logging.getLogger("schema_codegen")
 # Config model
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class CodegenConfig:
     """
@@ -201,6 +202,7 @@ class CodegenConfig:
 # IO helpers
 # ============================================================================
 
+
 def read_text(path: str | os.PathLike[str]) -> str:
     """Read a UTF-8 text file."""
     return Path(path).read_text(encoding="utf-8")
@@ -243,7 +245,9 @@ def _collect_top_level_definition_names(source: str) -> set[str]:
     return names
 
 
-def _replace_identifier_names(source: str, rename_map: dict[str, str]) -> tuple[str, set[str]]:
+def _replace_identifier_names(
+    source: str, rename_map: dict[str, str]
+) -> tuple[str, set[str]]:
     """
     Replace identifiers using a conservative word-boundary regex.
 
@@ -338,7 +342,11 @@ def postprocess_generated_file(path: str | os.PathLike[str]) -> dict[str, str]:
         write_text(path, replaced)
 
     applied_rename_map = {name: rename_map[name] for name in applied_names}
-    logger.info("🧹 Post-processed generated file: %s (renamed %d symbols)", path, len(applied_rename_map))
+    logger.info(
+        "🧹 Post-processed generated file: %s (renamed %d symbols)",
+        path,
+        len(applied_rename_map),
+    )
     return applied_rename_map
 
 
@@ -464,7 +472,16 @@ def run_client_api_codegen(
 
     logger.info("🛠️  Running client API codegen: %s", script)
     completed = subprocess.run(
-        [sys.executable, script, "--openapi", openapi, "--schemas", schemas, "--out", out],
+        [
+            sys.executable,
+            script,
+            "--openapi",
+            openapi,
+            "--schemas",
+            schemas,
+            "--out",
+            out,
+        ],
         check=True,
         capture_output=True,
         text=True,
@@ -570,13 +587,16 @@ def write_messages_init_file(
     exports = collect_generated_exports_for_messages_init(generated_source)
     content = build_messages_init_content(exports)
     write_text(path, content)
-    logger.info("✅ Wrote messages __init__ to: %s (exports %d symbols)", path, len(exports))
+    logger.info(
+        "✅ Wrote messages __init__ to: %s (exports %d symbols)", path, len(exports)
+    )
     return exports
 
 
 # ============================================================================
 # CST Visitors (Collectors)
 # ============================================================================
+
 
 class ClassCollector(cst.CSTVisitor):
     """Collect all ClassDef nodes by name."""
@@ -602,6 +622,7 @@ class NameCollector(cst.CSTVisitor):
 # Predicates (small helpers)
 # ============================================================================
 
+
 def is_docstring_stmt(stmt: cst.BaseStatement) -> bool:
     """Whether a statement looks like a docstring expression statement."""
     return m.matches(
@@ -618,7 +639,11 @@ def is_dataclass_class(class_node: cst.ClassDef) -> bool:
         d = decorator.decorator
         if isinstance(d, cst.Name) and d.value == "dataclass":
             return True
-        if isinstance(d, cst.Call) and isinstance(d.func, cst.Name) and d.func.value == "dataclass":
+        if (
+            isinstance(d, cst.Call)
+            and isinstance(d.func, cst.Name)
+            and d.func.value == "dataclass"
+        ):
             return True
     return False
 
@@ -636,6 +661,7 @@ def is_import_statement(stmt: cst.BaseStatement) -> bool:
 # ============================================================================
 # Extractors (read/collect info from CST)
 # ============================================================================
+
 
 def get_field_blocks(
     class_node: cst.ClassDef,
@@ -670,7 +696,9 @@ def get_field_blocks(
             j = i + 1
             while j < len(body):
                 next_stmt = body[j]
-                if isinstance(next_stmt, cst.SimpleStatementLine) and is_docstring_stmt(next_stmt):
+                if isinstance(next_stmt, cst.SimpleStatementLine) and is_docstring_stmt(
+                    next_stmt
+                ):
                     block.append(next_stmt)
                     j += 1
                     continue
@@ -694,7 +722,10 @@ def extract_literal_string(annotation: cst.BaseExpression) -> str | None:
     """
     if not isinstance(annotation, cst.Subscript):
         return None
-    if not isinstance(annotation.value, cst.Name) or annotation.value.value != "Literal":
+    if (
+        not isinstance(annotation.value, cst.Name)
+        or annotation.value.value != "Literal"
+    ):
         return None
     if len(annotation.slice) != 1:
         return None
@@ -821,7 +852,9 @@ def collect_definition_annotation_names(module: cst.Module) -> dict[str, set[str
         if isinstance(stmt, cst.SimpleStatementLine):
             for small_stmt in stmt.body:
                 if isinstance(small_stmt, cst.TypeAlias):
-                    result[small_stmt.name.value] = collect_names_from_expr(small_stmt.value)
+                    result[small_stmt.name.value] = collect_names_from_expr(
+                        small_stmt.value
+                    )
     return result
 
 
@@ -875,6 +908,7 @@ def collect_selected_type_alias_blocks(
 # TypedDict transforms
 # ============================================================================
 
+
 class ResponseFlattener(cst.CSTTransformer):
     """
     Flatten `*PostResponse` TypedDict classes.
@@ -891,7 +925,9 @@ class ResponseFlattener(cst.CSTTransformer):
 
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
+    ) -> (
+        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
+    ):
         if not original_node.name.value.endswith("PostResponse"):
             return updated_node
 
@@ -922,7 +958,9 @@ class ResponseFlattener(cst.CSTTransformer):
             new_body_list: list[cst.BaseStatement] = []
 
             # Keep docstring of PostResponse
-            if original_node.body.body and is_docstring_stmt(cast(cst.BaseStatement, original_node.body.body[0])):
+            if original_node.body.body and is_docstring_stmt(
+                cast(cst.BaseStatement, original_node.body.body[0])
+            ):
                 doc_stmt = cast(cst.BaseStatement, original_node.body.body[0])
                 new_body_list.append(doc_stmt)
 
@@ -957,7 +995,9 @@ class FlattenedClassRemover(cst.CSTTransformer):
 
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
+    ) -> (
+        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
+    ):
         if original_node.name.value in self.flattened_class_set:
             self.removed_count += 1
             return cst.RemoveFromParent()
@@ -972,7 +1012,9 @@ class DefinitionNameRemover(cst.CSTTransformer):
 
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
+    ) -> (
+        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
+    ):
         if original_node.name.value in self.names_to_remove:
             return cst.RemoveFromParent()
         return updated_node
@@ -981,9 +1023,14 @@ class DefinitionNameRemover(cst.CSTTransformer):
         self,
         original_node: cst.SimpleStatementLine,
         updated_node: cst.SimpleStatementLine,
-    ) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel:
+    ) -> (
+        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
+    ):
         for small_stmt in original_node.body:
-            if isinstance(small_stmt, cst.TypeAlias) and small_stmt.name.value in self.names_to_remove:
+            if (
+                isinstance(small_stmt, cst.TypeAlias)
+                and small_stmt.name.value in self.names_to_remove
+            ):
                 return cst.RemoveFromParent()
         return updated_node
 
@@ -991,6 +1038,7 @@ class DefinitionNameRemover(cst.CSTTransformer):
 # ============================================================================
 # Message (dataclass) transforms
 # ============================================================================
+
 
 def collect_dataclass_fields_with_inheritance(
     class_name: str,
@@ -1027,7 +1075,9 @@ def collect_dataclass_fields_with_inheritance(
         base_name = get_base_class_name(base)
         if not base_name:
             continue
-        for fname, fblock in collect_dataclass_fields_with_inheritance(base_name, definitions, visiting):
+        for fname, fblock in collect_dataclass_fields_with_inheritance(
+            base_name, definitions, visiting
+        ):
             upsert_field(fname, fblock)
 
     # Then this class
@@ -1061,7 +1111,9 @@ def collect_dataclass_class_names_with_inheritance(
         if not base_name:
             continue
         collected.update(
-            collect_dataclass_class_names_with_inheritance(base_name, definitions, visiting)
+            collect_dataclass_class_names_with_inheritance(
+                base_name, definitions, visiting
+            )
         )
 
     visiting.remove(class_name)
@@ -1205,6 +1257,7 @@ def collect_generated_message_classes(
 # Assemble output modules
 # ============================================================================
 
+
 def build_generated_message_module(
     typedict_module: cst.Module,
     dataclass_module: cst.Module,
@@ -1245,6 +1298,13 @@ def build_generated_message_module(
         f"""
 # generated by schema_codegen_single.py
 
+\"\"\"
+OneBot 11 Message Segments
+
+自动生成的消息段定义 (dataclass)。
+包含所有支持的消息段类型，例如 Text, Image, Face 等。
+\"\"\"
+
 from __future__ import annotations
 from .base import MessageSegment
 from dataclasses import dataclass
@@ -1280,7 +1340,9 @@ def build_schemas_module(
     referenced_names_in_schemas_source = collect_annotation_names_from_module(
         cleaned_typedict_module
     )
-    definition_annotation_names = collect_definition_annotation_names(cleaned_typedict_module)
+    definition_annotation_names = collect_definition_annotation_names(
+        cleaned_typedict_module
+    )
 
     # Remove:
     # - any generated names (because schemas should import them)
@@ -1302,7 +1364,9 @@ def build_schemas_module(
     schemas_names_to_remove |= orphan_helpers_to_remove
 
     typedict_remover_for_schemas = DefinitionNameRemover(schemas_names_to_remove)
-    schemas_typedict_module = cleaned_typedict_module.visit(typedict_remover_for_schemas)
+    schemas_typedict_module = cleaned_typedict_module.visit(
+        typedict_remover_for_schemas
+    )
 
     generated_import_module = cst.parse_module(
         "from .messages.generated import (\n"
@@ -1320,8 +1384,13 @@ def build_schemas_module(
             continue
         break
 
+    docstring_stmt = cst.parse_statement(
+        '"""\nOneBot 11/NapCat Schemas\n\n自动生成的 TypedDict 定义，用于 API 请求和响应的数据结构验证。\n"""'
+    )
+
     schemas_module = cst.Module(
         body=[
+            docstring_stmt,
             *schemas_body[:insert_index],
             *generated_import_module.body,
             *schemas_body[insert_index:],
@@ -1334,6 +1403,7 @@ def build_schemas_module(
 # ============================================================================
 # Pipeline
 # ============================================================================
+
 
 def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) -> None:
     """
@@ -1396,24 +1466,37 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     dataclass_collector = ClassCollector()
     dataclass_module.visit(dataclass_collector)
 
-    logger.info("📦 Collected %d TypedDict classes", len(typedict_collector.definitions))
-    logger.info("📦 Collected %d Dataclass classes", len(dataclass_collector.definitions))
+    logger.info(
+        "📦 Collected %d TypedDict classes", len(typedict_collector.definitions)
+    )
+    logger.info(
+        "📦 Collected %d Dataclass classes", len(dataclass_collector.definitions)
+    )
 
     # Flatten PostResponse schemas
     typedict_flattener = ResponseFlattener(typedict_collector.definitions)
     flattened_typedict_module = typedict_module.visit(typedict_flattener)
-    logger.info("🧩 Flattened %d PostResponse data classes", len(typedict_flattener.flattened_classes))
+    logger.info(
+        "🧩 Flattened %d PostResponse data classes",
+        len(typedict_flattener.flattened_classes),
+    )
 
     typedict_remover = FlattenedClassRemover(typedict_flattener.flattened_classes)
     cleaned_typedict_module = flattened_typedict_module.visit(typedict_remover)
-    logger.info("🗑️  Removed %d flattened class definitions", typedict_remover.removed_count)
+    logger.info(
+        "🗑️  Removed %d flattened class definitions", typedict_remover.removed_count
+    )
 
     # Transform message segment dataclasses
-    generated_message_classes, flattened_dataclass_names = collect_generated_message_classes(
-        dataclass_module,
-        dataclass_collector.definitions,
+    generated_message_classes, flattened_dataclass_names = (
+        collect_generated_message_classes(
+            dataclass_module,
+            dataclass_collector.definitions,
+        )
     )
-    logger.info("🧱 Generated %d message segment classes", len(generated_message_classes))
+    logger.info(
+        "🧱 Generated %d message segment classes", len(generated_message_classes)
+    )
 
     # Assemble generated.py
     generated_message_module = build_generated_message_module(
@@ -1471,7 +1554,9 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
             schemas_path=cfg.schemas_output_path,
             output_path=cfg.client_api_output_path,
         )
-        logger.info("✅ Wrote client API mixin module to: %s", cfg.client_api_output_path)
+        logger.info(
+            "✅ Wrote client API mixin module to: %s", cfg.client_api_output_path
+        )
 
     # Format with Ruff
     if cfg.format_with_ruff:
@@ -1512,7 +1597,10 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
         removed_files = cleanup_codegen_input_files(
             [cfg.typedict_input_path, cfg.dataclass_input_path]
         )
-        logger.info("🧽 Cleaned up codegen inputs: %s", ", ".join(removed_files) if removed_files else "none")
+        logger.info(
+            "🧽 Cleaned up codegen inputs: %s",
+            ", ".join(removed_files) if removed_files else "none",
+        )
 
     logger.info("🎉 Done")
 
@@ -1521,6 +1609,7 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
 # ============================================================================
 # CLI
 # ============================================================================
+
 
 def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]:
     """
@@ -1535,19 +1624,45 @@ def _parse_args(argv: Sequence[str] | None = None) -> tuple[CodegenConfig, bool]
         prog="schema_codegen_single",
         description="Single-file schema code generator (TypedDict + dataclass -> generated artifacts).",
     )
-    parser.add_argument("--typedict", default=CodegenConfig.typedict_input_path, help="Path to api_typedict.py")
-    parser.add_argument("--dataclass", default=CodegenConfig.dataclass_input_path, help="Path to api_dataclass.py")
-    parser.add_argument("--out-generated", default=CodegenConfig.generated_output_path, help="Output path for generated.py")
-    parser.add_argument("--out-schemas", default=CodegenConfig.schemas_output_path, help="Output path for schemas.py")
+    parser.add_argument(
+        "--typedict",
+        default=CodegenConfig.typedict_input_path,
+        help="Path to api_typedict.py",
+    )
+    parser.add_argument(
+        "--dataclass",
+        default=CodegenConfig.dataclass_input_path,
+        help="Path to api_dataclass.py",
+    )
+    parser.add_argument(
+        "--out-generated",
+        default=CodegenConfig.generated_output_path,
+        help="Output path for generated.py",
+    )
+    parser.add_argument(
+        "--out-schemas",
+        default=CodegenConfig.schemas_output_path,
+        help="Output path for schemas.py",
+    )
     parser.add_argument(
         "--out-messages-init",
         default=CodegenConfig.messages_init_output_path,
         help="Output path for messages/__init__.py",
     )
 
-    parser.add_argument("--no-ruff", action="store_true", help="Do not run ruff formatting")
-    parser.add_argument("--no-update-init", action="store_true", help="Do not run update-init after pipeline")
-    parser.add_argument("--ignore-ruff-errors", action="store_true", help="Ignore ruff failures (do not fail pipeline)")
+    parser.add_argument(
+        "--no-ruff", action="store_true", help="Do not run ruff formatting"
+    )
+    parser.add_argument(
+        "--no-update-init",
+        action="store_true",
+        help="Do not run update-init after pipeline",
+    )
+    parser.add_argument(
+        "--ignore-ruff-errors",
+        action="store_true",
+        help="Ignore ruff failures (do not fail pipeline)",
+    )
     parser.add_argument(
         "--no-openapi-pre-codegen",
         action="store_true",

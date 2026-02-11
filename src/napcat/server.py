@@ -1,3 +1,10 @@
+"""
+反向 WebSocket 服务器实现
+
+ReverseWebSocketServer 类用于启动一个 WebSocket 服务器，接收 NapCatQQ 的反向连接。
+每当有新的连接接入时，会创建一个 NapCatClient 实例并回调给用户定义的处理函数。
+"""
+
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
@@ -91,7 +98,9 @@ class ReverseWebSocketServer:
 
             # 取消所有活跃连接并等待它们结束
             if self._active_tasks:
-                logger.info(f"Cancelling {len(self._active_tasks)} active connections...")
+                logger.info(
+                    f"Cancelling {len(self._active_tasks)} active connections..."
+                )
                 tasks = list(self._active_tasks)
                 for task in tasks:
                     task.cancel()
@@ -99,18 +108,20 @@ class ReverseWebSocketServer:
                 try:
                     await asyncio.wait_for(
                         asyncio.gather(*tasks, return_exceptions=True),
-                        timeout=self.shutdown_timeout
+                        timeout=self.shutdown_timeout,
                     )
                 except TimeoutError:
-                    logger.warning(f"Some connections did not close within {self.shutdown_timeout}s")
+                    logger.warning(
+                        f"Some connections did not close within {self.shutdown_timeout}s"
+                    )
                 self._active_tasks.clear()
 
             try:
-                await asyncio.wait_for(self._server.wait_closed(), timeout=self.shutdown_timeout)
-            except TimeoutError:
-                logger.warning(
-                    f"Server did not close within {self.shutdown_timeout}s"
+                await asyncio.wait_for(
+                    self._server.wait_closed(), timeout=self.shutdown_timeout
                 )
+            except TimeoutError:
+                logger.warning(f"Server did not close within {self.shutdown_timeout}s")
             self._server = None
 
             logger.info("Server closed")

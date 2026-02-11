@@ -1,6 +1,13 @@
 # Auto-generated file. Do not modify directly.
 # 自动生成的文件。请勿直接修改。
 
+"""
+NapCat 客户端 API Mixin
+
+自动生成的 API 方法，实现了 OneBot 11 (以及扩展) 的所有 API 调用接口。
+混入到 NapCatClient 类中使用。
+"""
+
 from collections.abc import Mapping
 from typing import Any, Unpack
 

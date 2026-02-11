@@ -1,3 +1,9 @@
+"""
+OneBot 11/NapCat Schemas
+
+自动生成的 TypedDict 定义，用于 API 请求和响应的数据结构验证。
+"""
+
 from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict

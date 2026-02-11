@@ -1,3 +1,10 @@
+"""
+NapCat 客户端实现
+
+提供 NapCatClient 类，用于与 NapCatQQ 建立连接（正向 WebSocket）或复用现有连接（反向 WebSocket）。
+包含事件生成器 (_events) 和 API 调用方法 (call_action)。
+"""
+
 import asyncio
 from collections.abc import AsyncGenerator, Mapping
 from types import TracebackType
@@ -58,7 +65,9 @@ class NapCatClient(NapCatAPIMixin):
                     conn_entered = True
                 # 如果是 Client 模式（主动连接），建立连接并包装
                 elif self.ws_url:
-                    headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
+                    headers = (
+                        {"Authorization": f"Bearer {self.token}"} if self.token else {}
+                    )
                     self._ws_ctx = ws_connect(self.ws_url, additional_headers=headers)
                     ws = await self._ws_ctx.__aenter__()
                     ws_ctx_entered = True
@@ -66,7 +75,9 @@ class NapCatClient(NapCatAPIMixin):
                     await self._conn.__aenter__()
                     conn_entered = True
                 else:
-                    raise ValueError("Invalid Client: No URL and no existing connection")
+                    raise ValueError(
+                        "Invalid Client: No URL and no existing connection"
+                    )
 
                 self._entered = True
                 # 获取自身 ID (增加容错处理)
@@ -139,6 +150,7 @@ class NapCatClient(NapCatAPIMixin):
             if cleanup_errors:
                 for err in cleanup_errors:
                     import logging
+
                     logging.getLogger("napcat.client").warning(f"Cleanup error: {err}")
                 if exc_type is None:
                     raise cleanup_errors[0]
@@ -185,8 +197,12 @@ class NapCatClient(NapCatAPIMixin):
 
         if action in {"send_private_msg", "send_group_msg"} and "message" in params:
             normalized_params = dict(params)
-            message_for_send = cast(str | list[Message] | Message, normalized_params["message"])
-            normalized_params["message"] = self._normalize_message_for_send(message_for_send)
+            message_for_send = cast(
+                str | list[Message] | Message, normalized_params["message"]
+            )
+            normalized_params["message"] = self._normalize_message_for_send(
+                message_for_send
+            )
             params = normalized_params
 
         resp = await self.send({"action": action, "params": params})
@@ -195,13 +211,14 @@ class NapCatClient(NapCatAPIMixin):
         return resp.get("data", None)
 
     @staticmethod
-    def _normalize_message_for_send(message: str | list[Message] | Message) -> str | list[dict[str, Any]] | dict[str, Any]:
+    def _normalize_message_for_send(
+        message: str | list[Message] | Message,
+    ) -> str | list[dict[str, Any]] | dict[str, Any]:
         if isinstance(message, str):
             return message
         if isinstance(message, list):
             return [dict(segment) for segment in message]
         return dict(message)
-
 
     # --- 黑魔法区域 ---
 
