@@ -689,7 +689,7 @@ def main():
                             },
                             {
                                 "name": "list_code_files",
-                                "description": "列出 NapCat SDK 源码目录树及每个文件的模块 docstring（文件内容必须通过 list_code_files 访问，不得直接读取文件系统）",
+                                "description": "列出 NapCat SDK 源码目录树及每个文件的模块 docstring（文件内容必须通过 get_code_file 访问，不得直接读取文件系统）",
                                 "inputSchema": {"type": "object", "properties": {}},
                             },
                             {
