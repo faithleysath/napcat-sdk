@@ -12,10 +12,16 @@ NapCat SDK 是一个用于与 NapCatQQ (OneBot 11) 进行交互的 Python SDK。
 
 # src/napcat/__init__.py
 
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 
 from . import types
 from .client import NapCatClient
+from .exceptions import (
+    NapCatAPIError,
+    NapCatError,
+    NapCatProtocolError,
+    NapCatStateError,
+)
 from .server import ReverseWebSocketServer
 
 # 统一透传 types 的全量导出（自动更新）
@@ -24,6 +30,10 @@ from .types import *
 __all__ = [
     "NapCatClient",
     "ReverseWebSocketServer",
+    "NapCatError",
+    "NapCatAPIError",
+    "NapCatProtocolError",
+    "NapCatStateError",
     # >>> AUTO-GENERATED: TYPES EXPORTS START
     "NapCatEvent",
     "UnknownEvent",

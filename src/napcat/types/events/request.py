@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from ...exceptions import NapCatProtocolError, NapCatStateError
 from .base import NapCatEvent
 
 
@@ -23,7 +24,7 @@ class RequestEvent(NapCatEvent):
             return GroupRequestEvent._from_dict(data)
 
         # 未知类型的 Request，抛出异常或返回基类/Unknown
-        raise ValueError(f"Unknown request event type: {req_type}")
+        raise NapCatProtocolError(f"Unknown request event type: {req_type}")
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -37,13 +38,13 @@ class FriendRequestEvent(RequestEvent):
     async def approve(self, remark: str = "") -> None:
         """同意好友请求"""
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         await self._client.set_friend_add_request(flag=self.flag, approve=True, remark=remark)
 
     async def reject(self) -> None:
         """拒绝好友请求"""
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         await self._client.set_friend_add_request(flag=self.flag, approve=False)
 
 
@@ -60,7 +61,7 @@ class GroupRequestEvent(RequestEvent):
     async def approve(self) -> None:
         """同意入群/邀请请求"""
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         await self._client.set_group_add_request(
             flag=self.flag,
             approve=True
@@ -69,7 +70,7 @@ class GroupRequestEvent(RequestEvent):
     async def reject(self, reason: str = "") -> None:
         """拒绝入群/邀请请求"""
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         await self._client.set_group_add_request(
             flag=self.flag,
             approve=False,

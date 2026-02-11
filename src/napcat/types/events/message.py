@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
+from ...exceptions import NapCatProtocolError, NapCatStateError
 from ..messages import At, Message, MessageSegment, Reply, Text, UnknownMessageSegment
 from ..utils import FromDictMixin
 from .base import NapCatEvent
@@ -105,7 +106,7 @@ class MessageEvent(NapCatEvent):
                 msg_type,
                 sorted(data.keys()),
             )
-            raise ValueError("Unsupported message payload type: str")
+            raise NapCatProtocolError("Unsupported message payload type: str")
         elif isinstance(raw_message, list):
             parsed_message = tuple(
                 MessageSegment.from_dict(seg)
@@ -120,7 +121,7 @@ class MessageEvent(NapCatEvent):
                 cast(MessageSenderPayload, raw_sender)
             )
         else:
-            raise ValueError("Invalid sender data in message event")
+            raise NapCatProtocolError("Invalid sender data in message event")
 
         parsed_emoji_likes_list: list[EmojiLikeItem] | None
         if isinstance(raw_emoji_likes_list, list):
@@ -149,14 +150,14 @@ class MessageEvent(NapCatEvent):
         elif msg_type == "private":
             return PrivateMessageEvent._from_dict(new_data)
 
-        raise ValueError(f"Unknown message type: {msg_type}")
+        raise NapCatProtocolError(f"Unknown message type: {msg_type}")
 
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         raise NotImplementedError("send_msg must be implemented in subclasses")
 
     async def reply(self, message: str | list[Message] | Message, at: bool = False) -> int:
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         if isinstance(message, str):
             message = Text(text=message)
         if not isinstance(message, list):
@@ -182,7 +183,7 @@ class PrivateMessageEvent(MessageEvent):
 
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         resp = await self._client.send_private_msg(
             user_id=str(self.user_id),
             message=message
@@ -202,7 +203,7 @@ class GroupMessageEvent(MessageEvent):
 
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         if self._client is None:
-            raise RuntimeError("Event not bound to a client")
+            raise NapCatStateError("Event not bound to a client")
         resp = await self._client.send_group_msg(
             group_id=str(self.group_id),
             message=message

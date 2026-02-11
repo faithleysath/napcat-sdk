@@ -52,13 +52,20 @@ await client.send_group_msg(
 
 ## 错误处理
 
-当返回 `status != ok` 或 `retcode != 0` 时，SDK 会抛出 `RuntimeError`。
+当返回 `status != ok` 或 `retcode != 0` 时，SDK 会抛出 `NapCatAPIError`。
 
 建议在业务层统一捕获并记录：
 
 ```python
 try:
     await client.get_login_info()
-except RuntimeError as exc:
+except NapCatAPIError as exc:
     logger.error("API 调用失败: %s", exc)
+    logger.debug("action=%s retcode=%s", exc.action, exc.retcode)
 ```
+
+常见异常类型：
+
+- `NapCatAPIError`: API 返回失败状态
+- `NapCatProtocolError`: 上报事件数据不符合预期结构
+- `NapCatStateError`: 客户端未连接或事件未绑定

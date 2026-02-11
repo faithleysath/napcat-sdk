@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
+from ...exceptions import NapCatProtocolError
 from ..utils import FromDictMixin
 from .base import NapCatEvent
 
@@ -33,7 +34,7 @@ class MetaEvent(NapCatEvent):
         elif meta_type == "heartbeat":
             raw_status = data.get("status")
             if not isinstance(raw_status, dict):
-                raise ValueError("Invalid heartbeat status")
+                raise NapCatProtocolError("Invalid heartbeat status")
             status = HeartbeatStatus._from_dict(cast(dict[str, Any], raw_status))
             return HeartbeatEvent._from_dict(data | {"status": status})
 
@@ -42,7 +43,7 @@ class MetaEvent(NapCatEvent):
             meta_type,
             sorted(data.keys()),
         )
-        raise ValueError(f"Unknown meta event type: {meta_type}")
+        raise NapCatProtocolError(f"Unknown meta event type: {meta_type}")
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

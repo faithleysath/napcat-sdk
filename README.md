@@ -198,6 +198,26 @@ async def managing_bot(client: NapCatClient):
 
 </details>
 
+<details> <summary><b>⚠️ 错误处理 (异常类型)</b></summary>
+
+SDK 提供了明确的异常类型，方便区分错误来源：
+
+```python
+from napcat import NapCatAPIError, NapCatProtocolError, NapCatStateError
+
+try:
+    await client.get_login_info()
+except NapCatAPIError as exc:
+    print("API 失败:", exc)
+    print("action=", exc.action, "retcode=", exc.retcode)
+except NapCatProtocolError as exc:
+    print("上报数据异常:", exc)
+except NapCatStateError as exc:
+    print("客户端状态错误:", exc)
+```
+
+</details>
+
 ---
 
 ## 🛠️ Development

@@ -14,6 +14,7 @@ from websockets.asyncio.client import connect as ws_connect
 
 from .client_api import NapCatAPIMixin
 from .connection import Connection
+from .exceptions import NapCatAPIError, NapCatStateError
 from .types import NapCatEvent
 from .types.messages import Message
 
@@ -157,9 +158,9 @@ class NapCatClient(NapCatAPIMixin):
 
     async def _events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
-            raise RuntimeError("Client not connected")
+            raise NapCatStateError("Client not connected")
         if not self._connection_running():
-            raise RuntimeError("Client not connected or already closed")
+            raise NapCatStateError("Client not connected or already closed")
 
         async for event in self._conn.events():
             event = NapCatEvent.from_dict(event)
@@ -181,7 +182,7 @@ class NapCatClient(NapCatAPIMixin):
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
-            raise RuntimeError("Client not connected")
+            raise NapCatStateError("Client not connected")
         return await self._conn.send(data, timeout)
 
     async def call_action(
@@ -207,7 +208,12 @@ class NapCatClient(NapCatAPIMixin):
 
         resp = await self.send({"action": action, "params": params})
         if resp.get("status") != "ok" or resp.get("retcode") != 0:
-            raise RuntimeError(f"API call failed: {resp}")
+            raise NapCatAPIError(
+                f"API call failed: {resp}",
+                action=action,
+                retcode=resp.get("retcode"),
+                response=resp,
+            )
         return resp.get("data", None)
 
     @staticmethod
