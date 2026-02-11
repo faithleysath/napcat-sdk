@@ -602,12 +602,13 @@ def main():
                                 "inputSchema": {
                                     "type": "object",
                                     "properties": {
-                                        "path": {
-                                            "type": "string",
-                                            "description": "源码文件的相对路径 (例如 'client.py' 或 'mcp/doc_server.py')",
+                                        "paths": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                            "description": "源码文件的相对路径列表 (例如 ['client.py', 'types/__init__.py'])",
                                         }
                                     },
-                                    "required": ["path"],
+                                    "required": ["paths"],
                                 },
                             },
                         ]
@@ -656,12 +657,23 @@ def main():
                         case "list_code_files":
                             result_text = logic_get_code_index()
                         case "get_code_file":
-                            file_path = cast(str | None, args.get("path"))
-                            if not file_path:
+                            raw_paths = args.get("paths")
+                            paths: list[str] = []
+
+                            if isinstance(raw_paths, list):
+                                paths = [str(p) for p in cast(list[Any], raw_paths)]
+                            elif isinstance(raw_paths, str):
+                                paths = [raw_paths]
+                            else:
                                 raise ValueError(
-                                    "Argument 'path' is required and cannot be empty."
+                                    "Argument 'paths' is required and must be a list of strings."
                                 )
-                            result_text = logic_get_code_file(file_path)
+
+                            if not paths:
+                                raise ValueError("Argument 'paths' cannot be empty.")
+
+                            results = [logic_get_code_file(p) for p in paths]
+                            result_text = "\n\n".join(results)
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 
