@@ -20,7 +20,7 @@ icon: lucide/workflow
 
 ### 场景：区分私聊与群聊
 
-```
+```python
 from napcat.client import NapCatClient
 from napcat.types.events import GroupMessageEvent, PrivateMessageEvent, NapCatEvent
 
@@ -47,7 +47,7 @@ async def handle_event(event: NapCatEvent):
 
 ### 场景：特定群的特定指令
 
-```
+```python
 async def handle_group_msg(event: GroupMessageEvent):
     match event:
         # 🎯 只有群 123456 发送 "开启复读" 时才会命中
@@ -68,7 +68,7 @@ async def handle_group_msg(event: GroupMessageEvent):
 
 假设指令格式为：`文本("/ban")` + `At(目标)`。
 
-```
+```python
 from napcat.types.messages import Text, At, Image
 
 match event.message:
@@ -98,7 +98,7 @@ match event.message:
 
 ### 场景：宽松匹配与逻辑守卫
 
-```
+```python
 match event:
     # 🌟 场景：只要消息里包含“一张图片”，且发送者是管理员
     # [*_, Image(), *_] 表示：前面有些东西，后面有些东西，中间必须有个 Image
@@ -127,7 +127,7 @@ match event:
 3. 消息格式必须是：`Text("我是") + Text(名字) + Image(自拍)`。
 4. 我们要提取他的名字和照片 URL。
 
-```
+```python
 # 一气呵成，没有任何多余的赋值语句
 match event:
     case GroupMessageEvent(
@@ -158,7 +158,7 @@ match event:
 
 ### ❌ 错误示范
 
-```
+```python
 target_group = 987654321
 
 match event:
@@ -172,7 +172,7 @@ match event:
 
 对于变量匹配，必须使用 **Guard (卫语句)**：
 
-```
+```python
 target_group = 987654321
 
 match event:
