@@ -289,7 +289,12 @@ def _extract_module_docstring(file_path: Path) -> str:
 def logic_get_code_index() -> str:
     """生成源码目录树和模块 docstring 索引"""
     source_root = _get_source_root()
-    lines: list[str] = ["# NapCat Source Code Index", ""]
+    lines: list[str] = [
+        "# NapCat Source Code Index",
+        "",
+        "NOTE: File contents must be accessed via the list_code_files tool; do not read the file system directly.",
+        "",
+    ]
 
     # 遍历源码目录
     for root, dirs, files in os.walk(source_root):
@@ -593,7 +598,7 @@ def main():
                             },
                             {
                                 "name": "list_code_files",
-                                "description": "列出 NapCat SDK 源码目录树及每个文件的模块 docstring",
+                                "description": "列出 NapCat SDK 源码目录树及每个文件的模块 docstring（文件内容必须通过 list_code_files 访问，不得直接读取文件系统）",
                                 "inputSchema": {"type": "object", "properties": {}},
                             },
                             {
