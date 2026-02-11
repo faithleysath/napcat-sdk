@@ -60,6 +60,9 @@ nav = [
     { "Server 模式" = "key-concept/server.md" },
     { "事件与消息" = "key-concept/events-messages.md" },
   ] },
+  { "最佳实践" = [
+    { "模式匹配的艺术" = "best-practice/the-art-of-pattern-matching.md" },
+  ] },
   { "API 调用" = "api-usage.md" },
   { "开发指南" = "development.md" },
   { "常见问题" = "faq.md" },
