@@ -5,11 +5,14 @@ NapCat 文档 MCP 服务器
 支持 stdio 通信模式。
 """
 
+import ast
 import datetime
 import inspect
+import os
 import re
 import sys
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any, ForwardRef, TypeAliasType, TypedDict, cast, get_args, get_origin
 from urllib.parse import urlparse
 
@@ -215,6 +218,8 @@ def _get_api_data() -> dict[str, ApiDoc]:
 
 
 # --- 2. 业务逻辑层 (复用核心) ---
+
+# 2.1 API 相关
 def logic_get_index() -> str:
     """生成 API 目录索引"""
     api_data = _get_api_data()
@@ -256,6 +261,156 @@ def logic_get_details(api_names: list[str]) -> str:
     return "\n---\n".join(results)
 
 
+# 2.2 源码相关
+def _get_source_root() -> Path:
+    """获取 napcat 包的源码根目录"""
+    # __file__ 是 doc_server.py: src/napcat/mcp/doc_server.py
+    current = Path(__file__).resolve()
+    # 向上两级到 napcat 目录
+    return current.parent.parent
+
+
+def _extract_module_docstring(file_path: Path) -> str:
+    """提取 Python 文件的模块级 docstring"""
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            content = f.read()
+
+        try:
+            tree = ast.parse(content)
+            docstring = ast.get_docstring(tree)
+            return docstring if docstring else "(No module docstring)"
+        except SyntaxError:
+            return "(Failed to parse)"
+    except Exception as e:
+        return f"(Error reading file: {e})"
+
+
+def logic_get_code_index() -> str:
+    """生成源码目录树和模块 docstring 索引"""
+    source_root = _get_source_root()
+    lines: list[str] = ["# NapCat Source Code Index", ""]
+
+    # 遍历源码目录
+    for root, dirs, files in os.walk(source_root):
+        # 排除 __pycache__ 等目录
+        dirs[:] = [
+            d for d in dirs if not d.startswith("__") and not d.startswith(".")
+        ]
+        dirs.sort()
+
+        root_path = Path(root)
+        relative_root = root_path.relative_to(source_root)
+
+        # 计算缩进层级
+        depth = len(relative_root.parts) if str(relative_root) != "." else 0
+        indent = "  " * depth
+
+        # 如果不是根目录，显示目录名
+        if str(relative_root) != ".":
+            dir_name = relative_root.parts[-1]
+            lines.append(f"{indent}## {dir_name}/")
+            lines.append("")
+
+        # 列出 Python 文件
+        py_files = sorted([f for f in files if f.endswith(".py")])
+        for py_file in py_files:
+            file_path = root_path / py_file
+            relative_path = file_path.relative_to(source_root)
+            docstring = _extract_module_docstring(file_path)
+
+            # 使用 POSIX 路径格式
+            posix_path = relative_path.as_posix()
+
+            # 特殊处理：client_api.py 和 types/schemas.py
+            if posix_path in ("client_api.py", "types/schemas.py"):
+                lines.append(f"{indent}- **{py_file}** (`{posix_path}`)")
+                if posix_path == "client_api.py":
+                    lines.append(f"{indent}  ⚠️ API 定义文件，请使用 list_apis 和 get_api_details 工具查询")
+                else:  # types/schemas.py
+                    lines.append(f"{indent}  ⚠️ TypedDict 定义文件，请通过 get_api_details 工具查看相关 API 的类型定义")
+                lines.append("")
+                continue
+
+            lines.append(f"{indent}- **{py_file}** (`{posix_path}`)")
+            if docstring and docstring not in ("(No module docstring)", "(Failed to parse)"):
+                # 取 docstring 第一行并限制长度
+                doc_lines = docstring.strip().split("\n")
+                first_line = doc_lines[0]
+                if len(first_line) > 80:
+                    first_line = first_line[:80] + "..."
+                lines.append(f"{indent}  {first_line}")
+            lines.append("")
+
+    return "\n".join(lines)
+
+
+def logic_get_code_file(file_path: str) -> str:
+    """获取指定源码文件的完整内容"""
+    source_root = _get_source_root()
+
+    # 规范化路径格式
+    normalized_path = Path(file_path).as_posix()
+
+    # 特殊处理：client_api.py 和 types/schemas.py
+    if normalized_path == "client_api.py":
+        return (
+            f"# {file_path}\n\n"
+            "## ⚠️ 此文件包含 NapCat SDK 的所有 API 定义\n\n"
+            "此文件包含大量自动生成的 API 方法定义。为了更高效地查询：\n\n"
+            "### 推荐方式\n\n"
+            "**使用工具（Tools）：**\n"
+            "- `list_apis` - 获取所有可用 API 的列表\n"
+            "- `get_api_details` - 获取指定 API 的详细签名、返回类型和 TypedDict 定义\n\n"
+            "**使用资源（Resources）：**\n"
+            "- `napcat-docs://api/index` - 查看 API 索引\n"
+            "- `napcat-docs://api/{api_name}` - 查看特定 API 详情\n\n"
+            "### 示例\n\n"
+            "```\n"
+            "# 获取所有 API\n"
+            "list_apis()\n\n"
+            "# 获取 send_private_msg 的详细定义\n"
+            "get_api_details(names=['send_private_msg'])\n"
+            "```\n"
+        )
+    elif normalized_path == "types/schemas.py":
+        return (
+            f"# {file_path}\n\n"
+            "## ⚠️ 此文件包含 NapCat SDK 的所有 TypedDict 类型定义\n\n"
+            "此文件包含大量 TypedDict 定义，这些类型通常与特定 API 方法关联。\n\n"
+            "### 推荐方式\n\n"
+            "**通过 API 查询相关类型：**\n"
+            "使用 `get_api_details` 工具查询 API 时，会自动包含该 API 引用的所有 TypedDict 定义。\n\n"
+            "例如，查询 `send_private_msg` 时，会自动返回相关的请求和响应类型定义。\n\n"
+            "### 示例\n\n"
+            "```\n"
+            "# 查询 API 及其相关的 TypedDict\n"
+            "get_api_details(names=['send_private_msg'])\n"
+            "```\n\n"
+            "这样可以获得完整的上下文，而不仅仅是孤立的类型定义。\n"
+        )
+
+    # 安全性检查：确保路径在源码目录内
+    try:
+        target = (source_root / file_path).resolve()
+        target.relative_to(source_root)
+    except (ValueError, RuntimeError):
+        return f"# Error\n\nInvalid file path: {file_path}"
+
+    if not target.is_file():
+        return f"# Error\n\nFile not found: {file_path}"
+
+    if target.suffix != ".py":
+        return f"# Error\n\nNot a Python file: {file_path}"
+
+    try:
+        with open(target, encoding="utf-8") as f:
+            content = f.read()
+        return f"# {file_path}\n\n```python\n{content}\n```"
+    except Exception as e:
+        return f"# Error\n\nFailed to read file: {e}"
+
+
 # --- 3. 协议工具层 ---
 def send_response(response: dict[str, Any]):
     """使用 orjson 快速序列化并写入 stdout"""
@@ -275,8 +430,10 @@ def main():
 
     # 预定义常量
     PROTOCOL_VERSION = "2024-11-05"
-    URI_INDEX = "napcat-docs://api/index"
-    URI_TEMPLATE = "napcat-docs://api/{api_name}"
+    URI_API_INDEX = "napcat-docs://api/index"
+    URI_API_TEMPLATE = "napcat-docs://api/{api_name}"
+    URI_CODE_INDEX = "napcat-docs://code/index"
+    URI_CODE_TEMPLATE = "napcat-docs://code/{file_path}"
 
     for line in sys.stdin.buffer:
         msg_id: Any | None = None
@@ -336,11 +493,17 @@ def main():
                     resp["result"] = {
                         "resources": [
                             {
-                                "uri": URI_INDEX,
+                                "uri": URI_API_INDEX,
                                 "name": "NapCat API Index",
                                 "mimeType": "text/markdown",
                                 "description": "NapCat SDK API 列表概览",
-                            }
+                            },
+                            {
+                                "uri": URI_CODE_INDEX,
+                                "name": "NapCat Source Code Index",
+                                "mimeType": "text/markdown",
+                                "description": "NapCat SDK 源码目录树与模块 docstring",
+                            },
                         ]
                     }
 
@@ -348,11 +511,17 @@ def main():
                     resp["result"] = {
                         "resourceTemplates": [
                             {
-                                "uriTemplate": URI_TEMPLATE,
+                                "uriTemplate": URI_API_TEMPLATE,
                                 "name": "NapCat API Detail",
                                 "mimeType": "text/markdown",
                                 "description": "NapCat SDK API 的函数签名、返回类型与相关 TypedDict 源码",
-                            }
+                            },
+                            {
+                                "uriTemplate": URI_CODE_TEMPLATE,
+                                "name": "NapCat Source Code File",
+                                "mimeType": "text/markdown",
+                                "description": "NapCat SDK 源码文件的完整内容",
+                            },
                         ]
                     }
 
@@ -369,16 +538,26 @@ def main():
 
                     content = ""
 
-                    if uri == URI_INDEX:
+                    if uri == URI_API_INDEX:
                         content = logic_get_index()
+                    elif uri == URI_CODE_INDEX:
+                        content = logic_get_code_index()
                     elif uri.startswith("napcat-docs://api/"):
-                        # 更稳健地解析 URI，避免查询参数影响结果
+                        # 解析 API 名称
                         parsed = urlparse(uri)
                         path = parsed.path
                         api_name: str = path.rsplit("/", 1)[-1]
                         if not api_name:
                             raise ValueError(f"Invalid API URI: {uri}")
                         content = logic_get_details([api_name])
+                    elif uri.startswith("napcat-docs://code/"):
+                        # 解析文件路径
+                        parsed = urlparse(uri)
+                        # 去掉开头的 /
+                        file_path = parsed.path.lstrip("/")
+                        if not file_path:
+                            raise ValueError(f"Invalid code URI: {uri}")
+                        content = logic_get_code_file(file_path)
                     else:
                         raise ValueError(f"Unknown URI: {uri}")
 
@@ -410,6 +589,25 @@ def main():
                                         }
                                     },
                                     "required": ["names"],
+                                },
+                            },
+                            {
+                                "name": "list_code_files",
+                                "description": "列出 NapCat SDK 源码目录树及每个文件的模块 docstring",
+                                "inputSchema": {"type": "object", "properties": {}},
+                            },
+                            {
+                                "name": "get_code_file",
+                                "description": "获取 NapCat SDK 指定源码文件的完整内容",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {
+                                            "type": "string",
+                                            "description": "源码文件的相对路径 (例如 'client.py' 或 'mcp/doc_server.py')",
+                                        }
+                                    },
+                                    "required": ["path"],
                                 },
                             },
                         ]
@@ -455,6 +653,15 @@ def main():
                                     "Argument 'names' is required and cannot be empty."
                                 )
                             result_text = logic_get_details(names)
+                        case "list_code_files":
+                            result_text = logic_get_code_index()
+                        case "get_code_file":
+                            file_path = cast(str | None, args.get("path"))
+                            if not file_path:
+                                raise ValueError(
+                                    "Argument 'path' is required and cannot be empty."
+                                )
+                            result_text = logic_get_code_file(file_path)
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 

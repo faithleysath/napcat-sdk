@@ -12,7 +12,7 @@ NapCat SDK 是一个用于与 NapCatQQ (OneBot 11) 进行交互的 Python SDK。
 
 # src/napcat/__init__.py
 
-__version__ = "0.4.9"
+__version__ = "0.5.0"
 
 from . import types
 from .client import NapCatClient
