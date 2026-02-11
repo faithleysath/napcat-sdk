@@ -29,6 +29,8 @@ class ApiDoc(TypedDict):
 
 
 _api_data_cache: dict[str, ApiDoc] | None = None
+_class_def_cache: dict[str, list[dict[str, str]]] = {}
+_class_index_ready = False
 
 
 def _is_typed_dict_class(tp: Any) -> bool:
@@ -286,6 +288,49 @@ def _extract_module_docstring(file_path: Path) -> str:
         return f"(Error reading file: {e})"
 
 
+def _scan_class_definitions() -> dict[str, list[dict[str, str]]]:
+    """遍历源码文件并收集类定义"""
+    source_root = _get_source_root()
+    class_map: dict[str, list[dict[str, str]]] = {}
+
+    for root, dirs, files in os.walk(source_root):
+        dirs[:] = [
+            d for d in dirs if not d.startswith("__") and not d.startswith(".")
+        ]
+        dirs.sort()
+
+        root_path = Path(root)
+        py_files = sorted([f for f in files if f.endswith(".py")])
+        for py_file in py_files:
+            file_path = root_path / py_file
+            relative_path = file_path.relative_to(source_root).as_posix()
+
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    content = f.read()
+                tree = ast.parse(content)
+            except Exception:
+                continue
+
+            for node in tree.body:
+                if not isinstance(node, ast.ClassDef):
+                    continue
+
+                class_name = node.name
+                class_src = ast.get_source_segment(content, node)
+                if not class_src:
+                    class_src = f"class {class_name}:\n    ..."
+
+                class_map.setdefault(class_name, []).append(
+                    {
+                        "path": relative_path,
+                        "code": class_src.rstrip(),
+                    }
+                )
+
+    return class_map
+
+
 def logic_get_code_index() -> str:
     """生成源码目录树和模块 docstring 索引"""
     source_root = _get_source_root()
@@ -416,6 +461,39 @@ def logic_get_code_file(file_path: str) -> str:
         return f"# Error\n\nFailed to read file: {e}"
 
 
+def _ensure_class_index_ready() -> None:
+    global _class_def_cache
+    global _class_index_ready
+    if not _class_index_ready:
+        _class_def_cache = _scan_class_definitions()
+        _class_index_ready = True
+
+
+def logic_get_class_detail(class_name: str) -> str:
+    """根据类名查询定义与文件路径"""
+    _ensure_class_index_ready()
+    infos = _class_def_cache.get(class_name)
+    if not infos:
+        return f"## {class_name}\n(Class not found)"
+
+    blocks: list[str] = []
+    for info in infos:
+        blocks.append(
+            f"**Source:** `{info['path']}`\n\n"
+            f"```python\n{info['code']}\n```"
+        )
+
+    return f"## {class_name}\n" + "\n\n---\n\n".join(blocks)
+
+
+def logic_get_class_details(class_names: list[str]) -> str:
+    """批量获取类定义与文件路径"""
+    results: list[str] = []
+    for name in class_names:
+        results.append(logic_get_class_detail(name))
+    return "\n\n---\n\n".join(results)
+
+
 # --- 3. 协议工具层 ---
 def send_response(response: dict[str, Any]):
     """使用 orjson 快速序列化并写入 stdout"""
@@ -439,6 +517,7 @@ def main():
     URI_API_TEMPLATE = "napcat-docs://api/{api_name}"
     URI_CODE_INDEX = "napcat-docs://code/index"
     URI_CODE_TEMPLATE = "napcat-docs://code/{file_path}"
+    URI_CLASS_TEMPLATE = "napcat-docs://class/{class_name}"
 
     for line in sys.stdin.buffer:
         msg_id: Any | None = None
@@ -527,6 +606,12 @@ def main():
                                 "mimeType": "text/markdown",
                                 "description": "NapCat SDK 源码文件的完整内容",
                             },
+                            {
+                                "uriTemplate": URI_CLASS_TEMPLATE,
+                                "name": "NapCat Class Definition",
+                                "mimeType": "text/markdown",
+                                "description": "按类名查询类定义和文件路径",
+                            },
                         ]
                     }
 
@@ -563,6 +648,12 @@ def main():
                         if not file_path:
                             raise ValueError(f"Invalid code URI: {uri}")
                         content = logic_get_code_file(file_path)
+                    elif uri.startswith("napcat-docs://class/"):
+                        parsed = urlparse(uri)
+                        class_name = parsed.path.rsplit("/", 1)[-1]
+                        if not class_name:
+                            raise ValueError(f"Invalid class URI: {uri}")
+                        content = logic_get_class_detail(class_name)
                     else:
                         raise ValueError(f"Unknown URI: {uri}")
 
@@ -616,6 +707,21 @@ def main():
                                     "required": ["paths"],
                                 },
                             },
+                            {
+                                "name": "get_class_definition",
+                                "description": "根据类名查询类定义和其所在源码文件路径",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "names": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                            "description": "类名列表 (例如 ['NapCatClient'])",
+                                        }
+                                    },
+                                    "required": ["names"],
+                                },
+                            },
                         ]
                     }
 
@@ -636,12 +742,9 @@ def main():
                         case "list_apis":
                             result_text = logic_get_index()
                         case "get_api_details":
-                            # 即使客户端传了单个字符串，也尽量兼容处理，但标准是列表
                             raw_names = cast(Any, args.get("names"))
                             names: list[str]
-                            if isinstance(raw_names, str):
-                                names = [raw_names]
-                            elif isinstance(raw_names, list):
+                            if isinstance(raw_names, list):
                                 candidate_names = cast(list[Any], raw_names)
                                 if not all(
                                     isinstance(item, str) for item in candidate_names
@@ -652,7 +755,7 @@ def main():
                                 names = [cast(str, item) for item in candidate_names]
                             else:
                                 raise ValueError(
-                                    "Argument 'names' is required and cannot be empty."
+                                    "Argument 'names' is required and must be a list of strings."
                                 )
                             if not names:
                                 raise ValueError(
@@ -679,6 +782,25 @@ def main():
 
                             results = [logic_get_code_file(p) for p in paths]
                             result_text = "\n\n".join(results)
+                        case "get_class_definition":
+                            raw_names = args.get("names")
+                            names: list[str]
+                            if isinstance(raw_names, list):
+                                candidate_names = cast(list[Any], raw_names)
+                                if not all(isinstance(item, str) for item in candidate_names):
+                                    raise ValueError(
+                                        "Argument 'names' must be a list of strings."
+                                    )
+                                names = [cast(str, item) for item in candidate_names]
+                            else:
+                                raise ValueError(
+                                    "Argument 'names' is required and must be a list of strings."
+                                )
+                            if not names:
+                                raise ValueError(
+                                    "Argument 'names' is required and cannot be empty."
+                                )
+                            result_text = logic_get_class_details(names)
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 
