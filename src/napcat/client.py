@@ -195,7 +195,7 @@ class NapCatClient(NapCatAPIMixin):
         if params is None:
             params = {}
 
-        if action in {"send_private_msg", "send_group_msg"} and "message" in params:
+        if action in {"send_private_msg", "send_group_msg", "send_msg"} and "message" in params:
             normalized_params = dict(params)
             message_for_send = cast(
                 str | list[Message] | Message, normalized_params["message"]
