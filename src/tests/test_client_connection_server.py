@@ -10,6 +10,7 @@ import pytest
 
 from napcat.client import NapCatClient
 from napcat.connection import Connection
+from napcat.exceptions import NapCatAPIError
 from napcat.server import ReverseWebSocketServer
 
 
@@ -96,7 +97,7 @@ def test_call_action_raises_when_status_or_retcode_failed(
 ) -> None:
     async def _run() -> None:
         client = StubClient(response)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(NapCatAPIError):
             await client.call_action("test_action")
 
     asyncio.run(_run())
