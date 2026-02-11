@@ -134,20 +134,21 @@ match event:
         group_id=gid,
         sender=MessageSender(sex="male", user_id=uid), # 提取 uid
         message=[
-            Text(text="我是"),       # 开头必须是 "我是"
-            Text(text=name),        # 第二段是名字，提取为 name
-            Image(url=photo_url),   # 第三段是照片，提取为 photo_url
-            *_                      # 忽略后面可能跟的表情包
+            Text(text=raw_text),    # 捕获整个文本
+            Image(url=photo_url),   # 捕获图片
+            *_
         ]
-    ) if len(name) < 10:            # 额外的逻辑检查：名字不能太长
+    # 2. 逻辑守卫：处理字符串解析
+    # 使用海象运算符 (:=) 在判断的同时提取变量 name
+    ) if (name := raw_text.removeprefix("我是").strip()) and raw_text.startswith("我是"):
         
-        # 🚀 业务逻辑直接开始
-        print(f"群 {gid} 来了个帅哥 {name} (ID: {uid})")
-        print(f"爆照地址: {photo_url}")
-        await client.send_group_msg(gid, message=f"欢迎帅哥 {name}！")
+        # 🚀 业务逻辑
+        print(f"群 {gid} 成员自称: {name}")
+        print(f"照片: {photo_url}")
+        await event.reply(f"你好，{name}！")
 
     case _:
-        pass # 不符合格式的直接忽略
+        pass 
 ```
 
 ## ⚠️ 陷阱警告：变量匹配与捕获
