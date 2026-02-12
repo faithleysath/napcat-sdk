@@ -57,8 +57,9 @@ class NapCatClient(NapCatAPIMixin):
         self._rpc_port_config = rpc_port
         self.rpc_port = rpc_port
         # Token: None -> 随机生成; "" -> 无鉴权; "xxx" -> 指定
+        self.rpc_token: str | None
         if rpc_mode and rpc_token is None:
-            self.rpc_token: str | None = secrets.token_urlsafe(16)
+            self.rpc_token = secrets.token_urlsafe(16)
         else:
             self.rpc_token = rpc_token
         self._rpc_server: WsServer | None = None
