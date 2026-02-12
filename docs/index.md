@@ -46,6 +46,8 @@ NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类�
 - **完整类型覆盖**：所有事件、消息段、API 都有类型定义，补全体验一流。
 - **纯异步**：基于 `websockets` + `asyncio`，轻量且性能优秀。
 - **双模式**：既能主动连接 NapCat（Client 模式），也能作为反向 WebSocket 服务端。
+- **远程 RPC**：内置透明网关，让外部应用跨语言调用 NapCat API。
+- **MCP 集成**：支持 Model Context Protocol，让 AI 助手实时查询 SDK 文档。
 - **上游同步**：基于代码生成链路，零时差跟进上游 Schema 与 API 变更。
 
 ## 你将学到什么
@@ -54,11 +56,14 @@ NapCat-SDK 是面向 NapCat / OneBot 协议的 Python SDK，主打 **完整类�
 - 如何监听消息事件并发送富媒体消息
 - 如何调用 OneBot API，并优雅处理扩展接口
 - 如何在 Server 模式下提供反向 WebSocket 服务
+- 如何启用 RPC 模式实现跨语言调用
+- 如何通过 MCP 让 AI 助手查询 SDK 文档
 
 ## 下一步
 
 - 阅读 **[快速开始](./getting-started/first-bot.md)**，完成第一个可运行的 Bot。
 - 了解 **[Client 模式](./key-concept/client.md)** 与 **[Server 模式](./key-concept/server.md)** 的差异。
+- 探索 **[远程 RPC 模式](./key-concept/rpc-mode.md)** 与 **[MCP 服务器](./key-concept/mcp-server.md)** 的高级功能。
 - 学习 **[事件与消息](./key-concept/events-messages.md)**，高效构建消息处理逻辑。
 - 查看 **[API 调用](./api-usage.md)**，了解强类型 API 的使用方式。
 
