@@ -3,20 +3,30 @@ NapCat 客户端实现
 
 提供 NapCatClient 类，用于与 NapCatQQ 建立连接（正向 WebSocket）或复用现有连接（反向 WebSocket）。
 包含事件生成器 (_events) 和 API 调用方法 (call_action)。
+支持 RPC Server 模式，可作为透明 WebSocket 网关使用。
 """
 
 import asyncio
+import logging
+import secrets
 from collections.abc import AsyncGenerator, Mapping
 from types import TracebackType
 from typing import Any, cast
+from urllib.parse import parse_qs, urlparse
 
+import orjson
 from websockets.asyncio.client import connect as ws_connect
+from websockets.asyncio.server import Server as WsServer
+from websockets.asyncio.server import ServerConnection
+from websockets.asyncio.server import serve as ws_serve
 
 from .client_api import NapCatAPIMixin
 from .connection import Connection
-from .exceptions import NapCatAPIError, NapCatStateError
+from .exceptions import NapCatAPIError, NapCatError, NapCatStateError
 from .types import NapCatEvent
 from .types.messages import Message
+
+logger = logging.getLogger("napcat.client")
 
 
 class NapCatClient(NapCatAPIMixin):
@@ -25,6 +35,11 @@ class NapCatClient(NapCatAPIMixin):
         ws_url: str | None = None,
         token: str | None = None,
         _existing_conn: Connection | None = None,
+        # --- RPC Mode 参数 ---
+        rpc_mode: bool = False,
+        rpc_host: str = "0.0.0.0",
+        rpc_port: int = 0,
+        rpc_token: str | None = None,
     ):
         self.ws_url = ws_url
         self.token = token
@@ -35,6 +50,20 @@ class NapCatClient(NapCatAPIMixin):
         self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
         self.self_id: int = -1  # 连接后更新
+
+        # --- RPC 状态 ---
+        self.rpc_mode = rpc_mode
+        self.rpc_host = rpc_host
+        self._rpc_port_config = rpc_port
+        self.rpc_port = rpc_port
+        # Token: None -> 随机生成; "" -> 无鉴权; "xxx" -> 指定
+        if rpc_mode and rpc_token is None:
+            self.rpc_token: str | None = secrets.token_urlsafe(16)
+        else:
+            self.rpc_token = rpc_token
+        self._rpc_server: WsServer | None = None
+        self._rpc_tasks: list[asyncio.Task[None]] = []
+        self._rpc_clients: set[ServerConnection] = set()
 
     def _connection_running(self) -> bool:
         return bool(self._conn and self._conn.is_running)
@@ -85,12 +114,19 @@ class NapCatClient(NapCatAPIMixin):
                 try:
                     resp = await self.get_login_info()
                     self.self_id = resp["user_id"]
-                except Exception as e:
-                    print(f"Warning: Failed to get self_id: {e}")
+                except NapCatError as e:
+                    logger.warning(f"Failed to get self_id: {e}")
                     self.self_id = -1
+
+                # 启动 RPC 服务
+                if self.rpc_mode:
+                    await self._start_rpc()
+
                 return self
             except Exception:
                 # 异常时回滚已打开的资源
+                if self.rpc_mode:
+                    await self._stop_rpc()
                 if conn_entered and self._conn:
                     try:
                         await self._conn.__aexit__(None, None, None)
@@ -124,6 +160,10 @@ class NapCatClient(NapCatAPIMixin):
             if self._context_refs > 0:
                 return
 
+            # 关闭 RPC 服务
+            if self.rpc_mode:
+                await self._stop_rpc()
+
             # 级联关闭：Client -> Connection -> WebSocket
             conn = self._conn
             ws_ctx = self._ws_ctx
@@ -147,12 +187,9 @@ class NapCatClient(NapCatAPIMixin):
                     self._conn = None
                 self._ws_ctx = None
 
-            # 如果有清理错误，记录并抛出第一个
             if cleanup_errors:
                 for err in cleanup_errors:
-                    import logging
-
-                    logging.getLogger("napcat.client").warning(f"Cleanup error: {err}")
+                    logger.warning(f"Cleanup error: {err}")
                 if exc_type is None:
                     raise cleanup_errors[0]
 
@@ -236,3 +273,112 @@ class NapCatClient(NapCatAPIMixin):
             return await self.call_action(item, kwargs)
 
         return dynamic_api_call
+
+    # === RPC 实现 ===
+
+    async def _rpc_client_handler(self, websocket: ServerConnection) -> None:
+        """处理单个 RPC 客户端连接：鉴权 → 注册 → 透传消息。"""
+        # 鉴权
+        if self.rpc_token:
+            request = websocket.request
+            if request is None:
+                await websocket.close(code=4000, reason="No request")
+                return
+            auth_header = request.headers.get("Authorization", "")
+            parsed = urlparse(request.path)
+            token_in_url = parse_qs(parsed.query).get("token", [None])[0] == self.rpc_token
+            bearer_valid = auth_header == f"Bearer {self.rpc_token}"
+
+            if not (bearer_valid or token_in_url):
+                logger.warning(f"RPC client {websocket.remote_address} auth failed")
+                await websocket.close(code=4001, reason="Unauthorized")
+                return
+
+        self._rpc_clients.add(websocket)
+        try:
+            async for message in websocket:
+                if not self._connection_running():
+                    break
+                try:
+                    data = orjson.loads(message)
+                    if not isinstance(data, dict):
+                        continue
+                    data = cast(dict[str, Any], data)
+                    if self._conn:
+                        await self._conn.send_raw(data)
+                except (orjson.JSONDecodeError, OSError, NapCatStateError):
+                    continue
+        except Exception as e:
+            logger.debug(f"RPC client {websocket.remote_address} disconnected: {e}")
+        finally:
+            self._rpc_clients.discard(websocket)
+
+    async def _rpc_broadcaster(self) -> None:
+        """将 proxy_stream 广播给所有 RPC 客户端。"""
+        if not self._conn:
+            return
+
+        async for data in self._conn.proxy_stream():
+            if not self._rpc_clients:
+                continue
+
+            msg_bytes = orjson.dumps(data)
+            clients = list(self._rpc_clients)
+            results = await asyncio.gather(
+                *[ws.send(msg_bytes) for ws in clients],
+                return_exceptions=True,
+            )
+            for client, result in zip(clients, results, strict=True):
+                if isinstance(result, Exception):
+                    self._rpc_clients.discard(client)
+                    try:
+                        await client.close()
+                    except Exception:
+                        pass
+
+    async def _start_rpc(self) -> None:
+        """启动 RPC WebSocket 服务器。"""
+        if not self.rpc_mode:
+            return
+
+        logger.info(f"Starting RPC server on {self.rpc_host}:{self._rpc_port_config}...")
+        try:
+            self._rpc_server = await ws_serve(
+                self._rpc_client_handler,
+                self.rpc_host,
+                self._rpc_port_config,
+                ping_interval=20,
+                ping_timeout=20,
+            )
+            for sock in self._rpc_server.sockets:
+                self.rpc_port = sock.getsockname()[1]
+                break
+
+            logger.info(f"RPC server running at ws://{self.rpc_host}:{self.rpc_port}")
+            if self.rpc_token:
+                logger.debug(f"RPC token: {self.rpc_token[:6]}...")
+
+            self._rpc_tasks.append(asyncio.create_task(self._rpc_broadcaster()))
+        except Exception:
+            await self._stop_rpc()
+            raise
+
+    async def _stop_rpc(self) -> None:
+        """停止 RPC 服务。"""
+        for task in self._rpc_tasks:
+            task.cancel()
+        if self._rpc_tasks:
+            await asyncio.wait(self._rpc_tasks, timeout=2)
+        self._rpc_tasks.clear()
+
+        if self._rpc_clients:
+            await asyncio.gather(
+                *[ws.close() for ws in self._rpc_clients],
+                return_exceptions=True,
+            )
+            self._rpc_clients.clear()
+
+        if self._rpc_server:
+            self._rpc_server.close()
+            await self._rpc_server.wait_closed()
+            self._rpc_server = None

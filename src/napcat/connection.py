@@ -2,12 +2,14 @@
 WebSocket 连接管理
 
 Connection 类封装了底层的 WebSocket 连接，处理消息收发、请求响应匹配 (Echo 机制) 和事件分发。
-支持异步上下文管理器，确保连接资源的正确释放。
+采用双流设计：
+1. event_stream: 仅包含 OneBot 事件，供 Python 客户端使用。
+2. proxy_stream: 包含 OneBot 事件和外部 RPC 调用的响应，供 RPC 服务使用。
 """
 
 import asyncio
-import itertools
 import logging
+import uuid
 from asyncio import Future, Queue, Task
 from collections.abc import AsyncGenerator
 from types import TracebackType
@@ -17,6 +19,8 @@ import orjson
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.server import ServerConnection
 
+from .exceptions import NapCatStateError
+
 logger = logging.getLogger("napcat.connection")
 _STOP = object()
 
@@ -25,9 +29,13 @@ class Connection:
     def __init__(self, ws: ClientConnection | ServerConnection):
         self.ws = ws
         self._futures: dict[str, Future[dict[str, Any]]] = {}
-        self._queues: set[Queue[dict[str, Any] | object]] = set()
+
+        # event_queues: 仅存储 OneBot 事件 (给 Python Client 用)
+        self._event_queues: set[Queue[dict[str, Any] | object]] = set()
+        # proxy_queues: 存储 事件 + RPC 响应 (给 RPC Server 用)
+        self._proxy_queues: set[Queue[dict[str, Any] | object]] = set()
+
         self._task: Task[None] | None = None
-        self._counter = itertools.count()
         self._closed = asyncio.Event()
 
     async def __aenter__(self):
@@ -71,9 +79,10 @@ class Connection:
         await self._closed.wait()
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
+        """Python 内部调用：自动挂载 UUID echo 并等待结果。"""
         if not self._task or self._task.done():
-            raise ConnectionError("Connection closed")
-        echo = f"seq-{next(self._counter)}"
+            raise NapCatStateError("Connection closed")
+        echo = f"py-{uuid.uuid4()}"
         data = data | {"echo": echo}
         fut: Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
         self._futures[echo] = fut
@@ -84,9 +93,21 @@ class Connection:
         finally:
             self._futures.pop(echo, None)
 
+    async def send_raw(self, data: dict[str, Any] | str | bytes) -> None:
+        """RPC 代理调用：透传数据，不修改 echo，不挂载 Future。"""
+        if not self._task or self._task.done():
+            raise NapCatStateError("Connection closed")
+        if isinstance(data, dict):
+            await self.ws.send(orjson.dumps(data))
+        else:
+            await self.ws.send(data)
+
+    # === 数据流接口 ===
+
     async def events(self) -> AsyncGenerator[dict[str, Any], None]:
+        """仅产出 OneBot 事件 (给 Python Client)，过滤所有 API 响应。"""
         q: Queue[dict[str, Any] | object] = Queue(maxsize=500)
-        self._queues.add(q)
+        self._event_queues.add(q)
         try:
             while True:
                 data = await q.get()
@@ -95,7 +116,21 @@ class Connection:
                 if isinstance(data, dict):
                     yield data
         finally:
-            self._queues.discard(q)
+            self._event_queues.discard(q)
+
+    async def proxy_stream(self) -> AsyncGenerator[dict[str, Any], None]:
+        """产出 事件 + 外部 RPC 响应 (给 RPC Server)，过滤 Python 内部调用的响应。"""
+        q: Queue[dict[str, Any] | object] = Queue(maxsize=1000)
+        self._proxy_queues.add(q)
+        try:
+            while True:
+                data = await q.get()
+                if data is _STOP:
+                    break
+                if isinstance(data, dict):
+                    yield data
+        finally:
+            self._proxy_queues.discard(q)
 
     async def _loop(self) -> None:
         cancelled = False
@@ -104,24 +139,30 @@ class Connection:
                 try:
                     data = orjson.loads(msg)
                     if not isinstance(data, dict) or not data:
-                        logger.warning(f"Invalid message: {data}")
                         continue
                     data = cast(dict[str, Any], data)
                 except orjson.JSONDecodeError:
                     continue
-                if echo := data.get("echo"):
+
+                echo = data.get("echo")
+
+                if echo:
+                    # A: Python 内部请求的响应 → Future 消费，不广播
                     if fut := self._futures.get(echo):
                         if not fut.done():
                             fut.set_result(data)
-                            continue
-                    logger.warning(f"Unknown echo: {echo}")
-                    continue
+                        continue
+                    # B: RPC 客户端请求的响应 → 仅发 proxy 队列
+                    self._dispatch(self._proxy_queues, data)
                 else:
-                    self._broadcast(data)
+                    # C: OneBot 事件 → 两边都发
+                    self._dispatch(self._event_queues, data)
+                    self._dispatch(self._proxy_queues, data)
+
         except asyncio.CancelledError:
             cancelled = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Connection loop error: {e}")
         finally:
             await self._cleanup()
             if cancelled:
@@ -130,18 +171,22 @@ class Connection:
     async def _cleanup(self):
         for f in self._futures.values():
             if not f.done():
-                f.set_exception(ConnectionError("Conn closed"))
+                f.set_exception(NapCatStateError("Connection closed"))
         self._futures.clear()
-        self._broadcast(_STOP)
-        self._queues.clear()
+
+        self._dispatch(self._event_queues, _STOP)
+        self._dispatch(self._proxy_queues, _STOP)
+        self._event_queues.clear()
+        self._proxy_queues.clear()
         self._closed.set()
 
-    def _broadcast(self, item: dict[str, Any] | object):
-        for q in list(self._queues):
+    def _dispatch(self, queues: set[Queue[dict[str, Any] | object]], item: dict[str, Any] | object) -> None:
+        """向一组队列广播消息，满队列时丢弃最旧消息。"""
+        for q in list(queues):
             if q.full():
                 try:
                     q.get_nowait()
-                    logger.debug("Warning: Event queue dropped oldest message")
+                    logger.debug("Queue full, dropped oldest message")
                 except asyncio.QueueEmpty:
                     pass
             try:
