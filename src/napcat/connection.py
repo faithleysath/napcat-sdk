@@ -162,7 +162,7 @@ class Connection:
         except asyncio.CancelledError:
             cancelled = True
         except Exception as e:
-            logger.error(f"Connection loop error: {e}")
+            logger.error("Connection loop error: %s", e)
         finally:
             await self._cleanup()
             if cancelled:

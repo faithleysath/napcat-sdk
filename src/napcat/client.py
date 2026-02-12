@@ -115,7 +115,7 @@ class NapCatClient(NapCatAPIMixin):
                     resp = await self.get_login_info()
                     self.self_id = resp["user_id"]
                 except NapCatError as e:
-                    logger.warning(f"Failed to get self_id: {e}")
+                    logger.warning("Failed to get self_id: %s", e)
                     self.self_id = -1
 
                 # 启动 RPC 服务
@@ -125,8 +125,7 @@ class NapCatClient(NapCatAPIMixin):
                 return self
             except Exception:
                 # 异常时回滚已打开的资源
-                if self.rpc_mode:
-                    await self._stop_rpc()
+                # 注: _start_rpc 内部失败时已自行调用 _stop_rpc，无需重复
                 if conn_entered and self._conn:
                     try:
                         await self._conn.__aexit__(None, None, None)
@@ -189,7 +188,7 @@ class NapCatClient(NapCatAPIMixin):
 
             if cleanup_errors:
                 for err in cleanup_errors:
-                    logger.warning(f"Cleanup error: {err}")
+                    logger.warning("Cleanup error: %s", err)
                 if exc_type is None:
                     raise cleanup_errors[0]
 
@@ -282,16 +281,26 @@ class NapCatClient(NapCatAPIMixin):
         if self.rpc_token:
             request = websocket.request
             if request is None:
-                await websocket.close(code=4000, reason="No request")
+                try:
+                    await websocket.close(code=4000, reason="No request")
+                except Exception:
+                    pass
                 return
             auth_header = request.headers.get("Authorization", "")
             parsed = urlparse(request.path)
-            token_in_url = parse_qs(parsed.query).get("token", [None])[0] == self.rpc_token
-            bearer_valid = auth_header == f"Bearer {self.rpc_token}"
+            token_in_url = secrets.compare_digest(
+                parse_qs(parsed.query).get("token", [""])[0], self.rpc_token
+            )
+            bearer_valid = secrets.compare_digest(
+                auth_header, f"Bearer {self.rpc_token}"
+            )
 
             if not (bearer_valid or token_in_url):
-                logger.warning(f"RPC client {websocket.remote_address} auth failed")
-                await websocket.close(code=4001, reason="Unauthorized")
+                logger.warning("RPC client %s auth failed", websocket.remote_address)
+                try:
+                    await websocket.close(code=4001, reason="Unauthorized")
+                except Exception:
+                    pass
                 return
 
         self._rpc_clients.add(websocket)
@@ -309,7 +318,7 @@ class NapCatClient(NapCatAPIMixin):
                 except (orjson.JSONDecodeError, OSError, NapCatStateError):
                     continue
         except Exception as e:
-            logger.debug(f"RPC client {websocket.remote_address} disconnected: {e}")
+            logger.debug("RPC client %s disconnected: %s", websocket.remote_address, e)
         finally:
             self._rpc_clients.discard(websocket)
 
@@ -341,7 +350,7 @@ class NapCatClient(NapCatAPIMixin):
         if not self.rpc_mode:
             return
 
-        logger.info(f"Starting RPC server on {self.rpc_host}:{self._rpc_port_config}...")
+        logger.info("Starting RPC server on %s:%d...", self.rpc_host, self._rpc_port_config)
         try:
             self._rpc_server = await ws_serve(
                 self._rpc_client_handler,
@@ -354,9 +363,9 @@ class NapCatClient(NapCatAPIMixin):
                 self.rpc_port = sock.getsockname()[1]
                 break
 
-            logger.info(f"RPC server running at ws://{self.rpc_host}:{self.rpc_port}")
+            logger.info("RPC server running at ws://%s:%d", self.rpc_host, self.rpc_port)
             if self.rpc_token:
-                logger.debug(f"RPC token: {self.rpc_token[:6]}...")
+                logger.debug("RPC token: %s...", self.rpc_token[:6])
 
             self._rpc_tasks.append(asyncio.create_task(self._rpc_broadcaster()))
         except Exception:
