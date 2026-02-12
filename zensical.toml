@@ -58,6 +58,8 @@ nav = [
   { "核心概念" = [
     { "Client 模式" = "key-concept/client.md" },
     { "Server 模式" = "key-concept/server.md" },
+    { "远程 RPC 模式" = "key-concept/rpc-mode.md" },
+    { "MCP 服务器" = "key-concept/mcp-server.md" },
     { "事件与消息" = "key-concept/events-messages.md" },
   ] },
   { "最佳实践" = [

@@ -47,10 +47,12 @@
 ## ✨ Features
 
 - 🔄 **协议自动同步**: 基于 OpenAPI 自动构建，与 NapCat 上游定义零时差同步。
-- 🧘 **原生无框架**: 拒绝框架“黑魔法”，纯粹 Python 语法，零心智负担。
+- 🧘 **原生无框架**: 拒绝框架"黑魔法"，纯粹 Python 语法，零心智负担。
 - 💎 **极致类型**: 100% 类型覆盖，每一个参数都有定义，享受极致 IDE 补全。
 - ⚡ **完全异步**: 基于 `websockets` + `asyncio` 原生开发，无惧高并发。
 - 🔌 **双模支持**: 完美支持正向 (Client) 与反向 (Server) WebSocket 连接。
+- 🌐 **远程 RPC**: 内置透明网关，让外部应用跨语言调用 NapCat API。
+- 🤖 **MCP 集成**: 支持 Model Context Protocol，让 AI 助手实时查询 SDK 文档。
 - 📦 **极轻量级**: 仅依赖 `websockets` 和 `orjson`，极速安装，拒绝臃肿。
 
 ---
