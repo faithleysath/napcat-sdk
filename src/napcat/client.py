@@ -40,6 +40,7 @@ class NapCatClient(NapCatAPIMixin):
         rpc_host: str = "0.0.0.0",
         rpc_port: int = 0,
         rpc_token: str | None = None,
+        rpc_public_host: str | None = None,
     ):
         self.ws_url = ws_url
         self.token = token
@@ -62,9 +63,17 @@ class NapCatClient(NapCatAPIMixin):
             self.rpc_token = secrets.token_urlsafe(16)
         else:
             self.rpc_token = rpc_token
+        self.rpc_public_host = rpc_public_host
         self._rpc_server: WsServer | None = None
         self._rpc_tasks: list[asyncio.Task[None]] = []
         self._rpc_clients: set[ServerConnection] = set()
+
+    @property
+    def rpc_url_host(self) -> str:
+        """RPC 服务对外可达的 host，用于注入到 Event 序列化中。"""
+        if self.rpc_public_host:
+            return self.rpc_public_host
+        return "127.0.0.1" if self.rpc_host == "0.0.0.0" else self.rpc_host
 
     def _connection_running(self) -> bool:
         return bool(self._conn and self._conn.is_running)
@@ -233,7 +242,10 @@ class NapCatClient(NapCatAPIMixin):
         if params is None:
             params = {}
 
-        if action in {"send_private_msg", "send_group_msg", "send_msg"} and "message" in params:
+        if (
+            action in {"send_private_msg", "send_group_msg", "send_msg"}
+            and "message" in params
+        ):
             normalized_params = dict(params)
             message_for_send = cast(
                 str | list[Message] | Message, normalized_params["message"]
@@ -351,7 +363,9 @@ class NapCatClient(NapCatAPIMixin):
         if not self.rpc_mode:
             return
 
-        logger.info("Starting RPC server on %s:%d...", self.rpc_host, self._rpc_port_config)
+        logger.info(
+            "Starting RPC server on %s:%d...", self.rpc_host, self._rpc_port_config
+        )
         try:
             self._rpc_server = await ws_serve(
                 self._rpc_client_handler,
@@ -364,7 +378,9 @@ class NapCatClient(NapCatAPIMixin):
                 self.rpc_port = sock.getsockname()[1]
                 break
 
-            logger.info("RPC server running at ws://%s:%d", self.rpc_host, self.rpc_port)
+            logger.info(
+                "RPC server running at ws://%s:%d", self.rpc_host, self.rpc_port
+            )
             if self.rpc_token:
                 logger.debug("RPC token: %s...", self.rpc_token[:6])
 

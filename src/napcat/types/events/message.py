@@ -60,10 +60,9 @@ class EmojiLikeItem(FromDictMixin):
     likes_cnt: str
 
     @classmethod
-    def from_dict(
-        cls, data: EmojiLikeItemPayload
-    ) -> EmojiLikeItem:
+    def from_dict(cls, data: EmojiLikeItemPayload) -> EmojiLikeItem:
         return cls._from_dict(cast(dict[str, Any], data))
+
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MessageEvent(NapCatEvent):
@@ -80,7 +79,7 @@ class MessageEvent(NapCatEvent):
 
     # --- 新增字段 ---
     real_seq: str | None = None  # 对应 TS real_seq
-    message_sent_type: str | None = None # 对应 TS message_sent_type
+    message_sent_type: str | None = None  # 对应 TS message_sent_type
 
     # 子类型，对应文档：friend, group (临时), normal (群普通)
     sub_type: Literal["friend", "group", "normal"] | str | None = None
@@ -91,10 +90,15 @@ class MessageEvent(NapCatEvent):
     # 消息表情点赞列表（部分路径如 get_msg/get_history 可能返回）
     emoji_likes_list: list[EmojiLikeItem] | None = None
 
-    post_type: Literal["message", "message_sent"] | tuple[str, str] = ("message", "message_sent")
+    post_type: Literal["message", "message_sent"] | tuple[str, str] = (
+        "message",
+        "message_sent",
+    )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> PrivateMessageEvent | GroupMessageEvent:
+    def from_dict(
+        cls, data: dict[str, Any], **kwargs: Any
+    ) -> PrivateMessageEvent | GroupMessageEvent:
         msg_type = data.get("message_type")
         raw_message = data.get("message", [])
         raw_sender = data.get("sender")
@@ -116,7 +120,11 @@ class MessageEvent(NapCatEvent):
             parsed_message = ()
 
         parsed_sender: MessageSender
-        if isinstance(raw_sender, dict) and "user_id" in raw_sender and "nickname" in raw_sender:
+        if (
+            isinstance(raw_sender, dict)
+            and "user_id" in raw_sender
+            and "nickname" in raw_sender
+        ):
             parsed_sender = MessageSender.from_dict(
                 cast(MessageSenderPayload, raw_sender)
             )
@@ -126,9 +134,7 @@ class MessageEvent(NapCatEvent):
         parsed_emoji_likes_list: list[EmojiLikeItem] | None
         if isinstance(raw_emoji_likes_list, list):
             parsed_emoji_likes_list = [
-                EmojiLikeItem.from_dict(
-                    cast(EmojiLikeItemPayload, raw_item)
-                )
+                EmojiLikeItem.from_dict(cast(EmojiLikeItemPayload, raw_item))
                 for raw_item in cast(list[Any], raw_emoji_likes_list)
                 if isinstance(raw_item, dict)
                 and "emoji_id" in raw_item
@@ -155,7 +161,9 @@ class MessageEvent(NapCatEvent):
     async def send_msg(self, message: str | list[Message] | Message) -> int:
         raise NotImplementedError("send_msg must be implemented in subclasses")
 
-    async def reply(self, message: str | list[Message] | Message, at: bool = False) -> int:
+    async def reply(
+        self, message: str | list[Message] | Message, at: bool = False
+    ) -> int:
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
         if isinstance(message, str):
@@ -185,8 +193,7 @@ class PrivateMessageEvent(MessageEvent):
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
         resp = await self._client.send_private_msg(
-            user_id=str(self.user_id),
-            message=message
+            user_id=str(self.user_id), message=message
         )
         return resp["message_id"]
 
@@ -195,7 +202,7 @@ class PrivateMessageEvent(MessageEvent):
 class GroupMessageEvent(MessageEvent):
     # 对应 message.group
     group_id: int
-    group_name: str | None = None # TS 中定义了 group_name
+    group_name: str | None = None  # TS 中定义了 group_name
     # 自发群消息上报里可能携带 target_id
     target_id: int | None = None
     message_type: Literal["group"] = "group"
@@ -205,7 +212,6 @@ class GroupMessageEvent(MessageEvent):
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
         resp = await self._client.send_group_msg(
-            group_id=str(self.group_id),
-            message=message
+            group_id=str(self.group_id), message=message
         )
         return resp["message_id"]

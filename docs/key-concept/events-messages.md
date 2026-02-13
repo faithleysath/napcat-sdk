@@ -141,12 +141,49 @@ match event.message:
 
 </details>
 
-## 3. 为什么我们要这么设计？
+## 3. Event 序列化与反序列化
+
+Event 对象支持序列化为 dict / JSON，方便跨进程或网络传输。
+
+### `to_dict()` — 序列化
+
+将 Event 转为字典。如果 Event 绑定了 RPC 模式的 client，会自动注入 `_rpc` 连接信息。
+
+```python
+data = event.to_dict()
+# 通过消息队列、HTTP 等方式传输 JSON
+json_str = json.dumps(data)
+```
+
+### `from_dict(data, client=...)` — 反序列化
+
+从字典反序列化为 Event 对象。可选传入 `client` 参数直接绑定。
+
+```python
+event = NapCatEvent.from_dict(data, client=client)
+
+# 反序列化后可以正常调用 API
+await event.reply("来自远端的回复")
+```
+
+### `bind(client)` — 后绑定
+
+如果反序列化时没有传 client，可以后续绑定：
+
+```python
+event = NapCatEvent.from_dict(data)
+event.bind(client)  # 返回 self，支持链式调用
+```
+
+> 📝 更多关于跨进程 Event 消费的实战示例，请参阅 **[远程 RPC 模式](./rpc-mode.md)**。
+
+## 4. 为什么我们要这么设计？
 
 看完这三章核心概念，你可能发现了 NapCat-SDK 的设计共性：**“严谨的包装，自然的调用”**。
 
 1. **Client/Server**：封装了 WebSocket 的复杂性，给你 `async for` 的自然流。
 2. **API**：封装了网络请求，给你 `await client.func()` 的函数调用感。
 3. **Event/Message**：封装了 JSON 解析，给你强类型的对象操作。
+4. **Serialization**：封装了 RPC 元数据注入，给你 `to_dict` → 传输 → `from_dict` 的无缝体验。
 
 我们做这些繁琐的底层封装，就是为了让你在写业务逻辑时，能享受到**“点（.`dot`）哪里，都有提示”**的极致开发体验。

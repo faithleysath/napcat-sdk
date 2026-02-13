@@ -88,7 +88,7 @@ class NoticeEvent(NapCatEvent):
             )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> NoticeEvent:
+    def from_dict(cls, data: dict[str, Any], **kwargs: Any) -> NoticeEvent:
         n_type = data.get("notice_type")
 
         if n_type == "notify":

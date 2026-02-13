@@ -16,7 +16,7 @@ class RequestEvent(NapCatEvent):
     request_type: str
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> RequestEvent:
+    def from_dict(cls, data: dict[str, Any], **kwargs: Any) -> RequestEvent:
         req_type = data.get("request_type")
         if req_type == "friend":
             return FriendRequestEvent._from_dict(data)
@@ -39,7 +39,9 @@ class FriendRequestEvent(RequestEvent):
         """同意好友请求"""
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
-        await self._client.set_friend_add_request(flag=self.flag, approve=True, remark=remark)
+        await self._client.set_friend_add_request(
+            flag=self.flag, approve=True, remark=remark
+        )
 
     async def reject(self) -> None:
         """拒绝好友请求"""
@@ -53,7 +55,9 @@ class GroupRequestEvent(RequestEvent):
     # 对应 NapCatQQ/packages/napcat-onebot/event/request/OB11GroupRequest.ts
     group_id: int
     user_id: int
-    sub_type: Literal["add", "invite"] | str # 对应 TS 中的 generic string，但在 OneBot 中通常为 add(加群) 或 invite(邀请)
+    sub_type: (
+        Literal["add", "invite"] | str
+    )  # 对应 TS 中的 generic string，但在 OneBot 中通常为 add(加群) 或 invite(邀请)
     comment: str
     flag: str
     request_type: Literal["group"] = "group"
@@ -62,17 +66,12 @@ class GroupRequestEvent(RequestEvent):
         """同意入群/邀请请求"""
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
-        await self._client.set_group_add_request(
-            flag=self.flag,
-            approve=True
-        )
+        await self._client.set_group_add_request(flag=self.flag, approve=True)
 
     async def reject(self, reason: str = "") -> None:
         """拒绝入群/邀请请求"""
         if self._client is None:
             raise NapCatStateError("Event not bound to a client")
         await self._client.set_group_add_request(
-            flag=self.flag,
-            approve=False,
-            reason=reason
+            flag=self.flag, approve=False, reason=reason
         )

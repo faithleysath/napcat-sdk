@@ -27,7 +27,7 @@ class MetaEvent(NapCatEvent):
     meta_event_type: str
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> MetaEvent:
+    def from_dict(cls, data: dict[str, Any], **kwargs: Any) -> MetaEvent:
         meta_type = data.get("meta_event_type")
         if meta_type == "lifecycle":
             return LifecycleMetaEvent._from_dict(data)

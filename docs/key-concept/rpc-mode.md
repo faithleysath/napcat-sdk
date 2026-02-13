@@ -39,14 +39,15 @@ async def main():
     client = NapCatClient(
         ws_url="ws://localhost:3001",
         token="123",
-        rpc_mode=True,        # 启用 RPC 服务器
-        rpc_host="0.0.0.0",   # 监听所有网络接口
-        rpc_port=8080,        # RPC 服务器端口（0 表示自动分配）
-        rpc_token="my_secret" # RPC 鉴权令牌（可选）
+        rpc_mode=True,             # 启用 RPC 服务器
+        rpc_host="0.0.0.0",        # 监听所有网络接口
+        rpc_port=8080,             # RPC 服务器端口（0 表示自动分配）
+        rpc_token="my_secret",     # RPC 鉴权令牌（可选）
+        rpc_public_host="10.0.0.1" # 对外可达地址（可选）
     )
     
     async with client:
-        print(f"RPC 服务器已启动：{client.rpc_url}")
+        print(f"RPC 服务器已启动：ws://{client.rpc_url_host}:{client.rpc_port}")
         print(f"认证令牌：{client.rpc_token}")
         
         # 本地也可以正常处理事件
@@ -65,6 +66,7 @@ if __name__ == "__main__":
 | `rpc_host` | `str` | `"0.0.0.0"` | 监听地址（`0.0.0.0` 表示所有接口） |
 | `rpc_port` | `int` | `0` | 监听端口（`0` 表示自动分配） |
 | `rpc_token` | `str \| None` | `None` | 鉴权令牌（`None` 自动生成，`""` 表示不鉴权） |
+| `rpc_public_host` | `str \| None` | `None` | 对外可达地址（Docker/NAT 场景下使用，`None` 回落到 `rpc_host`） |
 
 ## 3. 外部客户端连接
 
@@ -114,7 +116,46 @@ RPC 服务器会将请求转发给 NapCat，并将响应原样返回：
 }
 ```
 
-## 4. 使用场景
+## 4. Event 序列化与远程调用
+
+除了直接转发 OneBot 请求外，RPC 模式还支持将 Event 对象序列化为 JSON 传输到远端进程，远端反序列化后依然能调用 `reply()`、`approve()` 等 API 方法。
+
+### 序列化（本地进程）
+
+当 Event 绑定了 RPC 模式的 client 时，`to_dict()` 会自动注入 `_rpc` 连接信息：
+
+```python
+# 本地进程：接收事件并序列化
+async for event in client:
+    data = event.to_dict()
+    # data 中自动包含 {"_rpc": {"host": ..., "port": ..., "token": ...}}
+    send_to_remote(json.dumps(data))
+```
+
+### 反序列化（远端进程）
+
+远端进程从 `_rpc` 信息创建 RPC client，然后反序列化 Event 并绑定：
+
+```python
+# 远端进程
+data = json.loads(receive_from_local())
+rpc_info = data["_rpc"]
+
+# 方式 1: from_dict 时直接绑定 client
+client = NapCatClient(ws_url=f"ws://{rpc_info['host']}:{rpc_info['port']}")
+event = NapCatEvent.from_dict(data, client=client)
+
+# 方式 2: 先反序列化，后绑定
+event = NapCatEvent.from_dict(data)
+event.bind(client)
+
+# 现在可以正常调用 API 了！
+await event.reply("来自远端进程的回复")
+```
+
+> **📝 注意**：`_rpc` 字段在 `from_dict` 时会被自动剥离，不会污染 `_raw` 数据。
+
+## 5. 使用场景
 
 ### 场景一：跨语言调用
 
@@ -144,7 +185,21 @@ RPC 服务器会将请求转发给 NapCat，并将响应原样返回：
 └──────────┘
 ```
 
-### 场景三：调试与监控
+### 场景三：跨进程事件消费
+
+将 Event 序列化后发送到消息队列（如 Redis / RabbitMQ），由多个工作进程并行消费：
+
+```
+                    ┌─────────────┐
+               ┌───>│  Worker A   │
+┌──────────┐   │    └─────────────┘
+│ NapCat   │──MQ───>│  Worker B   │  ← 每个 Worker 反序列化 Event 并 bind(client)
+│ (RPC)    │   │    └─────────────┘
+└──────────┘   └───>│  Worker C   │
+                    └─────────────┘
+```
+
+### 场景四：调试与监控
 
 启动一个 RPC 服务器，通过 WebSocket 客户端工具（如 wscat）实时监控 OneBot 事件与 API 响应：
 
@@ -157,7 +212,7 @@ wscat -c "ws://localhost:8080?token=my_secret"
 < {"status":"ok","retcode":0,"data":{"user_id":123456,"nickname":"Bot"},"echo":"test"}
 ```
 
-## 5. 最佳实践
+## 6. 最佳实践
 
 ### ✅ 推荐做法
 
@@ -165,6 +220,7 @@ wscat -c "ws://localhost:8080?token=my_secret"
 2. **限制监听地址**：在仅本地使用时，设置 `rpc_host="127.0.0.1"` 以避免外部访问。
 3. **使用 TLS 加密**：在公网部署时，建议在前端部署反向代理（如 Nginx）并启用 HTTPS/WSS。
 4. **日志监控**：记录所有 RPC 连接的来源 IP，便于审计。
+5. **Docker/NAT 场景下设置 `rpc_public_host`**：确保远端进程能通过该地址连接到 RPC 服务器。
 
 ### ❌ 避免的做法
 
@@ -172,7 +228,7 @@ wscat -c "ws://localhost:8080?token=my_secret"
 2. **不要禁用鉴权**：即使在内网环境，也建议保留 Token 鉴权机制。
 3. **不要在 RPC 模式下运行高负载任务**：RPC 服务器会引入额外的网络开销，不适合高频 API 调用场景。
 
-## 6. 生命周期管理
+## 7. 生命周期管理
 
 ### 自动启动与停止
 
@@ -184,7 +240,7 @@ RPC 服务器的生命周期与 `NapCatClient` 绑定：
 ```python
 async with NapCatClient(..., rpc_mode=True) as client:
     # RPC 服务器已启动
-    print(f"RPC 运行中: {client.rpc_url}")
+    print(f"RPC 运行中: ws://{client.rpc_url_host}:{client.rpc_port}")
 
 # 离开上下文后，RPC 服务器自动停止
 ```
@@ -203,7 +259,7 @@ await client._stop_rpc()  # 手动停止 RPC 服务器
 await client.disconnect()
 ```
 
-## 7. 错误处理
+## 8. 错误处理
 
 ### 鉴权失败
 
@@ -224,16 +280,17 @@ except OSError as exc:
     print(f"RPC 服务器启动失败: {exc}")
 ```
 
-建议使用 `rpc_port=0` 让系统自动分配可用端口，然后通过 `client.rpc_url` 获取实际监听地址。
+建议使用 `rpc_port=0` 让系统自动分配可用端口，然后通过 `client.rpc_port` 获取实际监听端口。
 
-## 8. API 参考
+## 9. API 参考
 
 ### 实例属性
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| `rpc_url` | `str \| None` | RPC 服务器的 WebSocket URL（仅在 RPC 模式下可用） |
-| `rpc_token` | `str \| None` | RPC 鉴权令牌（仅在 RPC 模式下可用） |
+| `rpc_url_host` | `str` | RPC 服务对外可达的 host（优先 `rpc_public_host`，回落到 `rpc_host`） |
+| `rpc_port` | `int` | RPC 服务器实际监听端口 |
+| `rpc_token` | `str \| None` | RPC 鉴权令牌 |
 
 ### 配置参数
 
@@ -243,10 +300,11 @@ except OSError as exc:
 NapCatClient(
     ws_url="ws://localhost:3001",
     token="napcat_token",
-    rpc_mode=True,         # 必须启用
+    rpc_mode=True,              # 必须启用
     rpc_host="0.0.0.0",
     rpc_port=8080,
-    rpc_token="my_secret"
+    rpc_token="my_secret",
+    rpc_public_host="10.0.0.1"  # Docker/NAT 场景下的对外地址
 )
 ```
 
@@ -259,7 +317,8 @@ RPC 模式让 NapCat-SDK 从单纯的 Python 客户端，升级为可跨语言�
 **核心要点：**
 
 1. **透明转发**：外部请求通过 WebSocket 进入，经由 SDK 转发给 NapCat，响应原路返回。
-2. **双流隔离**：本地事件流与 RPC 响应流互不干扰。
-3. **安全优先**：支持 Token 鉴权，建议在生产环境启用。
-4. **生命周期绑定**：RPC 服务器随 Client 连接自动启停。
+2. **Event 序列化**：`to_dict()` 自动注入 RPC 连接信息，远端 `from_dict(data, client=client)` 反序列化后可直接调用 API。
+3. **双流隔离**：本地事件流与 RPC 响应流互不干扰。
+4. **安全优先**：支持 Token 鉴权，建议在生产环境启用。
+5. **生命周期绑定**：RPC 服务器随 Client 连接自动启停。
 
