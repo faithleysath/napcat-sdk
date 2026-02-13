@@ -23,6 +23,9 @@
     <a href="https://deepwiki.com/faithleysath/napcat-sdk">
         <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
     </a>
+    <a href="https://faithleysath.github.io/napcat-sdk/">
+        <img src="https://img.shields.io/badge/Docs-📖-blue?style=flat-square&color=2986cc" alt="Documentation">
+    </a>
     <img src="https://img.shields.io/badge/QQ%E7%BE%A4-819085771-54a3ff?style=flat-square&logo=tencent-qq&logoColor=white" alt="QQ Group">
   </p>
 
