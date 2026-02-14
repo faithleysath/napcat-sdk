@@ -67,6 +67,7 @@ nav = [
   ] },
   { "API 调用" = "api-usage.md" },
   { "开发指南" = "development.md" },
+  { "AI 辅助开发" = "ai-development.md" },
   { "常见问题" = "faq.md" },
 ]
 
