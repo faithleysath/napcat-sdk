@@ -24,6 +24,8 @@ jobs:
         run: uv sync --frozen --group dev --python ${{ matrix.python-version }}
       - name: Run source tests
         run: uv run --python ${{ matrix.python-version }} pytest -q src/tests
+      - name: Copy llms.txt for packaging
+        run: cp llms.txt src/napcat/llms.txt
       - name: Build
         run: uv build
       - name: Run tests against wheel package (${{ matrix.python-version }})
@@ -46,6 +48,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.12
         run: uv python install 3.12
+      - name: Copy llms.txt for packaging
+        run: cp llms.txt src/napcat/llms.txt
       - name: Build
         run: uv build
       - name: Publish

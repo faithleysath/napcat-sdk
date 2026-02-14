@@ -116,6 +116,7 @@ MCP（Model Context Protocol）让 AI 能够**实时查询** SDK 的 API 定义�
 | `list_code_files` | 列出 SDK 源代码文件 |
 | `get_code_file` | 读取指定源代码文件 |
 | `get_class_definition` | 查找类或函数的定义位置 |
+| `get_llms_txt` | 获取核心概念与最佳实践文档 |
 
 ---
 

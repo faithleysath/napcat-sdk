@@ -494,6 +494,28 @@ def logic_get_class_details(class_names: list[str]) -> str:
     return "\n\n---\n\n".join(results)
 
 
+def logic_get_llms_txt() -> str:
+    """获取 llms.txt 文件内容，为 LLM 提供核心概念和最佳实践"""
+    import importlib.resources
+
+    # 首选：通过 importlib.resources 访问包内文件（pip 安装后）
+    try:
+        files = importlib.resources.files("napcat")
+        llms_file = files.joinpath("llms.txt")
+        if llms_file.is_file():
+            return llms_file.read_text(encoding="utf-8")
+    except Exception:
+        pass
+
+    # 后备：开发时从项目根目录读取
+    current = Path(__file__).resolve()
+    dev_path = current.parent.parent.parent.parent / "llms.txt"
+    if dev_path.is_file():
+        return dev_path.read_text(encoding="utf-8")
+
+    return "# Error\n\nllms.txt not found in package or project root"
+
+
 # --- 3. 协议工具层 ---
 def send_response(response: dict[str, Any]):
     """使用 orjson 快速序列化并写入 stdout"""
@@ -722,6 +744,11 @@ def main():
                                     "required": ["names"],
                                 },
                             },
+                            {
+                                "name": "get_llms_txt",
+                                "description": "获取 llms.txt 文件内容，包含 NapCat SDK 的核心设计哲学、运行模式、事件处理最佳实践和常用代码模式",
+                                "inputSchema": {"type": "object", "properties": {}},
+                            },
                         ]
                     }
 
@@ -801,6 +828,8 @@ def main():
                                     "Argument 'names' is required and cannot be empty."
                                 )
                             result_text = logic_get_class_details(names)
+                        case "get_llms_txt":
+                            result_text = logic_get_llms_txt()
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 
