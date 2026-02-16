@@ -33,7 +33,12 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Communications :: Chat",
 ]
-dependencies = ["orjson>=3.11.5", "websockets>=15.0.1"]
+dependencies = [
+    "orjson>=3.11.5",
+    "websockets>=15.0.1",
+    "aiohttp>=3.9.0",
+    "tomli-w>=1.0.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/faithleysath/napcat-sdk"

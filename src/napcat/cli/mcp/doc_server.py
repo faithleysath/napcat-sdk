@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 
 import orjson
 
-from ..client_api import NapCatAPIMixin
+from napcat.client_api import NapCatAPIMixin
 
 
 class ApiDoc(TypedDict):

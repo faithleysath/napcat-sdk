@@ -267,18 +267,33 @@ AI：（调用 get_class_definition("Connection"), get_code_file）
 
 ### 自定义工具路径
 
-如果你从源码运行，可以手动指定 Python 路径：
+如果你从源码运行，可以使用 uv 运行 CLI 命令：
 
 ```json
 {
   "mcpServers": {
     "napcat-sdk": {
-      "command": "python",
-      "args": ["-m", "napcat.mcp.doc_server"]
+      "command": "uv",
+      "args": ["run", "napcat-sdk", "mcp", "doc"]
     }
   }
 }
 ```
+
+或者使用系统安装的版本：
+
+```json
+{
+  "mcpServers": {
+    "napcat-sdk": {
+      "command": "napcat-sdk",
+      "args": ["mcp", "doc"]
+    }
+  }
+}
+```
+
+> **注意**：旧版模块入口 `python -m napcat.mcp.doc_server` 已迁移到 CLI 命令 `napcat-sdk mcp doc`。
 
 ### 日志调试
 
