@@ -12,6 +12,7 @@ NapCat CLI 模块
   log       查看日志
   call      调用 OneBot API
   webhook   管理 Webhook
+  doc       查询 SDK 文档
   mcp       MCP 相关命令
 """
 
@@ -186,6 +187,62 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     mcp_subparsers = mcp_parser.add_subparsers(dest="mcp_command")
     mcp_subparsers.add_parser("doc", help="Start NapCat docs MCP server (stdio)")
 
+    # doc 命令组
+    doc_parser = subparsers.add_parser(
+        "doc",
+        help="Query SDK documentation",
+        description="Query API definitions, source code, and documentation",
+    )
+    doc_subparsers = doc_parser.add_subparsers(dest="doc_command", help="Documentation commands")
+
+    # doc apis
+    doc_subparsers.add_parser(
+        "apis",
+        help="List all available APIs",
+        description="List all NapCat SDK API methods",
+    ).add_argument("--json", action="store_true", help="Output in JSON format")
+
+    # doc api
+    api_parser = doc_subparsers.add_parser(
+        "api",
+        help="Get API details",
+        description="Get detailed information about one or more APIs",
+    )
+    api_parser.add_argument("names", nargs="+", help="API name(s) to query")
+    api_parser.add_argument("--json", action="store_true", help="Output in JSON format")
+
+    # doc files
+    doc_subparsers.add_parser(
+        "files",
+        help="List source code files",
+        description="List the source code directory structure",
+    ).add_argument("--json", action="store_true", help="Output in JSON format")
+
+    # doc code
+    code_parser = doc_subparsers.add_parser(
+        "code",
+        help="View source code",
+        description="View the content of source code files",
+    )
+    code_parser.add_argument("paths", nargs="+", help="File path(s) to view")
+    code_parser.add_argument("--json", action="store_true", help="Output in JSON format")
+
+    # doc class
+    class_parser = doc_subparsers.add_parser(
+        "class",
+        help="View class definition",
+        description="View class definitions by name",
+    )
+    class_parser.add_argument("names", nargs="+", help="Class name(s) to query")
+    class_parser.add_argument("--json", action="store_true", help="Output in JSON format")
+
+    # doc llms
+    doc_subparsers.add_parser(
+        "llms",
+        help="View llms.txt documentation",
+        description="View the llms.txt file with SDK design philosophy and best practices",
+    ).add_argument("--json", action="store_true", help="Output in JSON format")
+
     return parser
 
 
@@ -202,6 +259,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     from .commands import (
         cmd_call,
         cmd_config,
+        cmd_doc,
         cmd_list,
         cmd_log,
         cmd_restart,
@@ -263,6 +321,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 events=args.events,
                 secret=args.secret,
                 index=args.index,
+            )
+
+        case "doc":
+            return cmd_doc(
+                doc_command=args.doc_command,
+                json_output=getattr(args, 'json', False),
+                names=getattr(args, 'names', None),
+                paths=getattr(args, 'paths', None),
             )
 
         case "mcp":

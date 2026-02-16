@@ -6,6 +6,7 @@ CLI 命令模块
 
 from .call import cmd_call
 from .config import cmd_config
+from .doc import cmd_doc
 from .list import cmd_list
 from .log import cmd_log
 from .restart import cmd_restart
@@ -22,4 +23,5 @@ __all__ = [
     "cmd_log",
     "cmd_call",
     "cmd_webhook",
+    "cmd_doc",
 ]
