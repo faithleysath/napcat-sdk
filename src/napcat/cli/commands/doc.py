@@ -17,6 +17,8 @@ from ..doc import (
     logic_get_details,
     logic_get_index,
     logic_get_llms_txt,
+    logic_get_missing_apis,
+    logic_get_missing_classes,
 )
 
 
@@ -115,12 +117,13 @@ def _handle_api(names: list[str], json_output: bool) -> int:
     """处理 doc api 命令"""
     try:
         result = logic_get_details(names)
+        missing = logic_get_missing_apis(names)
         if json_output:
             data = {"apis": names, "result": result}
             print_json(data)
         else:
             print(result)
-        return 0
+        return 1 if missing else 0
     except Exception as e:
         print_error(str(e))
         return 1
@@ -167,12 +170,13 @@ def _handle_class(names: list[str], json_output: bool) -> int:
     """处理 doc class 命令"""
     try:
         result = logic_get_class_details(names)
+        missing = logic_get_missing_classes(names)
         if json_output:
             data = {"classes": names, "result": result}
             print_json(data)
         else:
             print(result)
-        return 0
+        return 1 if missing else 0
     except Exception as e:
         print_error(str(e))
         return 1
@@ -182,12 +186,13 @@ def _handle_llms(json_output: bool) -> int:
     """处理 doc llms 命令"""
     try:
         result = logic_get_llms_txt()
+        has_error = _is_logic_error(result)
         if json_output:
             data = {"content": result}
             print_json(data)
         else:
             print(result)
-        return 0
+        return 1 if has_error else 0
     except Exception as e:
         print_error(str(e))
         return 1

@@ -350,6 +350,12 @@ def logic_get_details(api_names: list[str]) -> str:
     return "\n---\n".join(results)
 
 
+def logic_get_missing_apis(api_names: list[str]) -> list[str]:
+    """返回不存在的 API 名称列表"""
+    api_data = _get_api_data()
+    return [name for name in api_names if name not in api_data]
+
+
 def logic_get_code_index() -> str:
     """生成源码目录树和模块 docstring 索引"""
     source_root = _get_source_root()
@@ -488,6 +494,12 @@ def logic_get_class_details(class_names: list[str]) -> str:
     for name in class_names:
         results.append(logic_get_class_detail(name))
     return "\n\n---\n\n".join(results)
+
+
+def logic_get_missing_classes(class_names: list[str]) -> list[str]:
+    """返回不存在的类名列表"""
+    _ensure_class_index_ready()
+    return [name for name in class_names if name not in _class_def_cache]
 
 
 def logic_get_llms_txt() -> str:

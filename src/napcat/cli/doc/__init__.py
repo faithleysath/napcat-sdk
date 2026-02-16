@@ -13,6 +13,8 @@ from .logic import (
     logic_get_details,
     logic_get_index,
     logic_get_llms_txt,
+    logic_get_missing_apis,
+    logic_get_missing_classes,
 )
 
 __all__ = [
@@ -24,4 +26,6 @@ __all__ = [
     "logic_get_class_detail",
     "logic_get_class_details",
     "logic_get_llms_txt",
+    "logic_get_missing_apis",
+    "logic_get_missing_classes",
 ]
