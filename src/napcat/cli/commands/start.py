@@ -71,6 +71,42 @@ def cmd_start(
         return _run_daemon(config, cfg_ws_url, cfg_token, cfg_log_level, loaded)
 
 
+async def _run_gateway_until_shutdown(
+    gateway: Gateway,
+    shutdown_event: asyncio.Event,
+) -> None:
+    """运行 Gateway，直到收到关闭信号或 Gateway 异常退出。"""
+
+    async def wait_shutdown() -> None:
+        while not shutdown_event.is_set():
+            await asyncio.sleep(0.5)
+
+    gateway_task = asyncio.create_task(gateway.start())
+    shutdown_task = asyncio.create_task(wait_shutdown())
+
+    done, _ = await asyncio.wait(
+        [gateway_task, shutdown_task],
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+
+    if gateway_task in done:
+        shutdown_task.cancel()
+        try:
+            await shutdown_task
+        except asyncio.CancelledError:
+            pass
+
+        # 传播 Gateway 启动/运行异常，避免错误返回成功状态码。
+        await gateway_task
+        return
+
+    gateway_task.cancel()
+    try:
+        await gateway_task
+    except asyncio.CancelledError:
+        pass
+
+
 def _run_foreground(
     config: InstanceConfig,
     ws_url: str,
@@ -108,31 +144,7 @@ def _run_foreground(
     config.write_pid(os.getpid())
 
     try:
-        async def run():
-            # 启动一个任务来等待关闭信号
-            async def wait_shutdown():
-                while not shutdown_event.is_set():
-                    await asyncio.sleep(0.5)
-
-            # 并行运行 Gateway 和等待关闭信号
-            gateway_task = asyncio.create_task(gateway.start())
-            shutdown_task = asyncio.create_task(wait_shutdown())
-
-            # 任一完成就退出
-            done, _ = await asyncio.wait(
-                [gateway_task, shutdown_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            # 如果是关闭信号触发的，取消 gateway 任务
-            if shutdown_task in done:
-                gateway_task.cancel()
-                try:
-                    await gateway_task
-                except asyncio.CancelledError:
-                    pass
-
-        asyncio.run(run())
+        asyncio.run(_run_gateway_until_shutdown(gateway, shutdown_event))
         print_success("Gateway stopped.")
         return 0
     except KeyboardInterrupt:
@@ -230,27 +242,7 @@ def _run_daemon(
         gateway.load_webhooks(loaded_config["webhooks"])
 
     try:
-        async def run():
-            async def wait_shutdown():
-                while not shutdown_event.is_set():
-                    await asyncio.sleep(0.5)
-
-            gateway_task = asyncio.create_task(gateway.start())
-            shutdown_task = asyncio.create_task(wait_shutdown())
-
-            done, _ = await asyncio.wait(
-                [gateway_task, shutdown_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            if shutdown_task in done:
-                gateway_task.cancel()
-                try:
-                    await gateway_task
-                except asyncio.CancelledError:
-                    pass
-
-        asyncio.run(run())
+        asyncio.run(_run_gateway_until_shutdown(gateway, shutdown_event))
     except Exception as e:
         print(f"Gateway error: {e}", file=sys.stderr)
     finally:

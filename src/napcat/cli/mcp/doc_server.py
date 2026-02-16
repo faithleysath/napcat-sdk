@@ -266,9 +266,12 @@ def logic_get_details(api_names: list[str]) -> str:
 # 2.2 源码相关
 def _get_source_root() -> Path:
     """获取 napcat 包的源码根目录"""
-    # __file__ 是 doc_server.py: src/napcat/mcp/doc_server.py
     current = Path(__file__).resolve()
-    # 向上两级到 napcat 目录
+    for parent in current.parents:
+        if (parent / "client.py").is_file() and (parent / "client_api.py").is_file():
+            return parent
+
+    # 回退到旧的固定层级，避免极端路径下直接崩溃。
     return current.parent.parent
 
 
@@ -507,9 +510,9 @@ def logic_get_llms_txt() -> str:
     except Exception:
         pass
 
-    # 后备：开发时从项目根目录读取
-    current = Path(__file__).resolve()
-    dev_path = current.parent.parent.parent.parent / "llms.txt"
+    # 后备：开发时从项目根目录读取 (repo_root/llms.txt)
+    source_root = _get_source_root()
+    dev_path = source_root.parent.parent / "llms.txt"
     if dev_path.is_file():
         return dev_path.read_text(encoding="utf-8")
 
