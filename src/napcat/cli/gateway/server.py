@@ -228,9 +228,14 @@ class Gateway:
 
     def _handle_get_status(self, req: GatewayRequest) -> GatewayResponse:
         """处理状态查询"""
+        qq: int | None = None
+        if self._client and self._client.self_id > 0:
+            qq = self._client.self_id
+
         status = {
             "instance": self.instance_name,
             "running": self._client is not None and self._client.is_running,
+            "qq": qq,
             "ws_url": self.ws_url,
             "webhooks_count": len(self._webhooks.list_webhooks()),
             "rpc_mode": self.rpc_mode,

@@ -233,3 +233,36 @@ def test_list_displays_rpc_summary(
     assert exit_code == 0
     assert "RPC" in captured.out
     assert "ws://rpc.example.com:18080" in captured.out
+
+
+def test_list_displays_qq_column_from_gateway_status(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(InstanceConfig, "BASE_DIR", tmp_path)
+    config = InstanceConfig("qq-bot")
+    config.update(ws_url="ws://127.0.0.1:3001")
+
+    def always_running(_self: InstanceConfig) -> bool:
+        return True
+
+    monkeypatch.setattr(InstanceConfig, "is_running", always_running)
+
+    class FakeGatewayClient:
+        def __init__(self, _socket_path: Path, timeout: float = 30.0):
+            self.timeout = timeout
+
+        async def get_status(self) -> dict[str, object]:
+            return {"qq": 123456789}
+
+    import napcat.cli.commands.list as list_module
+
+    monkeypatch.setattr(list_module, "GatewayClient", FakeGatewayClient)
+
+    exit_code = cmd_list()
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "QQ" in captured.out
+    assert "123456789" in captured.out

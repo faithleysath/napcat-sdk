@@ -6,7 +6,11 @@ list 命令
 
 from __future__ import annotations
 
+import asyncio
+from typing import Any
+
 from ..config import GatewayConfig, InstanceConfig
+from ..gateway.client import GatewayClient
 from ..utils import format_status, truncate
 
 
@@ -60,6 +64,29 @@ def _format_rpc_summary(gateway_cfg: GatewayConfig) -> str:
     return f"ws://{host_str}:auto"
 
 
+def _extract_qq(status: dict[str, Any]) -> str:
+    """从 Gateway 状态中提取 QQ 号。"""
+    qq_raw = status.get("qq")
+    qq = _parse_non_negative_int(qq_raw)
+    if qq > 0:
+        return str(qq)
+    return "-"
+
+
+def _fetch_runtime_qq(instance: InstanceConfig) -> str:
+    """尝试从运行中的 Gateway 获取 QQ 号。"""
+    client = GatewayClient(instance.socket_file, timeout=1.0)
+
+    async def do_get_status() -> dict[str, Any]:
+        return await client.get_status()
+
+    try:
+        status = asyncio.run(do_get_status())
+        return _extract_qq(status)
+    except Exception:
+        return "-"
+
+
 def cmd_list() -> int:
     """
     列出所有实例
@@ -75,8 +102,8 @@ def cmd_list() -> int:
         return 0
 
     # 表头
-    print(f"{'NAME':<15} {'PID':<8} {'STATUS':<12} {'RPC':<30} {'WS_URL'}")
-    print("-" * 100)
+    print(f"{'NAME':<15} {'QQ':<12} {'PID':<8} {'STATUS':<12} {'RPC':<30} {'WS_URL'}")
+    print("-" * 112)
 
     has_error = False
     for instance in instances:
@@ -88,13 +115,17 @@ def cmd_list() -> int:
             rpc_summary = truncate(_format_rpc_summary(config["gateway"]), 30)
             status = format_status(running)
             pid_str = str(pid) if pid else "-"
+            qq_str = _fetch_runtime_qq(instance) if running else "-"
         except Exception as e:
             has_error = True
+            qq_str = "-"
             pid_str = "-"
             status = "\033[31mError\033[0m"
             rpc_summary = "-"
             ws_url = truncate(f"invalid config: {e}", 40)
 
-        print(f"{instance.name:<15} {pid_str:<8} {status:<20} {rpc_summary:<30} {ws_url}")
+        print(
+            f"{instance.name:<15} {qq_str:<12} {pid_str:<8} {status:<20} {rpc_summary:<30} {ws_url}"
+        )
 
     return 1 if has_error else 0
