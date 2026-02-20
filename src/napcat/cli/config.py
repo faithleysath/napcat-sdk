@@ -6,9 +6,12 @@
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 import tomli_w
 from typing_extensions import TypedDict
@@ -90,31 +93,87 @@ class InstanceConfig:
         """检查实例配置是否存在"""
         return self.config_file.exists()
 
+    @staticmethod
+    def _get_process_start_time(pid: int) -> str | None:
+        """读取进程启动时间，用于检测 PID 复用导致的陈旧 PID 文件。"""
+        try:
+            result = subprocess.run(
+                ["ps", "-o", "lstart=", "-p", str(pid)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except OSError:
+            return None
+
+        if result.returncode != 0:
+            return None
+
+        started = result.stdout.strip()
+        return started or None
+
+    def _read_pid_info(self) -> tuple[int | None, str | None]:
+        """读取 JSON PID 文件。"""
+        if not self.pid_file.exists():
+            return None, None
+
+        try:
+            raw = self.pid_file.read_text().strip()
+        except OSError:
+            return None, None
+
+        if not raw:
+            return None, None
+
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return None, None
+
+        if not isinstance(parsed, dict):
+            return None, None
+
+        parsed_dict = cast(dict[str, object], parsed)
+        pid_obj = parsed_dict.get("pid")
+        started_obj = parsed_dict.get("started")
+        if isinstance(pid_obj, int) and not isinstance(pid_obj, bool) and pid_obj > 0:
+            return pid_obj, started_obj if isinstance(started_obj, str) else None
+
+        return None, None
+
     def is_running(self) -> bool:
         """检查实例是否正在运行"""
-        if not self.pid_file.exists():
+        pid, expected_started = self._read_pid_info()
+        if pid is None:
+            if self.pid_file.exists():
+                self.clear_pid()
             return False
+
         try:
-            pid = int(self.pid_file.read_text().strip())
             # 发送信号 0 检查进程是否存在
             os.kill(pid, 0)
-            return True
         except (ValueError, ProcessLookupError, PermissionError, OSError):
             # PID 文件无效或进程不存在，清理 PID 文件
-            try:
-                self.pid_file.unlink()
-            except OSError:
-                pass
+            self.clear_pid()
             return False
+
+        if expected_started:
+            current_started = self._get_process_start_time(pid)
+            if current_started != expected_started:
+                # PID 已复用，避免误判并清理陈旧 PID 文件
+                self.clear_pid()
+                return False
+
+        return True
 
     def get_pid(self) -> int | None:
         """获取运行中的 PID，如果未运行返回 None"""
         if not self.is_running():
             return None
-        try:
-            return int(self.pid_file.read_text().strip())
-        except (ValueError, OSError):
+        pid, _ = self._read_pid_info()
+        if pid is None:
             return None
+        return pid
 
     def _default_config(self) -> InstanceConfigDict:
         """返回默认配置"""
@@ -223,7 +282,11 @@ class InstanceConfig:
     def write_pid(self, pid: int) -> None:
         """写入 PID 文件"""
         self.instance_dir.mkdir(parents=True, exist_ok=True)
-        self.pid_file.write_text(str(pid))
+        pid_record: dict[str, int | str] = {"pid": pid}
+        started = self._get_process_start_time(pid)
+        if started is not None:
+            pid_record["started"] = started
+        self.pid_file.write_text(json.dumps(pid_record))
 
     def clear_pid(self) -> None:
         """清除 PID 文件"""

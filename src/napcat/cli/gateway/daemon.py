@@ -6,11 +6,14 @@
 
 from __future__ import annotations
 
+import json
 import os
 import signal
+import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 
 def daemonize(
@@ -80,8 +83,59 @@ def daemonize(
     devnull = os.open(os.devnull, os.O_RDWR)
     os.dup2(devnull, sys.stdin.fileno())
 
-    # 写入 PID 文件
-    pid_file.write_text(str(os.getpid()))
+    # 写入 PID 文件（包含启动时间，避免 PID 复用导致误杀）
+    pid = os.getpid()
+    pid_record: dict[str, int | str] = {"pid": pid}
+    started = _get_process_start_time(pid)
+    if started is not None:
+        pid_record["started"] = started
+    pid_file.write_text(json.dumps(pid_record))
+
+
+def _get_process_start_time(pid: int) -> str | None:
+    """读取进程启动时间，用于检测 PID 复用。"""
+    try:
+        result = subprocess.run(
+            ["ps", "-o", "lstart=", "-p", str(pid)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    started = result.stdout.strip()
+    return started or None
+
+
+def _read_pid_info(pid_file: Path) -> tuple[int, str | None]:
+    """读取 JSON PID 文件。"""
+    try:
+        raw = pid_file.read_text().strip()
+    except OSError as e:
+        raise ProcessLookupError(f"Failed to read PID file: {pid_file}") from e
+
+    if not raw:
+        raise ProcessLookupError(f"Invalid PID in file: {pid_file}")
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        raise ProcessLookupError(f"Invalid PID file format: {pid_file}") from None
+
+    if not isinstance(parsed, dict):
+        raise ProcessLookupError(f"Invalid PID file format: {pid_file}")
+
+    parsed_dict = cast(dict[str, object], parsed)
+    pid_obj = parsed_dict.get("pid")
+    started_obj = parsed_dict.get("started")
+    if not isinstance(pid_obj, int) or isinstance(pid_obj, bool) or pid_obj <= 0:
+        raise ProcessLookupError(f"Invalid PID in file: {pid_file}")
+
+    return pid_obj, started_obj if isinstance(started_obj, str) else None
 
 
 def stop_daemon(
@@ -108,10 +162,7 @@ def stop_daemon(
     if not pid_file.exists():
         raise ProcessLookupError(f"PID file not found: {pid_file}")
 
-    try:
-        pid = int(pid_file.read_text().strip())
-    except ValueError as e:
-        raise ProcessLookupError(f"Invalid PID in file: {pid_file}") from e
+    pid, expected_started = _read_pid_info(pid_file)
 
     # 检查进程是否存在
     try:
@@ -122,6 +173,14 @@ def stop_daemon(
         raise ProcessLookupError(f"Process {pid} not running") from None
     except PermissionError:
         raise PermissionError(f"No permission to kill process {pid}") from None
+
+    if expected_started:
+        current_started = _get_process_start_time(pid)
+        if current_started != expected_started:
+            pid_file.unlink(missing_ok=True)
+            raise ProcessLookupError(
+                f"Stale PID file for process {pid}: start time mismatch"
+            ) from None
 
     # 发送信号
     sig = signal.SIGKILL if force else signal.SIGTERM

@@ -28,15 +28,21 @@ def cmd_list() -> int:
     print(f"{'NAME':<15} {'PID':<8} {'STATUS':<12} {'WS_URL'}")
     print("-" * 60)
 
+    has_error = False
     for instance in instances:
-        config = instance.load()
-        running = instance.is_running()
-        pid = instance.get_pid()
-        ws_url = truncate(config["connection"].get("ws_url", "") or "not set", 40)
-
-        status = format_status(running)
-        pid_str = str(pid) if pid else "-"
+        try:
+            config = instance.load()
+            running = instance.is_running()
+            pid = instance.get_pid()
+            ws_url = truncate(config["connection"].get("ws_url", "") or "not set", 40)
+            status = format_status(running)
+            pid_str = str(pid) if pid else "-"
+        except Exception as e:
+            has_error = True
+            pid_str = "-"
+            status = "\033[31mError\033[0m"
+            ws_url = truncate(f"invalid config: {e}", 40)
 
         print(f"{instance.name:<15} {pid_str:<8} {status:<20} {ws_url}")
 
-    return 0
+    return 1 if has_error else 0

@@ -130,3 +130,20 @@ def test_gateway_socket_server_uses_unix_mode(
     assert captured["kwargs"]["path"] == str(socket_path)
     assert state["closed"] is True
     assert state["wait_closed_called"] is True
+
+
+def test_gateway_remove_webhook_invalid_index_returns_invalid_params() -> None:
+    gateway = Gateway(
+        instance_name="test-instance",
+        ws_url="ws://127.0.0.1:3001",
+    )
+
+    req = GatewayRequest(
+        method="remove_webhook",
+        params={"index": "abc"},
+    )
+    resp = gateway._handle_remove_webhook(req)  # pyright: ignore[reportPrivateUsage]
+
+    assert resp.error is not None
+    assert resp.error["code"] == GatewayResponse.INVALID_PARAMS
+    assert "index" in resp.error["message"]

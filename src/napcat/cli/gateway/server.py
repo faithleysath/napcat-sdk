@@ -243,7 +243,23 @@ class Gateway:
         if url:
             removed = self._webhooks.remove_webhook_by_url(url)
         elif index is not None:
-            removed = self._webhooks.remove_webhook_by_index(int(index))
+            if isinstance(index, bool):
+                return GatewayResponse.error_response(
+                    code=GatewayResponse.INVALID_PARAMS,
+                    message="Parameter 'index' must be an integer",
+                    request_id=req.id,
+                )
+
+            try:
+                parsed_index = int(index)
+            except (TypeError, ValueError):
+                return GatewayResponse.error_response(
+                    code=GatewayResponse.INVALID_PARAMS,
+                    message="Parameter 'index' must be an integer",
+                    request_id=req.id,
+                )
+
+            removed = self._webhooks.remove_webhook_by_index(parsed_index)
         else:
             return GatewayResponse.error_response(
                 code=GatewayResponse.INVALID_PARAMS,
