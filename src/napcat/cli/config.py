@@ -11,10 +11,9 @@ import os
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 
 import tomli_w
-from typing_extensions import TypedDict
 
 
 class ConnectionConfig(TypedDict):
