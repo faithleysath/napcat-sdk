@@ -20,6 +20,11 @@ def cmd_start(
     instance_name: str,
     ws_url: str | None = None,
     token: str | None = None,
+    rpc_mode: bool | None = None,
+    rpc_host: str | None = None,
+    rpc_port: int | None = None,
+    rpc_token: str | None = None,
+    rpc_public_host: str | None = None,
     foreground: bool = False,
 ) -> int:
     """
@@ -29,6 +34,11 @@ def cmd_start(
         instance_name: 实例名称
         ws_url: WebSocket URL (可选，用于更新配置)
         token: 访问令牌 (可选)
+        rpc_mode: 是否启用透明 RPC 代理 (可选，用于更新配置)
+        rpc_host: RPC 监听地址 (可选，用于更新配置)
+        rpc_port: RPC 监听端口 (可选，用于更新配置)
+        rpc_token: RPC 鉴权令牌 (可选，用于更新配置)
+        rpc_public_host: RPC 对外地址 (可选，用于更新配置)
         foreground: 是否前台运行
 
     Returns:
@@ -37,8 +47,24 @@ def cmd_start(
     config = InstanceConfig(instance_name)
 
     # 如果提供了配置参数，先更新配置
-    if ws_url or token:
-        config.update(ws_url=ws_url, token=token)
+    if (
+        ws_url is not None
+        or token is not None
+        or rpc_mode is not None
+        or rpc_host is not None
+        or rpc_port is not None
+        or rpc_token is not None
+        or rpc_public_host is not None
+    ):
+        config.update(
+            ws_url=ws_url,
+            token=token,
+            rpc_mode=rpc_mode,
+            rpc_host=rpc_host,
+            rpc_port=rpc_port,
+            rpc_token=rpc_token,
+            rpc_public_host=rpc_public_host,
+        )
 
     # 检查配置是否存在
     if not config.exists():
@@ -51,6 +77,11 @@ def cmd_start(
     cfg_ws_url = loaded["connection"].get("ws_url", "")
     cfg_token = loaded["connection"].get("token") or None
     cfg_log_level = loaded["gateway"].get("log_level", "INFO")
+    cfg_rpc_mode = _parse_rpc_mode_value(loaded["gateway"].get("rpc_mode", False))
+    cfg_rpc_host = str(loaded["gateway"].get("rpc_host", "0.0.0.0"))
+    cfg_rpc_port = _parse_rpc_port(loaded["gateway"].get("rpc_port", 0))
+    cfg_rpc_token = _parse_optional_str(loaded["gateway"].get("rpc_token"))
+    cfg_rpc_public_host = _parse_optional_str(loaded["gateway"].get("rpc_public_host"))
 
     if not cfg_ws_url:
         print_error("WebSocket URL not configured.")
@@ -65,10 +96,66 @@ def cmd_start(
 
     if foreground:
         # 前台运行
-        return _run_foreground(config, cfg_ws_url, cfg_token, cfg_log_level, loaded)
+        return _run_foreground(
+            config,
+            cfg_ws_url,
+            cfg_token,
+            cfg_log_level,
+            cfg_rpc_mode,
+            cfg_rpc_host,
+            cfg_rpc_port,
+            cfg_rpc_token,
+            cfg_rpc_public_host,
+            loaded,
+        )
     else:
         # 后台守护进程
-        return _run_daemon(config, cfg_ws_url, cfg_token, cfg_log_level, loaded)
+        return _run_daemon(
+            config,
+            cfg_ws_url,
+            cfg_token,
+            cfg_log_level,
+            cfg_rpc_mode,
+            cfg_rpc_host,
+            cfg_rpc_port,
+            cfg_rpc_token,
+            cfg_rpc_public_host,
+            loaded,
+        )
+
+
+def _parse_optional_str(value: object) -> str | None:
+    """从配置值中解析可选字符串。"""
+    if isinstance(value, str):
+        return value
+    return None
+
+
+def _parse_rpc_mode_value(value: object) -> bool:
+    """从配置值中解析 RPC 开关。"""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    return bool(value)
+
+
+def _parse_rpc_port(value: object) -> int:
+    """从配置值中解析 RPC 端口，非法值回落到 0。"""
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value if value >= 0 else 0
+
+    try:
+        parsed = int(str(value))
+        return parsed if parsed >= 0 else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 async def _run_gateway_until_shutdown(
@@ -112,6 +199,11 @@ def _run_foreground(
     ws_url: str,
     token: str | None,
     log_level: str,
+    rpc_mode: bool,
+    rpc_host: str,
+    rpc_port: int,
+    rpc_token: str | None,
+    rpc_public_host: str | None,
     loaded_config: InstanceConfigDict,
 ) -> int:
     """前台运行 Gateway"""
@@ -126,6 +218,11 @@ def _run_foreground(
         token=token,
         socket_path=config.socket_file,
         log_level=log_level,
+        rpc_mode=rpc_mode,
+        rpc_host=rpc_host,
+        rpc_port=rpc_port,
+        rpc_token=rpc_token,
+        rpc_public_host=rpc_public_host,
     )
 
     # 加载 Webhook
@@ -163,6 +260,11 @@ def _run_daemon(
     ws_url: str,
     token: str | None,
     log_level: str,
+    rpc_mode: bool,
+    rpc_host: str,
+    rpc_port: int,
+    rpc_token: str | None,
+    rpc_public_host: str | None,
     loaded_config: InstanceConfigDict,
 ) -> int:
     """以守护进程方式运行 Gateway"""
@@ -235,6 +337,11 @@ def _run_daemon(
         token=token,
         socket_path=config.socket_file,
         log_level=log_level,
+        rpc_mode=rpc_mode,
+        rpc_host=rpc_host,
+        rpc_port=rpc_port,
+        rpc_token=rpc_token,
+        rpc_public_host=rpc_public_host,
     )
 
     # 加载 Webhook

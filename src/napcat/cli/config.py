@@ -24,10 +24,15 @@ class ConnectionConfig(TypedDict):
     token: str
 
 
-class GatewayConfig(TypedDict):
+class GatewayConfig(TypedDict, total=False):
     """Gateway 配置"""
 
     log_level: str
+    rpc_mode: bool
+    rpc_host: str
+    rpc_port: int
+    rpc_token: str
+    rpc_public_host: str
 
 
 class WebhookConfig(TypedDict, total=False):
@@ -179,7 +184,12 @@ class InstanceConfig:
         """返回默认配置"""
         return InstanceConfigDict(
             connection=ConnectionConfig(ws_url="", token=""),
-            gateway=GatewayConfig(log_level="INFO"),
+            gateway=GatewayConfig(
+                log_level="INFO",
+                rpc_mode=False,
+                rpc_host="0.0.0.0",
+                rpc_port=0,
+            ),
             webhooks=[],
         )
 
@@ -227,6 +237,11 @@ class InstanceConfig:
         ws_url: str | None = None,
         token: str | None = None,
         log_level: str | None = None,
+        rpc_mode: bool | None = None,
+        rpc_host: str | None = None,
+        rpc_port: int | None = None,
+        rpc_token: str | None = None,
+        rpc_public_host: str | None = None,
     ) -> InstanceConfigDict:
         """更新配置并保存"""
         config = self.load()
@@ -237,6 +252,16 @@ class InstanceConfig:
             config["connection"]["token"] = token
         if log_level is not None:
             config["gateway"]["log_level"] = log_level
+        if rpc_mode is not None:
+            config["gateway"]["rpc_mode"] = rpc_mode
+        if rpc_host is not None:
+            config["gateway"]["rpc_host"] = rpc_host
+        if rpc_port is not None:
+            config["gateway"]["rpc_port"] = rpc_port
+        if rpc_token is not None:
+            config["gateway"]["rpc_token"] = rpc_token
+        if rpc_public_host is not None:
+            config["gateway"]["rpc_public_host"] = rpc_public_host
 
         self.save(config)
         return config

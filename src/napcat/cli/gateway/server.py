@@ -42,12 +42,22 @@ class Gateway:
         token: str | None = None,
         socket_path: Path | None = None,
         log_level: str = "INFO",
+        rpc_mode: bool = False,
+        rpc_host: str = "0.0.0.0",
+        rpc_port: int = 0,
+        rpc_token: str | None = None,
+        rpc_public_host: str | None = None,
     ):
         self.instance_name = instance_name
         self.ws_url = ws_url
         self.token = token
         self.socket_path = socket_path or Path.home() / ".napcat" / instance_name / "gateway.sock"
         self.log_level = log_level
+        self.rpc_mode = rpc_mode
+        self.rpc_host = rpc_host
+        self.rpc_port = rpc_port
+        self.rpc_token = rpc_token
+        self.rpc_public_host = rpc_public_host
 
         self._client: NapCatClient | None = None
         self._webhooks: WebhookDispatcher = WebhookDispatcher()
@@ -64,6 +74,8 @@ class Gateway:
         """启动 Gateway"""
         logger.info("Starting Gateway for instance: %s", self.instance_name)
         logger.info("Connecting to NapCat at: %s", self.ws_url)
+        if self.rpc_mode:
+            logger.info("Transparent RPC proxy enabled on %s:%d", self.rpc_host, self.rpc_port)
 
         self._running = True
 
@@ -71,6 +83,11 @@ class Gateway:
         self._client = NapCatClient(
             ws_url=self.ws_url,
             token=self.token,
+            rpc_mode=self.rpc_mode,
+            rpc_host=self.rpc_host,
+            rpc_port=self.rpc_port,
+            rpc_token=self.rpc_token,
+            rpc_public_host=self.rpc_public_host,
         )
 
         try:
@@ -216,6 +233,10 @@ class Gateway:
             "running": self._client is not None and self._client.is_running,
             "ws_url": self.ws_url,
             "webhooks_count": len(self._webhooks.list_webhooks()),
+            "rpc_mode": self.rpc_mode,
+            "rpc_host": self._client.rpc_url_host if self._client else self.rpc_host,
+            "rpc_port": self._client.rpc_port if self._client else self.rpc_port,
+            "rpc_token_enabled": bool(self._client and self._client.rpc_token),
         }
         return GatewayResponse.success(status, req.id)
 

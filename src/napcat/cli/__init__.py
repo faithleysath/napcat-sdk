@@ -62,6 +62,19 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     config_parser.add_argument("name", help="Instance name")
     config_parser.add_argument("--ws", metavar="URL", help="NapCat WebSocket URL")
     config_parser.add_argument("--token", metavar="STR", help="Access token")
+    config_parser.add_argument(
+        "--rpc-mode",
+        choices=["on", "off"],
+        help="Enable or disable transparent RPC proxy",
+    )
+    config_parser.add_argument("--rpc-host", metavar="HOST", help="RPC listen host")
+    config_parser.add_argument("--rpc-port", type=int, metavar="PORT", help="RPC listen port")
+    config_parser.add_argument("--rpc-token", metavar="STR", help="RPC auth token")
+    config_parser.add_argument(
+        "--rpc-public-host",
+        metavar="HOST",
+        help="Public host advertised in serialized events",
+    )
 
     # start 命令
     start_parser = subparsers.add_parser(
@@ -72,6 +85,19 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     start_parser.add_argument("name", help="Instance name")
     start_parser.add_argument("--ws", metavar="URL", help="Update WebSocket URL before starting")
     start_parser.add_argument("--token", metavar="STR", help="Update token before starting")
+    start_parser.add_argument(
+        "--rpc-mode",
+        choices=["on", "off"],
+        help="Enable or disable transparent RPC proxy before starting",
+    )
+    start_parser.add_argument("--rpc-host", metavar="HOST", help="Update RPC listen host")
+    start_parser.add_argument("--rpc-port", type=int, metavar="PORT", help="Update RPC listen port")
+    start_parser.add_argument("--rpc-token", metavar="STR", help="Update RPC auth token")
+    start_parser.add_argument(
+        "--rpc-public-host",
+        metavar="HOST",
+        help="Update RPC public host advertised to remote consumers",
+    )
     start_parser.add_argument(
         "-f", "--foreground",
         action="store_true",
@@ -240,6 +266,13 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     return parser
 
 
+def _parse_rpc_mode_arg(value: str | None) -> bool | None:
+    """解析命令行的 rpc-mode 参数。"""
+    if value is None:
+        return None
+    return value == "on"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -268,6 +301,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 instance_name=args.name,
                 ws_url=args.ws,
                 token=args.token,
+                rpc_mode=_parse_rpc_mode_arg(args.rpc_mode),
+                rpc_host=args.rpc_host,
+                rpc_port=args.rpc_port,
+                rpc_token=args.rpc_token,
+                rpc_public_host=args.rpc_public_host,
             )
 
         case "start":
@@ -275,6 +313,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 instance_name=args.name,
                 ws_url=args.ws,
                 token=args.token,
+                rpc_mode=_parse_rpc_mode_arg(args.rpc_mode),
+                rpc_host=args.rpc_host,
+                rpc_port=args.rpc_port,
+                rpc_token=args.rpc_token,
+                rpc_public_host=args.rpc_public_host,
                 foreground=args.foreground,
             )
 

@@ -147,3 +147,63 @@ def test_gateway_remove_webhook_invalid_index_returns_invalid_params() -> None:
     assert resp.error is not None
     assert resp.error["code"] == GatewayResponse.INVALID_PARAMS
     assert "index" in resp.error["message"]
+
+
+def test_gateway_start_passes_rpc_options_to_napcat_client(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    class FakeNapCatClient:
+        def __init__(self, **kwargs: Any) -> None:
+            captured.update(kwargs)
+            self.is_running = True
+            self.rpc_url_host = kwargs.get("rpc_public_host") or kwargs.get("rpc_host", "0.0.0.0")
+            self.rpc_port = kwargs.get("rpc_port", 0)
+            self.rpc_token = kwargs.get("rpc_token")
+
+        async def __aenter__(self) -> FakeNapCatClient:
+            return self
+
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: Any,
+        ) -> bool:
+            return False
+
+        def __aiter__(self) -> Any:
+            async def _empty() -> Any:
+                if False:
+                    yield None
+
+            return _empty()
+
+    async def fake_run_socket_server(_self: Gateway) -> None:
+        return None
+
+    import napcat.cli.gateway.server as gateway_server_module
+
+    monkeypatch.setattr(gateway_server_module, "NapCatClient", FakeNapCatClient)
+    monkeypatch.setattr(Gateway, "_run_socket_server", fake_run_socket_server)
+
+    gateway = Gateway(
+        instance_name="rpc-instance",
+        ws_url="ws://127.0.0.1:3001",
+        socket_path=tmp_path / "gateway.sock",
+        rpc_mode=True,
+        rpc_host="127.0.0.1",
+        rpc_port=18080,
+        rpc_token="secret-token",
+        rpc_public_host="example.com",
+    )
+
+    asyncio.run(gateway.start())
+
+    assert captured["rpc_mode"] is True
+    assert captured["rpc_host"] == "127.0.0.1"
+    assert captured["rpc_port"] == 18080
+    assert captured["rpc_token"] == "secret-token"
+    assert captured["rpc_public_host"] == "example.com"

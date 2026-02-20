@@ -166,3 +166,70 @@ def test_list_handles_invalid_config_without_crashing(
     assert "valid" in captured.out
     assert "broken" in captured.out
     assert "invalid config" in captured.out
+
+
+def test_start_foreground_reads_rpc_settings_from_config(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(InstanceConfig, "BASE_DIR", tmp_path)
+
+    config = InstanceConfig("rpc")
+    config.update(
+        ws_url="ws://127.0.0.1:3001",
+        rpc_mode=True,
+        rpc_host="127.0.0.1",
+        rpc_port=18080,
+        rpc_token="secret-token",
+        rpc_public_host="proxy.example.com",
+    )
+
+    captured: dict[str, object] = {}
+
+    class FakeGateway:
+        def __init__(self, *_args: object, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+        async def start(self) -> None:
+            return None
+
+    import napcat.cli.commands.start as start_module
+
+    def fake_setup_signal_handlers(_cb: Callable[[], None]) -> None:
+        return None
+
+    monkeypatch.setattr(start_module, "Gateway", FakeGateway)
+    monkeypatch.setattr(start_module, "setup_signal_handlers", fake_setup_signal_handlers)
+
+    exit_code = cmd_start("rpc", foreground=True)
+
+    assert exit_code == 0
+    assert captured["rpc_mode"] is True
+    assert captured["rpc_host"] == "127.0.0.1"
+    assert captured["rpc_port"] == 18080
+    assert captured["rpc_token"] == "secret-token"
+    assert captured["rpc_public_host"] == "proxy.example.com"
+
+
+def test_list_displays_rpc_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(InstanceConfig, "BASE_DIR", tmp_path)
+
+    config = InstanceConfig("rpc-list")
+    config.update(
+        ws_url="ws://127.0.0.1:3001",
+        rpc_mode=True,
+        rpc_host="0.0.0.0",
+        rpc_port=18080,
+        rpc_public_host="rpc.example.com",
+    )
+
+    exit_code = cmd_list()
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "RPC" in captured.out
+    assert "ws://rpc.example.com:18080" in captured.out
