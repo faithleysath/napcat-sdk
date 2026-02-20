@@ -58,9 +58,18 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     config_parser = subparsers.add_parser(
         "config",
         help="Manage instance configuration",
-        description="View or update instance configuration",
+        description="View, update, or remove instance configuration",
     )
-    config_parser.add_argument("name", help="Instance name")
+    config_parser.add_argument(
+        "name",
+        nargs="?",
+        help="Instance name, or use 'rm <NAME>' to remove an instance",
+    )
+    config_parser.add_argument(
+        "rm_name",
+        nargs="?",
+        help=argparse.SUPPRESS,
+    )
     config_parser.add_argument("--ws", metavar="URL", help="NapCat WebSocket URL")
     config_parser.add_argument("--token", metavar="STR", help="Access token")
     config_parser.add_argument(
@@ -306,6 +315,40 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     match args.command:
         case "config":
+            if args.name is None:
+                parser.error("the following arguments are required: name")
+                return 2
+
+            if args.name == "rm":
+                if args.rm_name is None:
+                    parser.error("usage: napcat-sdk config rm <NAME>")
+                    return 2
+
+                has_update_options = any(
+                    value is not None
+                    for value in (
+                        args.ws,
+                        args.token,
+                        args.rpc_mode,
+                        args.rpc_host,
+                        args.rpc_port,
+                        args.rpc_token,
+                        args.rpc_public_host,
+                    )
+                )
+                if has_update_options:
+                    parser.error("'config rm' does not accept update options")
+                    return 2
+
+                return cmd_config(
+                    instance_name=args.rm_name,
+                    remove=True,
+                )
+
+            if args.rm_name is not None:
+                parser.error(f"unrecognized arguments: {args.rm_name}")
+                return 2
+
             return cmd_config(
                 instance_name=args.name,
                 ws_url=args.ws,

@@ -19,6 +19,7 @@ def cmd_tldr() -> int:
             1) Configure an instance
               napcat-sdk config <NAME> --ws <URL> [--token <TOKEN>]
               napcat-sdk config <NAME> --rpc-mode on --rpc-host 0.0.0.0 --rpc-port 8080
+              napcat-sdk config rm <NAME>
 
             2) Start / stop
               napcat-sdk start <NAME>

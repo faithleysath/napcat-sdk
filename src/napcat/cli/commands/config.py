@@ -6,6 +6,8 @@ config 命令
 
 from __future__ import annotations
 
+import shutil
+
 from ..config import InstanceConfig
 from ..utils import print_error, print_success
 
@@ -19,6 +21,7 @@ def cmd_config(
     rpc_port: int | None = None,
     rpc_token: str | None = None,
     rpc_public_host: str | None = None,
+    remove: bool = False,
 ) -> int:
     """
     查看或修改实例配置
@@ -32,11 +35,31 @@ def cmd_config(
         rpc_port: RPC 监听端口 (可选)
         rpc_token: RPC 鉴权令牌 (可选)
         rpc_public_host: RPC 对外地址 (可选)
+        remove: 是否删除实例配置
 
     Returns:
         退出码
     """
     config = InstanceConfig(instance_name)
+
+    if remove:
+        if not config.exists():
+            print_error(f"Instance '{instance_name}' does not exist.")
+            return 1
+
+        if config.is_running():
+            print_error(f"Instance '{instance_name}' is running. Stop it first.")
+            print(f"Stop it with: napcat-sdk stop {instance_name}")
+            return 1
+
+        try:
+            if config.instance_dir.exists():
+                shutil.rmtree(config.instance_dir)
+            print_success(f"Configuration removed for '{instance_name}'")
+            return 0
+        except Exception as e:
+            print_error(f"Failed to remove configuration: {e}")
+            return 1
 
     # 如果没有提供任何参数，显示当前配置
     if (
