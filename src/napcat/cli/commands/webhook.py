@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 from ..config import InstanceConfig
 from ..gateway.client import GatewayClient
 from ..gateway.protocol import GatewayError
 from ..utils import print_error, print_success
+
+WebhookRecord = dict[str, Any]
+IndexedWebhook = tuple[int, WebhookRecord]
 
 
 def cmd_webhook(
@@ -22,7 +25,6 @@ def cmd_webhook(
     url: str | None = None,
     events: list[str] | None = None,
     secret: str | None = None,
-    index: int | None = None,
 ) -> int:
     """
     管理 Webhook
@@ -31,9 +33,8 @@ def cmd_webhook(
         instance_name: 实例名称
         subcommand: 子命令 (add/list/rm)
         url: Webhook URL
-        events: 订阅的事件类型
+        events: 事件类型（add 作为订阅类型；list/rm 作为过滤器）
         secret: HMAC 签名密钥
-        index: 要删除的 Webhook 索引
 
     Returns:
         退出码
@@ -48,9 +49,9 @@ def cmd_webhook(
         case "add":
             return _cmd_webhook_add(config, url, events, secret)
         case "list":
-            return _cmd_webhook_list(config)
+            return _cmd_webhook_list(config, url, events)
         case "rm" | "remove":
-            return _cmd_webhook_remove(config, url, index)
+            return _cmd_webhook_remove(config, url, events)
         case _:
             print_error(f"Unknown subcommand: {subcommand}")
             print("Available: add, list, rm")
@@ -125,100 +126,177 @@ def _add_webhook_offline(
         return 1
 
 
-def _cmd_webhook_list(config: InstanceConfig) -> int:
-    """列出 Webhook"""
-    # 如果实例正在运行，通过 Gateway API 获取
+def _cmd_webhook_list(
+    config: InstanceConfig,
+    url: str | None,
+    events: list[str] | None,
+) -> int:
+    """列出 Webhook（支持过滤）"""
     if config.is_running():
-        return _list_webhooks_online(config)
-    else:
-        # 否则从配置文件读取
-        return _list_webhooks_offline(config)
-
-
-def _list_webhooks_online(config: InstanceConfig) -> int:
-    """通过 Gateway API 列出 Webhook"""
-    client = GatewayClient(config.socket_file)
-
-    async def do_list():
-        try:
-            webhooks = await client.list_webhooks()
-            return webhooks
-        except GatewayError as e:
-            print_error(f"Gateway error: {e}")
-            return None
-        except Exception as e:
-            print_error(f"Error: {e}")
-            return None
-
-    try:
-        webhooks = asyncio.run(do_list())
+        webhooks = _list_webhooks_online(config)
         if webhooks is None:
             return 1
+    else:
+        webhooks = _list_webhooks_offline(config)
 
-        _print_webhooks(webhooks)
+    if not webhooks:
+        print("No webhooks configured.")
         return 0
-    except Exception as e:
-        print_error(f"Unexpected error: {e}")
-        return 1
 
+    matched = _filter_webhooks(webhooks, url=url, events=events)
+    if not matched:
+        print("No webhooks matched the given filters.")
+        return 0
 
-def _list_webhooks_offline(config: InstanceConfig) -> int:
-    """从配置文件列出 Webhook"""
-    loaded = config.load()
-    webhooks = loaded.get("webhooks", [])
-
-    _print_webhooks(webhooks)  # type: ignore[arg-type]
+    _print_webhooks(matched)
     return 0
 
 
-def _print_webhooks(webhooks: Sequence[dict[str, Any]]) -> None:
-    """打印 Webhook 列表"""
-    if not webhooks:
-        print("No webhooks configured.")
-        return
+def _list_webhooks_online(config: InstanceConfig) -> list[WebhookRecord] | None:
+    """通过 Gateway API 读取当前运行中的 Webhook 列表"""
+    client = GatewayClient(config.socket_file)
 
+    async def do_list() -> list[WebhookRecord]:
+        return await client.list_webhooks()
+
+    try:
+        return asyncio.run(do_list())
+    except GatewayError as e:
+        print_error(f"Gateway error: {e}")
+        return None
+    except Exception as e:
+        print_error(f"Error: {e}")
+        return None
+
+
+def _list_webhooks_offline(config: InstanceConfig) -> list[WebhookRecord]:
+    """从配置文件读取 Webhook 列表"""
+    loaded = config.load()
+    webhooks = cast(list[WebhookRecord], loaded.get("webhooks", []))
+    return webhooks
+
+
+def _print_webhooks(indexed_webhooks: Sequence[IndexedWebhook]) -> None:
+    """打印 Webhook 列表"""
     print(f"{'#':<4} {'URL':<40} {'EVENTS'}")
     print("-" * 70)
 
-    for i, wh in enumerate(webhooks):
-        url = wh.get("url", "")
-        events = wh.get("events", ["*"])
-        events_str = ",".join(events) if events else "*"
-        print(f"{i:<4} {url:<40} {events_str}")
+    for index, wh in indexed_webhooks:
+        webhook_url = str(wh.get("url", ""))
+        webhook_events = _normalize_webhook_events(wh)
+        events_str = ",".join(webhook_events) if webhook_events else "*"
+        print(f"{index:<4} {webhook_url:<40} {events_str}")
+
+
+def _normalize_event_filters(events: Sequence[str] | None) -> list[str]:
+    """规范化事件过滤器"""
+    if not events:
+        return []
+
+    normalized: list[str] = []
+    for event in events:
+        event_type = event.strip()
+        if event_type:
+            normalized.append(event_type)
+    return normalized
+
+
+def _normalize_webhook_events(webhook: WebhookRecord) -> list[str]:
+    """规范化单条 Webhook 上的事件类型"""
+    raw_events = webhook.get("events")
+    if isinstance(raw_events, list):
+        normalized: list[str] = []
+        for raw_event in cast(list[object], raw_events):
+            event_type = str(raw_event).strip()
+            if event_type:
+                normalized.append(event_type)
+        return normalized or ["*"]
+    if isinstance(raw_events, str):
+        event_type = raw_events.strip()
+        return [event_type] if event_type else ["*"]
+    return ["*"]
+
+
+def _match_event_filter(webhook: WebhookRecord, event_filters: Sequence[str]) -> bool:
+    """按事件类型过滤 Webhook。"""
+    if not event_filters or "*" in event_filters:
+        return True
+
+    webhook_events = _normalize_webhook_events(webhook)
+    if "*" in webhook_events:
+        return True
+    return any(event in webhook_events for event in event_filters)
+
+
+def _filter_webhooks(
+    webhooks: Sequence[WebhookRecord],
+    url: str | None,
+    events: Sequence[str] | None,
+) -> list[IndexedWebhook]:
+    """
+    过滤 Webhook 列表。
+
+    规则：
+    - 无过滤参数：返回全部；
+    - 仅传 url：按 url 过滤；
+    - 仅传 events：按事件类型过滤；
+    - 同时传 url 和 events：取交集。
+    """
+    event_filters = _normalize_event_filters(events)
+    matched: list[IndexedWebhook] = []
+
+    for index, webhook in enumerate(webhooks):
+        if url and str(webhook.get("url", "")) != url:
+            continue
+
+        if not _match_event_filter(webhook, event_filters):
+            continue
+
+        matched.append((index, webhook))
+
+    return matched
 
 
 def _cmd_webhook_remove(
     config: InstanceConfig,
     url: str | None,
-    index: int | None,
+    events: list[str] | None,
 ) -> int:
-    """移除 Webhook"""
-    if not url and index is None:
-        print_error("URL or index is required.")
-        print("Usage: napcat-sdk webhook <NAME> rm <URL>")
-        print("       napcat-sdk webhook <NAME> rm --index <NUM>")
-        return 1
-
-    # 如果实例正在运行，通过 Gateway API 移除
+    """移除 Webhook（支持过滤）"""
     if config.is_running():
-        return _remove_webhook_online(config, url, index)
-    else:
-        # 否则直接修改配置文件
-        return _remove_webhook_offline(config, url, index)
+        return _remove_webhooks_online(config, url, events)
+    return _remove_webhooks_offline(config, url, events)
 
 
-def _remove_webhook_online(
+def _remove_webhooks_online(
     config: InstanceConfig,
     url: str | None,
-    index: int | None,
+    events: Sequence[str] | None,
 ) -> int:
-    """通过 Gateway API 移除 Webhook"""
+    """通过 Gateway API 批量移除匹配的 Webhook"""
     client = GatewayClient(config.socket_file)
+    webhooks = _list_webhooks_online(config)
+    if webhooks is None:
+        return 1
 
-    async def do_remove():
+    if not webhooks:
+        print("No webhooks configured.")
+        return 0
+
+    matched = _filter_webhooks(webhooks, url=url, events=events)
+    if not matched:
+        print_error("No webhook matched the given filters.")
+        return 1
+
+    indices = [idx for idx, _ in sorted(matched, key=lambda item: item[0], reverse=True)]
+
+    async def do_remove() -> bool:
         try:
-            success = await client.remove_webhook(url=url, index=index)
-            return success
+            for idx in indices:
+                removed = await client.remove_webhook(index=idx)
+                if not removed:
+                    return False
+            return True
         except GatewayError as e:
             print_error(f"Gateway error: {e}")
             return False
@@ -229,37 +307,41 @@ def _remove_webhook_online(
     try:
         success = asyncio.run(do_remove())
         if success:
-            target = url if url else f"index {index}"
-            print_success(f"Webhook removed: {target}")
+            print_success(f"Removed {len(indices)} webhook(s).")
             return 0
-        print_error("Webhook not found.")
+        print_error("Failed to remove one or more webhooks.")
         return 1
     except Exception as e:
         print_error(f"Unexpected error: {e}")
         return 1
 
 
-def _remove_webhook_offline(
+def _remove_webhooks_offline(
     config: InstanceConfig,
     url: str | None,
-    index: int | None,
+    events: Sequence[str] | None,
 ) -> int:
-    """通过修改配置文件移除 Webhook"""
+    """通过修改配置文件批量移除匹配的 Webhook"""
     try:
-        if url:
-            success = config.remove_webhook(url)
-        elif index is not None:
-            success = config.remove_webhook(index)
-        else:
-            success = False
+        loaded = config.load()
+        webhooks = cast(list[WebhookRecord], loaded.get("webhooks", []))
 
-        if success:
-            target = url if url else f"index {index}"
-            print_success(f"Webhook removed from config: {target}")
-            print("Note: Changes will take effect on next start.")
+        if not webhooks:
+            print("No webhooks configured.")
             return 0
-        print_error("Webhook not found.")
-        return 1
+
+        matched = _filter_webhooks(webhooks, url=url, events=events)
+        if not matched:
+            print_error("No webhook matched the given filters.")
+            return 1
+
+        for idx, _ in sorted(matched, key=lambda item: item[0], reverse=True):
+            webhooks.pop(idx)
+
+        config.save(loaded)
+        print_success(f"Removed {len(matched)} webhook(s) from config.")
+        print("Note: Changes will take effect on next start.")
+        return 0
     except Exception as e:
         print_error(f"Failed to update config: {e}")
         return 1

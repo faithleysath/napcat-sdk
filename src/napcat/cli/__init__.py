@@ -161,25 +161,19 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     webhook_parser.add_argument(
         "url",
         nargs="?",
-        help="Webhook URL (for add/rm)",
+        help="Webhook URL (for add; URL filter for list/rm)",
     )
     webhook_parser.add_argument(
         "--event",
         action="append",
         dest="events",
         metavar="TYPE",
-        help="Event type filter (can specify multiple)",
+        help="Event type(s): add as subscription; list/rm as filter (repeatable)",
     )
     webhook_parser.add_argument(
         "--secret",
         metavar="STR",
         help="HMAC secret for webhook signature",
-    )
-    webhook_parser.add_argument(
-        "--index",
-        type=int,
-        metavar="NUM",
-        help="Webhook index to remove (alternative to URL)",
     )
 
     # mcp 命令组
@@ -320,7 +314,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 url=args.url,
                 events=args.events,
                 secret=args.secret,
-                index=args.index,
             )
 
         case "doc":
