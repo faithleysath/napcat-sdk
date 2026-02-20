@@ -55,25 +55,22 @@ def cmd_call(
     # 调用 API
     client = GatewayClient(config.socket_file)
 
-    async def do_call():
-        try:
-            result = await client.call_api(action, params)
-            return result
-        except GatewayError as e:
-            print_error(f"API error: {e}")
-            return None
-        except ConnectionError as e:
-            print_error(f"Connection error: {e}")
-            return None
-        except TimeoutError:
-            print_error("Request timeout.")
-            return None
+    async def do_call() -> Any:
+        return await client.call_api(action, params)
 
     try:
         result = asyncio.run(do_call())
         if result is not None:
             print_json(result)
-            return 0
+        return 0
+    except GatewayError as e:
+        print_error(f"API error: {e}")
+        return 1
+    except ConnectionError as e:
+        print_error(f"Connection error: {e}")
+        return 1
+    except TimeoutError:
+        print_error("Request timeout.")
         return 1
     except Exception as e:
         print_error(f"Unexpected error: {e}")
