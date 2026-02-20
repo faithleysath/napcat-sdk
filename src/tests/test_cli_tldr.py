@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import napcat.cli as cli_module
 import pytest
+
+import napcat.cli as cli_module
 
 
 def test_cli_tldr_outputs_quick_reference(
