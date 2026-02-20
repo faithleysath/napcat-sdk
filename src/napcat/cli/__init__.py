@@ -9,6 +9,7 @@ NapCat CLI 模块
   stop      停止 Gateway 守护进程
   restart   重启 Gateway 守护进程
   list      列出所有实例
+  tldr      快速命令速查
   log       查看日志
   call      调用 OneBot API
   webhook   管理 Webhook
@@ -136,6 +137,13 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         aliases=["ls"],
         help="List all instances",
         description="List all instances and their status",
+    )
+
+    # tldr 命令
+    subparsers.add_parser(
+        "tldr",
+        help="Show quick command cheatsheet",
+        description="Show concise CLI usage examples",
     )
 
     # log 命令
@@ -292,6 +300,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         cmd_restart,
         cmd_start,
         cmd_stop,
+        cmd_tldr,
         cmd_webhook,
     )
 
@@ -335,6 +344,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         case "list" | "ls":
             return cmd_list()
+
+        case "tldr":
+            return cmd_tldr()
 
         case "log":
             return cmd_log(

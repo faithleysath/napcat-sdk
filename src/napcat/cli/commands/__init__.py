@@ -12,6 +12,7 @@ from .log import cmd_log
 from .restart import cmd_restart
 from .start import cmd_start
 from .stop import cmd_stop
+from .tldr import cmd_tldr
 from .webhook import cmd_webhook
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "cmd_call",
     "cmd_webhook",
     "cmd_doc",
+    "cmd_tldr",
 ]
