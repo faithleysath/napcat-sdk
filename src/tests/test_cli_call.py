@@ -16,6 +16,10 @@ def _prepare_instance(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     config.update(ws_url="ws://127.0.0.1:3001")
 
 
+def _always_running(_self: InstanceConfig) -> bool:
+    return True
+
+
 def test_cmd_call_returns_success_when_api_result_is_none(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -37,7 +41,7 @@ def test_cmd_call_returns_success_when_api_result_is_none(
 
     import napcat.cli.commands.call as call_module
 
-    monkeypatch.setattr(InstanceConfig, "is_running", lambda _self: True)
+    monkeypatch.setattr(InstanceConfig, "is_running", _always_running)
     monkeypatch.setattr(call_module, "GatewayClient", FakeGatewayClient)
 
     exit_code = cmd_call("demo", "friend_poke", '{"user_id": 123456}')
@@ -64,7 +68,7 @@ def test_cmd_call_returns_error_when_gateway_raises(
 
     import napcat.cli.commands.call as call_module
 
-    monkeypatch.setattr(InstanceConfig, "is_running", lambda _self: True)
+    monkeypatch.setattr(InstanceConfig, "is_running", _always_running)
     monkeypatch.setattr(call_module, "GatewayClient", FakeGatewayClient)
 
     exit_code = cmd_call("demo", "friend_poke", '{"user_id": 123456}')
