@@ -138,7 +138,7 @@ await client.send_group_msg(
 | `get_api_details` | 获取指定 API 的参数和返回值结构 |
 | `list_code_files` | 列出 SDK 源代码文件路径 |
 | `get_code_file` | 读取指定源代码文件 |
-| `get_class_definition` | 查找类或函数的定义位置 |
+| `get_class_definition` | 查找类的定义位置 |
 | `get_llms_txt` | 获取本文档内容（核心概念与最佳实践） |
 
 ## 常用事件字段速查
