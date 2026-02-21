@@ -90,14 +90,14 @@ MCP 服务器向 LLM 暴露了以下工具，AI 可以自主决定何时调用�
 **描述**：获取指定 API 的详细信息，包括函数签名、参数类型、返回值结构。
 
 **输入**：
-- `api_name` (string)：API 方法名，如 `"send_group_msg"`
+- `names` (string[])：API 方法名列表，如 `["send_group_msg"]`
 
 **输出**：包含函数签名、参数定义、返回类型的详细信息。
 
 **示例**：
 ```python
 # 请求
-{"api_name": "send_group_msg"}
+{"names": ["send_group_msg"]}
 
 # 响应
 {
@@ -120,15 +120,15 @@ MCP 服务器向 LLM 暴露了以下工具，AI 可以自主决定何时调用�
 
 **输入**：无需参数。
 
-**输出**：文件路径列表。
+**输出**：源码目录树（Markdown 文本），包含模块 docstring 与路径索引。
 
 **示例**：
 ```json
 [
-  "src/napcat/client.py",
-  "src/napcat/server.py",
-  "src/napcat/connection.py",
-  "src/napcat/types/events.py",
+  "client.py",
+  "server.py",
+  "connection.py",
+  "types/events/message.py",
   ...
 ]
 ```
@@ -142,7 +142,7 @@ MCP 服务器向 LLM 暴露了以下工具，AI 可以自主决定何时调用�
 **描述**：读取指定源代码文件的内容。
 
 **输入**：
-- `file_path` (string)：文件路径，如 `"src/napcat/client.py"`
+- `paths` (string[])：文件路径列表，如 `["client.py"]`
 
 **输出**：文件的完整源代码。
 
@@ -152,23 +152,23 @@ MCP 服务器向 LLM 暴露了以下工具，AI 可以自主决定何时调用�
 
 ### 🔎 `get_class_definition`
 
-**描述**：查找指定类或函数的定义位置。
+**描述**：按类名查询类定义源码和所在文件路径。
 
 **输入**：
-- `class_name` (string)：类名或函数名，如 `"NapCatClient"`
+- `names` (string[])：类名列表，如 `["NapCatClient"]`
 
-**输出**：定义所在的文件路径和行号。
+**输出**：类定义代码块与文件路径。
 
 **示例**：
-```json
-{
-  "name": "NapCatClient",
-  "file": "src/napcat/client.py",
-  "line": 42
-}
+```text
+## NapCatClient
+**Source:** `client.py`
+
+class NapCatClient(...):
+    ...
 ```
 
-**使用场景**：当 AI 想快速定位某个类或函数的源码位置时。
+**使用场景**：当 AI 想快速定位某个类的源码位置时。
 
 ---
 
@@ -217,8 +217,8 @@ MCP 服务器向 LLM 暴露了以下工具，AI 可以自主决定何时调用�
 **用户**：`send_group_msg` 这个 API 怎么用？
 
 **AI 内部流程**：
-1. 调用 `get_api_details("send_group_msg")` 获取签名和参数说明。
-2. 调用 `get_code_file("src/napcat/client_api.py")` 查看实现。
+1. 调用 `get_api_details({"names": ["send_group_msg"]})` 获取签名和参数说明。
+2. 调用 `get_code_file({"paths": ["client_api.py"]})` 查看实现。
 3. 综合信息生成回答。
 
 **AI 回复**：
@@ -293,7 +293,7 @@ AI：（调用 get_class_definition("Connection"), get_code_file）
 }
 ```
 
-> **注意**：旧版模块入口 `python -m napcat.mcp.doc_server` 已迁移到 CLI 命令 `napcat-sdk mcp doc`。
+> **注意**：推荐使用 `napcat-sdk mcp doc`。如需模块方式，请使用 `python -m napcat.cli.mcp.doc_server`。
 
 ### 日志调试
 
@@ -305,7 +305,7 @@ napcat-sdk mcp doc 2> mcp.log
 
 ### 兼容性
 
-MCP 服务器遵循 **Model Context Protocol 规范 v0.1.0**，理论上兼容所有支持该协议的客户端：
+MCP 服务器当前握手返回的协议版本为 **`2024-11-05`**，理论上兼容支持该版本的客户端：
 
 - ✅ Claude Desktop (官方客户端)
 - ✅ MCP Inspector (调试工具)
@@ -366,4 +366,3 @@ napcat-sdk mcp doc
 
 # 3. 重启 Claude Desktop，开始提问！
 ```
-
