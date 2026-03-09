@@ -254,6 +254,8 @@ class NapCatClient(NapCatAPIMixin):
                 message_for_send
             )
             params = normalized_params
+        elif action == ".handle_quick_operation":
+            params = self._normalize_quick_operation_params(params)
 
         resp = await self.send({"action": action, "params": params})
         if resp.get("status") != "ok" or resp.get("retcode") != 0:
@@ -274,6 +276,28 @@ class NapCatClient(NapCatAPIMixin):
         if isinstance(message, list):
             return [dict(segment) for segment in message]
         return dict(message)
+
+    @classmethod
+    def _normalize_quick_operation_params(
+        cls,
+        params: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        operation = params.get("operation")
+        if not isinstance(operation, Mapping) or "reply" not in operation:
+            return dict(params)
+
+        operation_mapping = cast(Mapping[str, Any], operation)
+        reply = operation_mapping["reply"]
+        if reply is None:
+            return dict(params)
+
+        normalized_params: dict[str, Any] = dict(params)
+        normalized_operation: dict[str, Any] = dict(operation_mapping)
+        normalized_operation["reply"] = cls._normalize_message_for_send(
+            cast(str | list[Message] | Message, reply)
+        )
+        normalized_params["operation"] = normalized_operation
+        return normalized_params
 
     # --- 黑魔法区域 ---
 

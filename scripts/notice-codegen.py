@@ -14,9 +14,11 @@ PY_OUTPUT_DIR = "./src/napcat/types/events/notice"
 
 IGNORE_FILES = {"OB11BaseNoticeEvent.ts", "index.ts"}
 
-API_BASE = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+API_BASE = os.getenv(
+    "OPENAI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
+)
 API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "google/gemini-3-flash")
+MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "models/gemini-3-flash-preview")
 CONCURRENCY_LIMIT = 5
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

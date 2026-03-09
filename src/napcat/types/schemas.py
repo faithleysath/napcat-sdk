@@ -225,6 +225,25 @@ class OB11Group(TypedDict):
     """
 
 
+class Sender(TypedDict):
+    user_id: int
+    """
+    用户QQ号
+    """
+    nickname: str
+    """
+    用户昵称
+    """
+    card: NotRequired[str]
+    """
+    用户名片
+    """
+    role: NotRequired[str]
+    """
+    用户角色
+    """
+
+
 class EmojiLikesListItem(TypedDict):
     emoji_id: str
     """
@@ -238,6 +257,75 @@ class EmojiLikesListItem(TypedDict):
     """
     点赞数
     """
+
+
+class OB11ActionMessage(TypedDict):
+    """
+    OneBot 11 消息信息
+    """
+
+    self_id: int
+    """
+    发送者QQ号
+    """
+    user_id: int
+    """
+    接收者QQ号
+    """
+    time: int
+    """
+    时间戳
+    """
+    real_seq: str
+    """
+    消息序号
+    """
+    message_type: str
+    """
+    消息类型
+    """
+    sender: Sender
+    raw_message: str
+    """
+    原始消息
+    """
+    font: int
+    """
+    字体大小
+    """
+    sub_type: str
+    """
+    子类型
+    """
+    message: dict[str, Any]
+    """
+    消息内容
+    """
+    message_format: str
+    """
+    消息格式
+    """
+    post_type: str
+    """
+    发布类型
+    """
+    group_id: int
+    """
+    群号
+    """
+    group_name: str
+    """
+    群名称
+    """
+    message_id: int
+    """
+    消息ID
+    """
+    message_seq: int
+    """
+    消息序列号
+    """
+    emoji_likes_list: list[EmojiLikesListItem]
 
 
 class OB11Notify(TypedDict):
@@ -633,7 +721,7 @@ class GetGroupAlbumMediaListPostRequest(TypedDict):
     """
     相册ID
     """
-    attach_info: str
+    attach_info: NotRequired[str]
     """
     附加信息（用于分页）
     """
@@ -647,9 +735,25 @@ class GetQunAlbumListPostRequest(TypedDict):
     """
     群号
     """
+    attach_info: NotRequired[str]
+    """
+    附加信息（用于分页，从上一次返回结果中获取）
+    """
 
 
-type GetQunAlbumListPostResponse = list[Any]
+class GetQunAlbumListPostResponse(TypedDict):
+    album_list: list[Any]
+    """
+    群相册列表
+    """
+    attach_info: str
+    """
+    分页附加信息，传入下一次请求以获取更多数据
+    """
+    has_more: bool
+    """
+    是否有更多数据
+    """
 
 
 class UploadImageToQunAlbumPostRequest(TypedDict):
@@ -936,7 +1040,7 @@ class FetchEmojiLikePostRequest(TypedDict):
     """
 
 
-class Data3EmojiLikesListItem(TypedDict):
+class Data4EmojiLikesListItem(TypedDict):
     tinyId: str
     """
     TinyID
@@ -952,7 +1056,7 @@ class Data3EmojiLikesListItem(TypedDict):
 
 
 class FetchEmojiLikePostResponse(TypedDict):
-    emojiLikesList: list[Data3EmojiLikesListItem]
+    emojiLikesList: list[Data4EmojiLikesListItem]
     """
     表情回应列表
     """
@@ -1001,7 +1105,7 @@ class GetEmojiLikesPostRequest(TypedDict):
     """
 
 
-class Data4EmojiLikeListItem(TypedDict):
+class Data5EmojiLikeListItem(TypedDict):
     user_id: str
     """
     点击者QQ号
@@ -1013,7 +1117,7 @@ class Data4EmojiLikeListItem(TypedDict):
 
 
 class GetEmojiLikesPostResponse(TypedDict):
-    emoji_like_list: list[Data4EmojiLikeListItem]
+    emoji_like_list: list[Data5EmojiLikeListItem]
     """
     表情回应列表
     """
@@ -2646,64 +2750,6 @@ class FieldHandleQuickOperationPostRequestContext(TypedDict):
     """
 
 
-class FieldHandleQuickOperationPostRequestOperation(TypedDict):
-    """
-    快速操作内容
-    """
-
-    reply: NotRequired[str]
-    """
-    回复内容
-    """
-    auto_escape: NotRequired[bool]
-    """
-    是否作为纯文本发送
-    """
-    at_sender: NotRequired[bool]
-    """
-    是否 @ 发送者
-    """
-    delete: NotRequired[bool]
-    """
-    是否撤回该消息
-    """
-    kick: NotRequired[bool]
-    """
-    是否踢出发送者
-    """
-    ban: NotRequired[bool]
-    """
-    是否禁言发送者
-    """
-    ban_duration: NotRequired[int]
-    """
-    禁言时长
-    """
-    approve: NotRequired[bool]
-    """
-    是否同意请求/加群
-    """
-    remark: NotRequired[str]
-    """
-    好友备注
-    """
-    reason: NotRequired[str]
-    """
-    拒绝理由
-    """
-
-
-class FieldHandleQuickOperationPostRequest(TypedDict):
-    context: FieldHandleQuickOperationPostRequestContext
-    """
-    事件上下文
-    """
-    operation: FieldHandleQuickOperationPostRequestOperation
-    """
-    快速操作内容
-    """
-
-
 type FieldHandleQuickOperationPostResponse = None
 
 
@@ -2831,7 +2877,7 @@ class GetProfileLikePostRequest(TypedDict):
     """
 
 
-class Data36FavoriteInfo(TypedDict):
+class Data37FavoriteInfo(TypedDict):
     userInfos: list[Any]
     """
     点赞用户信息
@@ -2850,7 +2896,7 @@ class Data36FavoriteInfo(TypedDict):
     """
 
 
-class Data36VoteInfo(TypedDict):
+class Data37VoteInfo(TypedDict):
     total_count: int
     """
     总点赞数
@@ -2882,8 +2928,8 @@ class GetProfileLikePostResponse(TypedDict):
     """
     时间
     """
-    favoriteInfo: Data36FavoriteInfo
-    voteInfo: Data36VoteInfo
+    favoriteInfo: Data37FavoriteInfo
+    voteInfo: Data37VoteInfo
 
 
 class SetGroupPortraitPostRequest(TypedDict):
@@ -4040,22 +4086,6 @@ class OB11PostSendMsg(TypedDict):
     """
 
 
-class OB11ActionMessage(OB11LatestMessage):
-    """
-    OneBot 11 消息信息
-    """
-
-    message_id: int
-    """
-    消息ID
-    """
-    message_seq: int
-    """
-    消息序列号
-    """
-    emoji_likes_list: list[EmojiLikesListItem]
-
-
 class SendGroupMsgPostRequest(TypedDict):
     message_type: NotRequired[Literal["private", "group"]]
     """
@@ -4269,4 +4299,59 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     prompt: NotRequired[str]
     """
     合并转发提示
+    """
+
+
+class FieldHandleQuickOperationPostRequestOperation(TypedDict):
+    """
+    快速操作内容
+    """
+
+    reply: NotRequired[OB11MessageMixType]
+    auto_escape: NotRequired[bool]
+    """
+    是否作为纯文本发送
+    """
+    at_sender: NotRequired[bool]
+    """
+    是否 @ 发送者
+    """
+    delete: NotRequired[bool]
+    """
+    是否撤回该消息
+    """
+    kick: NotRequired[bool]
+    """
+    是否踢出发送者
+    """
+    ban: NotRequired[bool]
+    """
+    是否禁言发送者
+    """
+    ban_duration: NotRequired[int]
+    """
+    禁言时长
+    """
+    approve: NotRequired[bool]
+    """
+    是否同意请求/加群
+    """
+    remark: NotRequired[str]
+    """
+    好友备注
+    """
+    reason: NotRequired[str]
+    """
+    拒绝理由
+    """
+
+
+class FieldHandleQuickOperationPostRequest(TypedDict):
+    context: FieldHandleQuickOperationPostRequestContext
+    """
+    事件上下文
+    """
+    operation: FieldHandleQuickOperationPostRequestOperation
+    """
+    快速操作内容
     """

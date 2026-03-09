@@ -234,21 +234,33 @@ except NapCatStateError as exc:
 git clone --recursive https://github.com/faithleysath/napcat-sdk.git
 cd napcat-sdk
 uv sync
+corepack enable
+corepack prepare pnpm@latest --activate
 cd NapCatQQ
-pnpm install
+pnpm install --frozen-lockfile
+cd ..
 ```
 
 2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成，请运行以下命令重新生成代码：
 ```
 uv run scripts/schema-codegen.py
 ```
-*这会自动更新 `src/napcat/types/messages/generated.py`、`src/napcat/types/schemas.py`、`src/napcat/client_api.py` 以及相关的 `__init__.py`。*
+*这会自动更新 `src/napcat/types/messages/generated.py`、`src/napcat/types/schemas.py`、`src/napcat/client_api.py` 以及相关的 `__init__.py`。如果你的环境里没有全局 `pnpm`，请先在 `NapCatQQ` 中执行 `corepack pnpm --filter napcat-schema run build:openapi`，然后改用 `uv run scripts/schema-codegen.py --no-openapi-pre-codegen`。*
 
-3. **运行测试**:
+3. **如需同步 `notice` 事件定义**:
+```
+OPENAI_API_KEY=你的key uv run scripts/notice-codegen.py
+uv run scripts/update-init.py
+```
+*脚本默认已经配置好 Google 的 OpenAI-compatible `base_url` 和模型；通常只需要传 `OPENAI_API_KEY`。*
+
+4. **运行测试**:
 ```
 # 运行 tests
 uv run pytest src/tests -q
 ```
+
+完整工作流请参见 [`docs/development.md`](docs/development.md)。
 
 ---
 

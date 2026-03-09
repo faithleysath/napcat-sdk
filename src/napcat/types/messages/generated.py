@@ -213,7 +213,6 @@ class Image(MessageSegment):
     """
 
     _type: ClassVar[str] = "image"
-
     file: str
     """
     文件路径/URL/file:///

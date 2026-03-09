@@ -12,6 +12,7 @@ from napcat.client import NapCatClient
 from napcat.connection import Connection
 from napcat.exceptions import NapCatAPIError
 from napcat.server import ReverseWebSocketServer
+from napcat.types.messages import Text
 
 
 class StubClient(NapCatClient):
@@ -21,6 +22,16 @@ class StubClient(NapCatClient):
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         return self._response
+
+
+class RecordingClient(NapCatClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.last_request: dict[str, Any] | None = None
+
+    async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
+        self.last_request = data
+        return {"status": "ok", "retcode": 0, "data": None}
 
 
 class FailingExitConnection:
@@ -108,6 +119,41 @@ def test_call_action_returns_data_on_success() -> None:
         client = StubClient({"status": "ok", "retcode": 0, "data": {"ok": True}})
         data = await client.call_action("test_action")
         assert data == {"ok": True}
+
+    asyncio.run(_run())
+
+
+def test_dot_handle_quick_operation_normalizes_segment_reply() -> None:
+    async def _run() -> None:
+        client = RecordingClient()
+
+        await client.dot_handle_quick_operation(
+            context={
+                "time": 0,
+                "self_id": 10001,
+                "post_type": "message",
+                "user_id": "10002",
+            },
+            operation={"reply": Text(text="hi")},
+        )
+
+        assert client.last_request == {
+            "action": ".handle_quick_operation",
+            "params": {
+                "context": {
+                    "time": 0,
+                    "self_id": 10001,
+                    "post_type": "message",
+                    "user_id": "10002",
+                },
+                "operation": {
+                    "reply": {
+                        "type": "text",
+                        "data": {"text": "hi"},
+                    }
+                },
+            },
+        }
 
     asyncio.run(_run())
 

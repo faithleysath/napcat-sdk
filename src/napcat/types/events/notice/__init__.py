@@ -1,3 +1,9 @@
+"""
+OneBot 11 Notice Events
+
+自动生成的通知事件类导出。
+"""
+
 from .base import NoticeEvent, UnknownNoticeEvent
 from .BotOfflineEvent import BotOfflineEvent
 from .FriendAddNoticeEvent import FriendAddNoticeEvent

@@ -575,6 +575,7 @@ class NapCatAPIMixin:
           ]
         }
         """
+        kwargs.setdefault("attach_info", "")
         return await self.call_action("get_group_album_media_list", kwargs)
 
     async def get_qun_album_list(
@@ -587,19 +588,25 @@ class NapCatAPIMixin:
 
         请求示例:
         {
-          "group_id": "123456"
+          "group_id": "123456",
+          "attach_info": ""
         }
 
         成功响应 data 示例:
-        [
-          {
-            "album_id": "album_1",
-            "album_name": "测试相册",
-            "cover_url": "http://example.com/cover.jpg",
-            "create_time": 1734567890
-          }
-        ]
+        {
+          "album_list": [
+            {
+              "album_id": "album_1",
+              "album_name": "测试相册",
+              "cover_url": "http://example.com/cover.jpg",
+              "create_time": 1734567890
+            }
+          ],
+          "attach_info": "",
+          "has_more": false
+        }
         """
+        kwargs.setdefault("attach_info", "")
         return await self.call_action("get_qun_album_list", kwargs)
 
     async def upload_image_to_qun_album(
