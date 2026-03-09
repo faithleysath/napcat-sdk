@@ -1,0 +1,11 @@
+# napcat-sdk
+
+Temporary placeholder llms.txt.
+
+Detailed LLM-oriented guidance was removed and will be rewritten later.
+For now:
+- Use `napcat-sdk doc apis` to inspect available APIs.
+- Use `napcat-sdk doc api <NAME>` to inspect an API signature and related types.
+- Use `napcat-sdk doc files`, `napcat-sdk doc code <PATH>`, and `napcat-sdk doc class <NAME>` for source lookup.
+
+This file exists only to keep temporary compatibility with existing tooling.
