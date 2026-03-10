@@ -20,7 +20,7 @@ class JsonDataConfig(TypedDict):
     """
 
 
-class NodeDataNew(TypedDict):
+class NodeInlineDataNew(TypedDict):
     text: str
     """
     新闻文本
@@ -334,23 +334,28 @@ class MiniApp(MessageSegment):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class Node(MessageSegment):
+class NodeReference(MessageSegment, register=False):
     """
-    合并转发消息节点
+    引用已有消息的合并转发节点
     """
 
     _type: ClassVar[str] = "node"
-    nickname: str
+    id: str
     """
-    发送者昵称
+    转发消息ID
     """
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class NodeInline(MessageSegment, register=False):
+    """
+    内联合并转发消息节点
+    """
+
+    _type: ClassVar[str] = "node"
     content: dict[str, Any]
     """
     消息内容 (OB11MessageMixType)
-    """
-    id: str | None = None
-    """
-    转发消息ID
     """
     user_id: int | str | None = None
     """
@@ -360,6 +365,10 @@ class Node(MessageSegment):
     """
     发送者QQ号(兼容go-cqhttp)
     """
+    nickname: str | None = None
+    """
+    发送者昵称
+    """
     name: str | None = None
     """
     发送者昵称(兼容go-cqhttp)
@@ -368,7 +377,7 @@ class Node(MessageSegment):
     """
     消息来源
     """
-    news: list[NodeDataNew] | None = None
+    news: list[NodeInlineDataNew] | None = None
     summary: str | None = None
     """
     摘要
@@ -377,10 +386,7 @@ class Node(MessageSegment):
     """
     提示
     """
-    time: str | None = None
-    """
-    时间
-    """
+    time: str | int | None = None
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -543,6 +549,12 @@ class Xml(MessageSegment):
     """
     XML数据
     """
+
+
+type Node = NodeReference | NodeInline
+"""
+合并转发消息节点
+"""
 
 
 type Message = (

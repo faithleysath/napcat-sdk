@@ -254,6 +254,23 @@ class NapCatClient(NapCatAPIMixin):
                 message_for_send
             )
             params = normalized_params
+        elif (
+            action
+            in {
+                "send_forward_msg",
+                "send_group_forward_msg",
+                "send_private_forward_msg",
+            }
+            and "messages" in params
+        ):
+            normalized_params = dict(params)
+            message_for_send = cast(
+                str | list[Message] | Message, normalized_params["messages"]
+            )
+            normalized_params["messages"] = self._normalize_message_for_send(
+                message_for_send
+            )
+            params = normalized_params
         elif action == ".handle_quick_operation":
             params = self._normalize_quick_operation_params(params)
 

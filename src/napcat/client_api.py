@@ -442,7 +442,7 @@ class NapCatAPIMixin:
 
         请求示例:
         {
-          "url": "http://example.com/file"
+          "error": false
         }
 
         成功响应 data 示例:
@@ -575,7 +575,6 @@ class NapCatAPIMixin:
           ]
         }
         """
-        kwargs.setdefault("attach_info", "")
         return await self.call_action("get_group_album_media_list", kwargs)
 
     async def get_qun_album_list(
@@ -606,7 +605,6 @@ class NapCatAPIMixin:
           "has_more": false
         }
         """
-        kwargs.setdefault("attach_info", "")
         return await self.call_action("get_qun_album_list", kwargs)
 
     async def upload_image_to_qun_album(
@@ -752,14 +750,13 @@ class NapCatAPIMixin:
         处理可疑好友申请
 
         描述:
-        同意或拒绝系统的可疑好友申请
+        同意并处理系统的可疑好友申请
 
         标签: 系统接口
 
         请求示例:
         {
-          "flag": "12345",
-          "approve": true
+          "flag": "12345"
         }
         """
         return await self.call_action("set_doubt_friends_add_request", kwargs)
@@ -1730,7 +1727,7 @@ class NapCatAPIMixin:
         退出群组
 
         描述:
-        退出或解散指定群聊
+        退出指定群聊；群主可通过 is_dismiss=true 解散群聊
 
         标签: 群组接口
 
@@ -2338,21 +2335,19 @@ class NapCatAPIMixin:
         self, **kwargs: Unpack[CheckUrlSafelyPostRequest]
     ) -> CheckUrlSafelyPostResponse:
         """
-        检查URL安全性
+        检查URL安全性 (未实现)
 
         描述:
-        检查指定URL的安全等级
+        兼容接口，当前版本未实现 check_url_safely
+
+        当前导出状态：未实现兼容接口，调用将返回业务错误。
+        原因：当前版本未实现 check_url_safely
 
         标签: Go-CQHTTP
 
         请求示例:
         {
           "url": "https://example.com"
-        }
-
-        成功响应 data 示例:
-        {
-          "level": 1
         }
         """
         return await self.call_action("check_url_safely", kwargs)
@@ -2361,17 +2356,18 @@ class NapCatAPIMixin:
         self, **kwargs: Unpack[GetOnlineClientsPostRequest]
     ) -> GetOnlineClientsPostResponse:
         """
-        获取在线客户端
+        获取在线客户端 (未实现)
 
         描述:
-        获取当前登录账号的在线客户端列表
+        兼容接口，当前版本未实现 get_online_clients
+
+        当前导出状态：未实现兼容接口，调用将返回业务错误。
+        原因：当前版本未实现 get_online_clients
 
         标签: Go-CQHTTP
 
         请求示例:
-        {
-          "no_cache": false
-        }
+        {}
         """
         return await self.call_action("get_online_clients", kwargs)
 
@@ -2684,23 +2680,18 @@ class NapCatAPIMixin:
         self, **kwargs: Unpack[GetGuildListPostRequest]
     ) -> GetGuildListPostResponse:
         """
-        获取频道列表
+        获取频道列表 (未实现)
 
         描述:
-        获取当前帐号已加入的频道列表
+        兼容接口，当前版本未实现 get_guild_list
+
+        当前导出状态：未实现兼容接口，调用将返回业务错误。
+        原因：当前版本未实现 get_guild_list
 
         标签: 频道接口
 
         请求示例:
         {}
-
-        成功响应 data 示例:
-        [
-          {
-            "guild_id": "123456",
-            "guild_name": "测试频道"
-          }
-        ]
         """
         return await self.call_action("get_guild_list", kwargs)
 
@@ -3050,24 +3041,18 @@ class NapCatAPIMixin:
         self, **kwargs: Unpack[GetGuildServiceProfilePostRequest]
     ) -> GetGuildServiceProfilePostResponse:
         """
-        获取频道个人信息
+        获取频道个人信息 (未实现)
 
         描述:
-        获取当前帐号在频道中的个人资料
+        兼容接口，当前版本未实现 get_guild_service_profile
+
+        当前导出状态：未实现兼容接口，调用将返回业务错误。
+        原因：当前版本未实现 get_guild_service_profile
 
         标签: 频道接口
 
         请求示例:
-        {
-          "guild_id": "123456"
-        }
-
-        成功响应 data 示例:
-        {
-          "guild_id": "123456",
-          "guild_name": "测试频道",
-          "guild_display_id": "123"
-        }
+        {}
         """
         return await self.call_action("get_guild_service_profile", kwargs)
 
@@ -3088,9 +3073,14 @@ class NapCatAPIMixin:
         }
 
         成功响应 data 示例:
-        {
-          "variants": []
-        }
+        [
+          {
+            "variants": {
+              "model_show": "napcat",
+              "need_pay": false
+            }
+          }
+        ]
         """
         return await self.call_action("_get_model_show", kwargs)
 
@@ -3098,18 +3088,18 @@ class NapCatAPIMixin:
         self, **kwargs: Unpack[FieldSetModelShowPostRequest]
     ) -> FieldSetModelShowPostResponse:
         """
-        设置机型
+        设置机型 (未实现)
 
         描述:
-        设置当前账号的设备机型名称
+        兼容接口，当前版本未实现 _set_model_show
+
+        当前导出状态：未实现兼容接口，调用将返回业务错误。
+        原因：当前版本未实现 _set_model_show
 
         标签: Go-CQHTTP
 
         请求示例:
-        {
-          "model": "iPhone 13",
-          "model_show": "iPhone 13"
-        }
+        {}
         """
         return await self.call_action("_set_model_show", kwargs)
 
@@ -4050,7 +4040,7 @@ class NapCatAPIMixin:
         {
           "user_id": "123456789",
           "msg_id": "123",
-          "save_path": "C:\\save"
+          "element_id": "456"
         }
         """
         return await self.call_action("receive_online_file", kwargs)

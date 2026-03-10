@@ -12,7 +12,7 @@ from napcat.client import NapCatClient
 from napcat.connection import Connection
 from napcat.exceptions import NapCatAPIError
 from napcat.server import ReverseWebSocketServer
-from napcat.types.messages import Text
+from napcat.types.messages import NodeReference, Text
 
 
 class StubClient(NapCatClient):
@@ -152,6 +152,33 @@ def test_dot_handle_quick_operation_normalizes_segment_reply() -> None:
                         "data": {"text": "hi"},
                     }
                 },
+            },
+        }
+
+    asyncio.run(_run())
+
+
+def test_send_forward_msg_normalizes_messages_segments() -> None:
+    async def _run() -> None:
+        client = RecordingClient()
+
+        await client.send_forward_msg(
+            group_id="123456",
+            messages=[NodeReference(id="654321")],
+        )
+
+        assert client.last_request == {
+            "action": "send_forward_msg",
+            "params": {
+                "group_id": "123456",
+                "messages": [
+                    {
+                        "type": "node",
+                        "data": {
+                            "id": "654321",
+                        },
+                    }
+                ],
             },
         }
 

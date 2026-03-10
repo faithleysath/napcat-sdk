@@ -637,7 +637,7 @@ class UploadFileStreamPostRequest(TypedDict):
     """
     是否仅验证
     """
-    file_retention: int
+    file_retention: NotRequired[int]
     """
     文件保留时间 (毫秒)
     """
@@ -680,10 +680,6 @@ class SetGroupAlbumMediaLikePostRequest(TypedDict):
     id: str
     """
     点赞ID
-    """
-    set: bool
-    """
-    是否点赞
     """
 
 
@@ -911,17 +907,13 @@ class SetDoubtFriendsAddRequestPostRequest(TypedDict):
     """
     请求 flag
     """
-    approve: bool
-    """
-    是否同意 (强制为 true)
-    """
 
 
 type SetDoubtFriendsAddRequestPostResponse = Any
 
 
 class GetDoubtFriendsAddRequestPostRequest(TypedDict):
-    count: int
+    count: NotRequired[int]
     """
     获取数量
     """
@@ -1030,11 +1022,11 @@ class FetchEmojiLikePostRequest(TypedDict):
     """
     表情类型
     """
-    count: int | str
+    count: NotRequired[int | str]
     """
     获取数量
     """
-    cookie: str
+    cookie: NotRequired[str]
     """
     分页Cookie
     """
@@ -1099,7 +1091,7 @@ class GetEmojiLikesPostRequest(TypedDict):
     """
     表情类型
     """
-    count: int
+    count: NotRequired[int]
     """
     数量，0代表全部
     """
@@ -1194,7 +1186,7 @@ class ArkSharePeerPostRequest(TypedDict):
     """
     群号
     """
-    phone_number: str
+    phone_number: NotRequired[str]
     """
     手机号
     """
@@ -1222,7 +1214,7 @@ class SendArkSharePostRequest(TypedDict):
     """
     群号
     """
-    phone_number: str
+    phone_number: NotRequired[str]
     """
     手机号
     """
@@ -1356,7 +1348,7 @@ class GetGroupRootFilesPostRequest(TypedDict):
     """
     群号
     """
-    file_count: int | str
+    file_count: NotRequired[int | str]
     """
     文件数量
     """
@@ -1479,7 +1471,7 @@ class SendLikePostRequest(TypedDict):
     """
     对方 QQ 号
     """
-    times: int | str
+    times: NotRequired[int | str]
     """
     点赞次数
     """
@@ -1819,7 +1811,7 @@ class SetGroupBanPostRequest(TypedDict):
     """
     用户QQ
     """
-    duration: int | str
+    duration: NotRequired[int | str]
     """
     禁言时长(秒)
     """
@@ -2084,11 +2076,7 @@ class CheckUrlSafelyPostRequest(TypedDict):
     """
 
 
-class CheckUrlSafelyPostResponse(TypedDict):
-    level: int
-    """
-    安全等级 (1: 安全, 2: 未知, 3: 危险)
-    """
+type CheckUrlSafelyPostResponse = None
 
 
 class GetOnlineClientsPostRequest(TypedDict):
@@ -2097,7 +2085,7 @@ class GetOnlineClientsPostRequest(TypedDict):
     """
 
 
-type GetOnlineClientsPostResponse = list[Any]
+type GetOnlineClientsPostResponse = None
 
 
 class OcrImagePostRequest(TypedDict):
@@ -2177,23 +2165,23 @@ class FieldSendGroupNoticePostRequest(TypedDict):
     """
     公告图片路径或 URL
     """
-    pinned: int | str
+    pinned: NotRequired[int | str]
     """
     是否置顶 (0/1)
     """
-    type: int | str
+    type: NotRequired[int | str]
     """
     类型 (默认为 1)
     """
-    confirm_required: int | str
+    confirm_required: NotRequired[int | str]
     """
     是否需要确认 (0/1)
     """
-    is_show_edit_card: int | str
+    is_show_edit_card: NotRequired[int | str]
     """
     是否显示修改群名片引导 (0/1)
     """
-    tip_window_type: int | str
+    tip_window_type: NotRequired[int | str]
     """
     弹窗类型 (默认为 0)
     """
@@ -2329,7 +2317,7 @@ class GetGroupAtAllRemainPostResponse(TypedDict):
     """
 
 
-class SendForwardMsgPostRequestNew(TypedDict):
+class News(TypedDict):
     text: str
 
 
@@ -2348,10 +2336,6 @@ class SendForwardMsgPostResponse(TypedDict):
     """
 
 
-class SendGroupForwardMsgPostRequestNew(TypedDict):
-    text: str
-
-
 class SendGroupForwardMsgPostResponse(TypedDict):
     message_id: int
     """
@@ -2365,10 +2349,6 @@ class SendGroupForwardMsgPostResponse(TypedDict):
     """
     转发消息的 forward_id
     """
-
-
-class SendPrivateForwardMsgPostRequestNew(TypedDict):
-    text: str
 
 
 class SendPrivateForwardMsgPostResponse(TypedDict):
@@ -2391,7 +2371,7 @@ class GetStrangerInfoPostRequest(TypedDict):
     """
     用户QQ
     """
-    no_cache: bool | str
+    no_cache: NotRequired[bool | str]
     """
     是否不使用缓存
     """
@@ -2532,7 +2512,7 @@ class UploadGroupFilePostRequest(TypedDict):
     """
     父目录 ID (兼容性字段)
     """
-    upload_file: bool
+    upload_file: NotRequired[bool]
     """
     是否执行上传
     """
@@ -2554,27 +2534,27 @@ class GetGroupMsgHistoryPostRequest(TypedDict):
     """
     起始消息序号
     """
-    count: int
+    count: NotRequired[int]
     """
     获取消息数量
     """
-    reverse_order: bool
+    reverse_order: NotRequired[bool]
     """
     是否反向排序
     """
-    disable_get_url: bool
+    disable_get_url: NotRequired[bool]
     """
     是否禁用获取URL
     """
-    parse_mult_msg: bool
+    parse_mult_msg: NotRequired[bool]
     """
     是否解析合并消息
     """
-    quick_reply: bool
+    quick_reply: NotRequired[bool]
     """
     是否快速回复
     """
-    reverseOrder: bool
+    reverseOrder: NotRequired[bool]
     """
     是否反向排序(旧版本兼容)
     """
@@ -2614,27 +2594,27 @@ class GetFriendMsgHistoryPostRequest(TypedDict):
     """
     起始消息序号
     """
-    count: int
+    count: NotRequired[int]
     """
     获取消息数量
     """
-    reverse_order: bool
+    reverse_order: NotRequired[bool]
     """
     是否反向排序
     """
-    disable_get_url: bool
+    disable_get_url: NotRequired[bool]
     """
     是否禁用获取URL
     """
-    parse_mult_msg: bool
+    parse_mult_msg: NotRequired[bool]
     """
     是否解析合并消息
     """
-    quick_reply: bool
+    quick_reply: NotRequired[bool]
     """
     是否快速回复
     """
-    reverseOrder: bool
+    reverseOrder: NotRequired[bool]
     """
     是否反向排序(旧版本兼容)
     """
@@ -2807,7 +2787,7 @@ type SetEssenceMsgPostResponse = dict[str, Any]
 
 
 class GetRecentContactPostRequest(TypedDict):
-    count: int | str
+    count: NotRequired[int | str]
     """
     获取的数量
     """
@@ -2859,7 +2839,7 @@ class FieldMarkAllAsReadPostRequest(TypedDict):
     pass
 
 
-type FieldMarkAllAsReadPostResponse = EmptyData | None
+type FieldMarkAllAsReadPostResponse = None
 
 
 class GetProfileLikePostRequest(TypedDict):
@@ -2867,17 +2847,17 @@ class GetProfileLikePostRequest(TypedDict):
     """
     QQ号
     """
-    start: int | str
+    start: NotRequired[int | str]
     """
     起始位置
     """
-    count: int | str
+    count: NotRequired[int | str]
     """
     获取数量
     """
 
 
-class Data37FavoriteInfo(TypedDict):
+class Data36FavoriteInfo(TypedDict):
     userInfos: list[Any]
     """
     点赞用户信息
@@ -2896,7 +2876,7 @@ class Data37FavoriteInfo(TypedDict):
     """
 
 
-class Data37VoteInfo(TypedDict):
+class Data36VoteInfo(TypedDict):
     total_count: int
     """
     总点赞数
@@ -2928,8 +2908,8 @@ class GetProfileLikePostResponse(TypedDict):
     """
     时间
     """
-    favoriteInfo: Data37FavoriteInfo
-    voteInfo: Data37VoteInfo
+    favoriteInfo: Data36FavoriteInfo
+    voteInfo: Data36VoteInfo
 
 
 class SetGroupPortraitPostRequest(TypedDict):
@@ -2949,7 +2929,7 @@ class SetGroupPortraitPostResponse(TypedDict):
 
 
 class FetchCustomFacePostRequest(TypedDict):
-    count: int | str
+    count: NotRequired[int | str]
     """
     获取数量
     """
@@ -2971,7 +2951,7 @@ class UploadPrivateFilePostRequest(TypedDict):
     """
     文件名
     """
-    upload_file: bool
+    upload_file: NotRequired[bool]
     """
     是否执行上传
     """
@@ -3177,7 +3157,7 @@ class GetGroupFilesByFolderPostRequest(TypedDict):
     """
     文件夹ID
     """
-    file_count: int | str
+    file_count: NotRequired[int | str]
     """
     文件数量
     """
@@ -3278,7 +3258,7 @@ class SetGroupSpecialTitlePostRequest(TypedDict):
     """
     QQ号
     """
-    special_title: str
+    special_title: NotRequired[str]
     """
     专属头衔
     """
@@ -3292,11 +3272,11 @@ class SetDiyOnlineStatusPostRequest(TypedDict):
     """
     图标ID
     """
-    face_type: int | str
+    face_type: NotRequired[int | str]
     """
     图标类型
     """
-    wording: str
+    wording: NotRequired[str]
     """
     状态文字内容
     """
@@ -3500,7 +3480,7 @@ class GetAiCharactersPostRequest(TypedDict):
     """
     群号
     """
-    chat_type: int | str
+    chat_type: NotRequired[int | str]
     """
     聊天类型
     """
@@ -3544,7 +3524,7 @@ class SendPacketPostRequest(TypedDict):
     """
     十六进制数据
     """
-    rsp: str | bool
+    rsp: NotRequired[str | bool]
     """
     是否等待响应
     """
@@ -3572,7 +3552,7 @@ type SendPokePostResponse = None
 
 
 class GetGroupSystemMsgPostRequest(TypedDict):
-    count: int | str
+    count: NotRequired[int | str]
     """
     获取的消息数量
     """
@@ -3609,15 +3589,15 @@ class ClickInlineKeyboardButtonPostRequest(TypedDict):
     """
     机器人AppID
     """
-    button_id: str
+    button_id: NotRequired[str]
     """
     按钮ID
     """
-    callback_data: str
+    callback_data: NotRequired[str]
     """
     回调数据
     """
-    msg_seq: str
+    msg_seq: NotRequired[str]
     """
     消息序列号
     """
@@ -3728,7 +3708,7 @@ class GetCollectionListPostRequest(TypedDict):
     """
     分类ID
     """
-    count: str
+    count: NotRequired[str]
     """
     获取数量
     """
@@ -3939,11 +3919,6 @@ class GetFilesetIdPostResponse(TypedDict):
     """
     文件集 ID
     """
-
-
-"""
-OneBot 11 消息段
-"""
 
 
 type OB11MessageMixType = list[Message] | str | Message
@@ -4207,7 +4182,6 @@ class SendForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -4216,7 +4190,7 @@ class SendForwardMsgPostRequest(TypedDict):
     """
     合并转发来源
     """
-    news: NotRequired[list[SendForwardMsgPostRequestNew]]
+    news: NotRequired[list[News]]
     """
     合并转发新闻
     """
@@ -4228,6 +4202,7 @@ class SendForwardMsgPostRequest(TypedDict):
     """
     合并转发提示
     """
+    messages: OB11MessageMixType
 
 
 class SendGroupForwardMsgPostRequest(TypedDict):
@@ -4243,7 +4218,6 @@ class SendGroupForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -4252,7 +4226,7 @@ class SendGroupForwardMsgPostRequest(TypedDict):
     """
     合并转发来源
     """
-    news: NotRequired[list[SendGroupForwardMsgPostRequestNew]]
+    news: NotRequired[list[News]]
     """
     合并转发新闻
     """
@@ -4264,6 +4238,7 @@ class SendGroupForwardMsgPostRequest(TypedDict):
     """
     合并转发提示
     """
+    messages: OB11MessageMixType
 
 
 class SendPrivateForwardMsgPostRequest(TypedDict):
@@ -4279,7 +4254,6 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     """
     群号
     """
-    message: OB11MessageMixType
     auto_escape: NotRequired[bool | str]
     """
     是否作为纯文本发送
@@ -4288,7 +4262,7 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     """
     合并转发来源
     """
-    news: NotRequired[list[SendPrivateForwardMsgPostRequestNew]]
+    news: NotRequired[list[News]]
     """
     合并转发新闻
     """
@@ -4300,6 +4274,7 @@ class SendPrivateForwardMsgPostRequest(TypedDict):
     """
     合并转发提示
     """
+    messages: OB11MessageMixType
 
 
 class FieldHandleQuickOperationPostRequestOperation(TypedDict):

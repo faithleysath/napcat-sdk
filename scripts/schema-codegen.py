@@ -219,9 +219,21 @@ def _apply_generated_name_rules(name: str) -> str:
     """
     Apply renaming rules for generated artifacts.
 
+    Special-case datamodel-codegen full-path names for message node unions so
+    the public API stays semantic after upstream switched `OB11MessageNode`
+    from a single object to a union.
+
     - OB11MessageData -> Message
     - OB11Message*    -> remove prefix
     """
+    special_cases = {
+        "OB11MessageNodeOB11MessageNode": "NodeReference",
+        "OB11MessageNodeOB11MessageNode1": "NodeInline",
+        "OB11MessageNodeOB11MessageNode1DataNew": "NodeInlineDataNew",
+    }
+    if name in special_cases:
+        return special_cases[name]
+
     replaced = name.replace("OB11MessageData", "Message")
     replaced = replaced.replace("OB11Message", "")
     return replaced
@@ -318,6 +330,170 @@ def _collect_generated_import_names(source: str) -> set[str]:
                     imported_names.add(alias.name.value)
 
     return imported_names
+
+
+def _module_uses_typeddict(module: cst.Module) -> bool:
+    """Whether the module defines any TypedDict classes."""
+    for stmt in module.body:
+        if not isinstance(stmt, cst.ClassDef):
+            continue
+        if any(get_base_class_name(base) == "TypedDict" for base in stmt.bases):
+            return True
+    return False
+
+
+def _is_future_import_statement(stmt: cst.BaseStatement) -> bool:
+    """Whether a statement line is `from __future__ import ...`."""
+    if not isinstance(stmt, cst.SimpleStatementLine):
+        return False
+    return any(
+        isinstance(small_stmt, cst.ImportFrom)
+        and _expr_to_dotted_name(small_stmt.module) == "__future__"
+        for small_stmt in stmt.body
+    )
+
+
+class TypedDictCompatibilityTransformer(cst.CSTTransformer):
+    """Drop typing-extensions-only TypedDict class keywords from generated output."""
+
+    def __init__(self) -> None:
+        self.removed_keyword_count = 0
+
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
+        if not any(get_base_class_name(base) == "TypedDict" for base in original_node.bases):
+            return updated_node
+
+        kept_keywords: list[cst.Arg] = []
+        removed = False
+        for keyword in updated_node.keywords:
+            if (
+                keyword.keyword is not None
+                and keyword.keyword.value in {"closed", "extra_items"}
+            ):
+                self.removed_keyword_count += 1
+                removed = True
+                continue
+            kept_keywords.append(keyword)
+
+        if not removed:
+            return updated_node
+
+        return updated_node.with_changes(keywords=tuple(kept_keywords))
+
+
+def postprocess_typeddict_imports(path: str | os.PathLike[str]) -> None:
+    """
+    Normalize TypedDict usage in generated artifacts.
+
+    We intentionally drop typing-extensions-only class keywords like
+    `closed=True` so the final generated artifacts can use stdlib
+    `typing.TypedDict` on Python 3.12+.
+    """
+    path = str(path)
+    source = read_text(path)
+    parsed_module = cst.parse_module(source)
+    compatibility_transformer = TypedDictCompatibilityTransformer()
+    module = parsed_module.visit(compatibility_transformer)
+
+    uses_typeddict = _module_uses_typeddict(module)
+    has_typing_typedict = False
+    changed = compatibility_transformer.removed_keyword_count > 0
+    new_body: list[cst.BaseStatement] = []
+
+    for stmt in module.body:
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            new_body.append(stmt)
+            continue
+
+        new_small_stmts: list[cst.BaseSmallStatement] = []
+        for small_stmt in stmt.body:
+            if not isinstance(small_stmt, cst.ImportFrom):
+                new_small_stmts.append(small_stmt)
+                continue
+
+            module_expr = small_stmt.module
+            if module_expr is None:
+                new_small_stmts.append(small_stmt)
+                continue
+
+            module_name = _expr_to_dotted_name(module_expr)
+            if module_name == "typing_extensions":
+                if isinstance(small_stmt.names, cst.ImportStar):
+                    new_small_stmts.append(small_stmt)
+                    continue
+
+                kept_aliases = [
+                    alias
+                    for alias in small_stmt.names
+                    if not (
+                        isinstance(alias.name, cst.Name) and alias.name.value == "TypedDict"
+                    )
+                ]
+                if len(kept_aliases) != len(small_stmt.names):
+                    changed = True
+                    if kept_aliases:
+                        new_small_stmts.append(
+                            small_stmt.with_changes(names=tuple(kept_aliases))
+                        )
+                    continue
+
+                new_small_stmts.append(small_stmt)
+                continue
+
+            if module_name != "typing":
+                new_small_stmts.append(small_stmt)
+                continue
+
+            if isinstance(small_stmt.names, cst.ImportStar):
+                has_typing_typedict = True
+                new_small_stmts.append(small_stmt)
+                continue
+
+            if any(
+                isinstance(alias.name, cst.Name) and alias.name.value == "TypedDict"
+                for alias in small_stmt.names
+            ):
+                has_typing_typedict = True
+            new_small_stmts.append(small_stmt)
+
+        if not new_small_stmts:
+            changed = True
+            continue
+
+        if len(new_small_stmts) != len(stmt.body):
+            changed = True
+        new_body.append(stmt.with_changes(body=tuple(new_small_stmts)))
+
+    if uses_typeddict and not has_typing_typedict:
+        insert_index = 0
+        for i, stmt in enumerate(new_body):
+            if i == 0 and is_docstring_stmt(stmt):
+                insert_index = i + 1
+                continue
+            if _is_future_import_statement(stmt) or is_import_statement(stmt):
+                insert_index = i + 1
+                continue
+            break
+        new_body.insert(
+            insert_index,
+            cst.parse_statement("from typing import TypedDict\n"),
+        )
+        changed = True
+
+    if not changed:
+        return
+
+    normalized_source = cst.Module(body=tuple(new_body)).code
+    normalized_source = re.sub(
+        r"^(from typing import .+?),\s*$",
+        r"\1",
+        normalized_source,
+        flags=re.MULTILINE,
+    )
+    write_text(path, normalized_source)
+    logger.info("🧹 Normalized TypedDict imports: %s", path)
 
 
 def postprocess_generated_file(path: str | os.PathLike[str]) -> dict[str, str]:
@@ -771,6 +947,8 @@ def collect_typedict_helper_classes(
     message_classes: Sequence[cst.ClassDef],
     typedict_module: cst.Module,
     typedict_definitions: dict[str, cst.ClassDef],
+    *,
+    extra_root_names: Sequence[str] = (),
 ) -> list[cst.ClassDef]:
     """
     Collect helper TypedDict classes referenced by generated message classes.
@@ -787,6 +965,9 @@ def collect_typedict_helper_classes(
         for name in collect_annotation_names_from_class(cls):
             if name not in message_class_names:
                 queue.append(name)
+    for name in extra_root_names:
+        if name not in message_class_names:
+            queue.append(name)
 
     while queue:
         current = queue.pop()
@@ -863,9 +1044,36 @@ def collect_selected_type_alias_blocks(
     target_alias_names: set[str],
 ) -> list[cst.SimpleStatementLine]:
     """
-    Collect TypeAlias statements (plus their following docstring statements) by name.
+    Collect TypeAlias statements by name, including alias-to-alias dependencies.
+
+    Returned statements keep original order and include following docstrings.
     """
     body = list(module.body)
+    alias_dependencies: dict[str, set[str]] = {}
+    alias_names: set[str] = set()
+
+    for stmt in body:
+        if not isinstance(stmt, cst.SimpleStatementLine):
+            continue
+        for small_stmt in stmt.body:
+            if not isinstance(small_stmt, cst.TypeAlias):
+                continue
+            alias_names.add(small_stmt.name.value)
+            alias_dependencies[small_stmt.name.value] = collect_names_from_expr(
+                small_stmt.value
+            )
+
+    selected_alias_names: set[str] = set()
+    queue = list(target_alias_names)
+    while queue:
+        current = queue.pop()
+        if current in selected_alias_names or current not in alias_names:
+            continue
+        selected_alias_names.add(current)
+        for dep_name in alias_dependencies.get(current, set()):
+            if dep_name in alias_names and dep_name not in selected_alias_names:
+                queue.append(dep_name)
+
     collected: list[cst.SimpleStatementLine] = []
 
     i = 0
@@ -879,7 +1087,7 @@ def collect_selected_type_alias_blocks(
             for small_stmt in stmt.body:
                 if (
                     isinstance(small_stmt, cst.TypeAlias)
-                    and small_stmt.name.value in target_alias_names
+                    and small_stmt.name.value in selected_alias_names
                 ):
                     matched_alias = True
                     break
@@ -902,6 +1110,18 @@ def collect_selected_type_alias_blocks(
             i += 1
 
     return collected
+
+
+def collect_names_from_type_alias_blocks(
+    alias_blocks: Sequence[cst.SimpleStatementLine],
+) -> set[str]:
+    """Collect referenced names from TypeAlias statements."""
+    names: set[str] = set()
+    for stmt in alias_blocks:
+        for small_stmt in stmt.body:
+            if isinstance(small_stmt, cst.TypeAlias):
+                names.update(collect_names_from_expr(small_stmt.value))
+    return names
 
 
 # ============================================================================
@@ -1004,35 +1224,41 @@ class FlattenedClassRemover(cst.CSTTransformer):
         return updated_node
 
 
-class DefinitionNameRemover(cst.CSTTransformer):
-    """Remove top-level definitions (classes / type aliases) by name."""
+def get_top_level_definition_name(stmt: cst.BaseStatement) -> str | None:
+    """Get the top-level class or type-alias name for a statement."""
+    if isinstance(stmt, cst.ClassDef):
+        return stmt.name.value
 
-    def __init__(self, names_to_remove: set[str]):
-        self.names_to_remove = names_to_remove
+    if isinstance(stmt, cst.SimpleStatementLine):
+        for small_stmt in stmt.body:
+            if isinstance(small_stmt, cst.TypeAlias):
+                return small_stmt.name.value
 
-    def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> (
-        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
-    ):
-        if original_node.name.value in self.names_to_remove:
-            return cst.RemoveFromParent()
-        return updated_node
+    return None
 
-    def leave_SimpleStatementLine(
-        self,
-        original_node: cst.SimpleStatementLine,
-        updated_node: cst.SimpleStatementLine,
-    ) -> (
-        cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement] | cst.RemovalSentinel
-    ):
-        for small_stmt in original_node.body:
-            if (
-                isinstance(small_stmt, cst.TypeAlias)
-                and small_stmt.name.value in self.names_to_remove
-            ):
-                return cst.RemoveFromParent()
-        return updated_node
+
+def remove_named_definitions_with_docstrings(
+    module: cst.Module,
+    names_to_remove: set[str],
+) -> cst.Module:
+    """Remove top-level definitions and any following standalone docstrings."""
+    kept_body: list[cst.BaseStatement] = []
+    body = list(module.body)
+    i = 0
+
+    while i < len(body):
+        stmt = cast(cst.BaseStatement, body[i])
+        definition_name = get_top_level_definition_name(stmt)
+        if definition_name is None or definition_name not in names_to_remove:
+            kept_body.append(stmt)
+            i += 1
+            continue
+
+        i += 1
+        while i < len(body) and is_docstring_stmt(cast(cst.BaseStatement, body[i])):
+            i += 1
+
+    return module.with_changes(body=tuple(kept_body))
 
 
 # ============================================================================
@@ -1189,8 +1415,12 @@ def transform_message_segment_class(
             continue
         new_body.extend(block)
 
+    public_name = _apply_generated_name_rules(class_node.name.value)
     register_kwarg: list[cst.Arg] = []
-    if class_node.name.value.endswith("CustomMusic"):
+    if public_name.endswith("CustomMusic") or public_name in {
+        "NodeReference",
+        "NodeInline",
+    }:
         register_kwarg = [
             cst.Arg(keyword=cst.Name("register"), value=cst.Name("False"))
         ]
@@ -1271,10 +1501,19 @@ def build_generated_message_module(
     - generated message segment classes
     - selected type aliases (e.g. OB11MessageData) from dataclass module
     """
+    generated_message_alias_blocks = collect_selected_type_alias_blocks(
+        dataclass_module,
+        {"OB11MessageData"},
+    )
+    alias_reference_names = collect_names_from_type_alias_blocks(
+        generated_message_alias_blocks
+    )
+
     helper_typedict_classes = collect_typedict_helper_classes(
         generated_message_classes,
         typedict_module,
         typedict_definitions,
+        extra_root_names=sorted(alias_reference_names),
     )
 
     typing_import_names = ["Any", "Literal", "ClassVar"]
@@ -1288,11 +1527,6 @@ def build_generated_message_module(
     )
     if has_not_required:
         typing_import_names.append("NotRequired")
-
-    generated_message_alias_blocks = collect_selected_type_alias_blocks(
-        dataclass_module,
-        {"OB11MessageData"},
-    )
 
     generated_header = cst.parse_module(
         f"""
@@ -1363,9 +1597,9 @@ def build_schemas_module(
     }
     schemas_names_to_remove |= orphan_helpers_to_remove
 
-    typedict_remover_for_schemas = DefinitionNameRemover(schemas_names_to_remove)
-    schemas_typedict_module = cleaned_typedict_module.visit(
-        typedict_remover_for_schemas
+    schemas_typedict_module = remove_named_definitions_with_docstrings(
+        cleaned_typedict_module,
+        schemas_names_to_remove,
     )
 
     generated_import_module = cst.parse_module(
@@ -1530,6 +1764,8 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
     # Postprocess float/int mapping in generated artifacts
     postprocess_float_to_int_with_location_exceptions(cfg.generated_output_path)
     postprocess_float_to_int_with_location_exceptions(cfg.schemas_output_path)
+    postprocess_typeddict_imports(cfg.generated_output_path)
+    postprocess_typeddict_imports(cfg.schemas_output_path)
 
     # Assemble messages/__init__.py from final generated output
     final_generated_source = read_text(cfg.generated_output_path)
