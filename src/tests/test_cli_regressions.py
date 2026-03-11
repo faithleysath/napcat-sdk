@@ -47,11 +47,6 @@ def test_doc_server_can_read_main_client_file() -> None:
     assert "class NapCatClient" in content
 
 
-def test_doc_server_reads_llms_txt_content() -> None:
-    content = doc_server.logic_get_llms_txt()
-    assert content.startswith("# napcat-sdk")
-
-
 def test_instance_is_running_rejects_stale_pid_metadata(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

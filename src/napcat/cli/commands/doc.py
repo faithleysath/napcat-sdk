@@ -16,7 +16,6 @@ from ..doc import (
     logic_get_code_index,
     logic_get_details,
     logic_get_index,
-    logic_get_llms_txt,
     logic_get_missing_apis,
     logic_get_missing_classes,
 )
@@ -63,7 +62,6 @@ def cmd_doc(
         print("  files              List source code files")
         print("  code <PATH>...     View source code file")
         print("  class <NAME>...    View class definition")
-        print("  llms               View llms.txt documentation")
         print("\nOptions:")
         print("  --json             Output in JSON format")
         return 0
@@ -91,8 +89,6 @@ def cmd_doc(
                 print("Usage: napcat-sdk doc class <NAME> [NAME ...]")
                 return 1
             return _handle_class(names, json_output)
-        case "llms":
-            return _handle_llms(json_output)
         case _:
             print_error(f"Unknown doc command: {doc_command}")
             return 1
@@ -180,23 +176,6 @@ def _handle_class(names: list[str], json_output: bool) -> int:
     except Exception as e:
         print_error(str(e))
         return 1
-
-
-def _handle_llms(json_output: bool) -> int:
-    """处理 doc llms 命令"""
-    try:
-        result = logic_get_llms_txt()
-        has_error = _is_logic_error(result)
-        if json_output:
-            data = {"content": result}
-            print_json(data)
-        else:
-            print(result)
-        return 1 if has_error else 0
-    except Exception as e:
-        print_error(str(e))
-        return 1
-
 
 def _parse_api_index(markdown: str) -> list[dict[str, str]]:
     """解析 API 索引为 JSON 结构"""

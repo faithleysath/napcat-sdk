@@ -15,23 +15,6 @@ def test_doc_code_invalid_path_returns_nonzero_exit(
     assert "Invalid file path: ../pyproject.toml" in captured.out
 
 
-def test_doc_llms_logic_error_returns_nonzero_exit(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    monkeypatch.setattr(
-        doc_module,
-        "logic_get_llms_txt",
-        lambda: "# Error\n\nllms.txt not found in package or project root",
-    )
-
-    exit_code = doc_module.cmd_doc(doc_command="llms")
-    captured = capsys.readouterr()
-
-    assert exit_code == 1
-    assert "llms.txt not found in package or project root" in captured.out
-
-
 def test_doc_api_not_found_returns_nonzero_exit(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

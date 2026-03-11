@@ -273,13 +273,6 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     class_parser.add_argument("names", nargs="+", help="Class name(s) to query")
     class_parser.add_argument("--json", action="store_true", help="Output in JSON format")
 
-    # doc llms
-    doc_subparsers.add_parser(
-        "llms",
-        help="View llms.txt documentation",
-        description="View the llms.txt file with SDK design philosophy and best practices",
-    ).add_argument("--json", action="store_true", help="Output in JSON format")
-
     return parser
 
 

@@ -7,7 +7,6 @@ NapCat 文档查询核心逻辑
 from __future__ import annotations
 
 import ast
-import importlib.resources
 import inspect
 import os
 import re
@@ -500,23 +499,3 @@ def logic_get_missing_classes(class_names: list[str]) -> list[str]:
     """返回不存在的类名列表"""
     _ensure_class_index_ready()
     return [name for name in class_names if name not in _class_def_cache]
-
-
-def logic_get_llms_txt() -> str:
-    """获取 llms.txt 文件内容，为 LLM 提供核心概念和最佳实践"""
-    # 首选：通过 importlib.resources 访问包内文件（pip 安装后）
-    try:
-        files = importlib.resources.files("napcat")
-        llms_file = files.joinpath("llms.txt")
-        if llms_file.is_file():
-            return llms_file.read_text(encoding="utf-8")
-    except Exception:
-        pass
-
-    # 后备：开发时从项目根目录读取 (repo_root/llms.txt)
-    source_root = _get_source_root()
-    dev_path = source_root.parent.parent / "llms.txt"
-    if dev_path.is_file():
-        return dev_path.read_text(encoding="utf-8")
-
-    return "# Error\n\nllms.txt not found in package or project root"

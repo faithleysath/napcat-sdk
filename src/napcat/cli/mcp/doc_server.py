@@ -21,7 +21,6 @@ from ..doc import (
     logic_get_code_index,
     logic_get_details,
     logic_get_index,
-    logic_get_llms_txt,
 )
 
 
@@ -253,11 +252,6 @@ def main():
                                     "required": ["names"],
                                 },
                             },
-                            {
-                                "name": "get_llms_txt",
-                                "description": "获取 llms.txt 文件内容，包含 NapCat SDK 的核心设计哲学、运行模式、事件处理最佳实践和常用代码模式",
-                                "inputSchema": {"type": "object", "properties": {}},
-                            },
                         ]
                     }
 
@@ -337,8 +331,6 @@ def main():
                                     "Argument 'names' is required and cannot be empty."
                                 )
                             result_text = logic_get_class_details(names)
-                        case "get_llms_txt":
-                            result_text = logic_get_llms_txt()
                         case _:
                             raise ValueError(f"Unknown tool: {name}")
 
