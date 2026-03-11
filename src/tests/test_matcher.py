@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import pytest
 
-from napcat.matcher import event_match
+from napcat.matcher import FALSE, TRUE, event_match
 from napcat.types import (
     GroupMessageEvent,
     MessageSender,
@@ -116,6 +116,55 @@ def test_event_match_supports_multiple_event_types() -> None:
         user_id=123,
         raw_message="ping",
     )
+
+    assert matcher(event) is True
+
+
+def test_event_match_predicates_support_or_composition() -> None:
+    event = make_group_event(raw_message="hello", user_id=42, group_id=99)
+    pred1 = event_match(GroupMessageEvent, raw_message="hello")
+    pred2 = event_match(GroupMessageEvent, user_id=0)
+    matcher = pred1 | pred2
+
+    assert matcher(event) is True
+
+
+def test_event_match_predicates_support_and_composition_with_lambda() -> None:
+    event = make_group_event(raw_message="hello", user_id=42, group_id=99)
+    pred1 = event_match(GroupMessageEvent, group_id=99)
+
+    def has_expected_text(current: NapCatEvent) -> bool:
+        return isinstance(current, GroupMessageEvent) and current.raw_message == "hello"
+
+    matcher = pred1 & has_expected_text
+
+    assert matcher(event) is True
+
+
+def test_true_constant_enables_composition_for_plain_functions() -> None:
+    event = make_group_event(raw_message="hello", user_id=42, group_id=99)
+
+    def has_expected_text(current: NapCatEvent) -> bool:
+        return isinstance(current, GroupMessageEvent) and current.raw_message == "hello"
+
+    def has_expected_user(current: NapCatEvent) -> bool:
+        return isinstance(current, GroupMessageEvent) and current.user_id == 42
+
+    matcher = TRUE & has_expected_text & has_expected_user
+
+    assert matcher(event) is True
+
+
+def test_false_constant_enables_or_chaining_for_plain_functions() -> None:
+    event = make_group_event(raw_message="hello", user_id=42, group_id=99)
+
+    def impossible(_: NapCatEvent) -> bool:
+        return False
+
+    def has_expected_group(current: NapCatEvent) -> bool:
+        return isinstance(current, GroupMessageEvent) and current.group_id == 99
+
+    matcher = FALSE | impossible | has_expected_group
 
     assert matcher(event) is True
 

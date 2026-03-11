@@ -13,6 +13,7 @@ import pytest
 from napcat.client import NapCatClient
 from napcat.connection import Connection
 from napcat.exceptions import NapCatAPIError
+from napcat.matcher import TRUE, event_match
 from napcat.server import ReverseWebSocketServer
 from napcat.types import GroupMessageEvent, NapCatEvent
 from napcat.types.messages import NodeReference, Text
@@ -345,6 +346,67 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
                 )
                 is False
             )
+        finally:
+            await conn.close()
+
+    asyncio.run(_run())
+
+
+def test_wait_event_accepts_composed_matcher_predicate() -> None:
+    async def _run() -> None:
+        ws = EventWS()
+        conn = Connection(cast(Any, ws))
+        await conn.__aenter__()
+        client = NapCatClient(_existing_conn=conn)
+
+        def has_expected_text(event: NapCatEvent) -> bool:
+            return isinstance(event, GroupMessageEvent) and event.raw_message == "12"
+
+        predicate = event_match(GroupMessageEvent, group_id=123456) & has_expected_text
+        waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
+        await asyncio.sleep(0)
+
+        try:
+            await ws.emit(make_group_message_event("11", message_id=70))
+            await ws.emit(make_group_message_event("12", message_id=71))
+
+            matched = await asyncio.wait_for(waiter, timeout=1.0)
+
+            assert isinstance(matched, GroupMessageEvent)
+            assert matched.raw_message == "12"
+            assert matched.message_id == 71
+        finally:
+            await conn.close()
+
+    asyncio.run(_run())
+
+
+def test_wait_event_accepts_true_seeded_plain_function_chain() -> None:
+    async def _run() -> None:
+        ws = EventWS()
+        conn = Connection(cast(Any, ws))
+        await conn.__aenter__()
+        client = NapCatClient(_existing_conn=conn)
+
+        def is_group_message(event: NapCatEvent) -> bool:
+            return isinstance(event, GroupMessageEvent)
+
+        def has_expected_text(event: NapCatEvent) -> bool:
+            return isinstance(event, GroupMessageEvent) and event.raw_message == "12"
+
+        predicate = TRUE & is_group_message & has_expected_text
+        waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
+        await asyncio.sleep(0)
+
+        try:
+            await ws.emit(make_group_message_event("11", message_id=72))
+            await ws.emit(make_group_message_event("12", message_id=73))
+
+            matched = await asyncio.wait_for(waiter, timeout=1.0)
+
+            assert isinstance(matched, GroupMessageEvent)
+            assert matched.raw_message == "12"
+            assert matched.message_id == 73
         finally:
             await conn.close()
 

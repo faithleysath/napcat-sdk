@@ -8,11 +8,60 @@ from typing import Any, cast, get_args
 
 from .types import NapCatEvent
 
-__all__ = ["event_match"]
+__all__ = ["FALSE", "Predicate", "TRUE", "event_match"]
 
 _MISSING: object = object()
 type EventType = type[NapCatEvent] | UnionType
-type EventPredicate = Callable[[NapCatEvent], bool]
+
+
+class Predicate[T]:
+    """Composable callable predicate."""
+
+    __slots__ = ("_func",)
+
+    def __init__(self, func: Callable[[T], bool]) -> None:
+        self._func = func
+
+    def __call__(self, value: T, /) -> bool:
+        return bool(self._func(value))
+
+    def __or__(self, other: PredicateLike[T], /) -> Predicate[T]:
+        other_predicate = _coerce_predicate(other)
+        return Predicate(lambda value: self(value) or other_predicate(value))
+
+    def __ror__(self, other: PredicateLike[T], /) -> Predicate[T]:
+        other_predicate = _coerce_predicate(other)
+        return Predicate(lambda value: other_predicate(value) or self(value))
+
+    def __and__(self, other: PredicateLike[T], /) -> Predicate[T]:
+        other_predicate = _coerce_predicate(other)
+        return Predicate(lambda value: self(value) and other_predicate(value))
+
+    def __rand__(self, other: PredicateLike[T], /) -> Predicate[T]:
+        other_predicate = _coerce_predicate(other)
+        return Predicate(lambda value: other_predicate(value) and self(value))
+
+
+type PredicateLike[T] = Callable[[T], bool] | Predicate[T]
+type EventPredicate = Predicate[NapCatEvent]
+
+
+def _coerce_predicate[T](predicate: PredicateLike[T]) -> Predicate[T]:
+    if isinstance(predicate, Predicate):
+        return cast(Predicate[T], predicate)
+    return Predicate(predicate)
+
+
+def _always_true(_: Any) -> bool:
+    return True
+
+
+def _always_false(_: Any) -> bool:
+    return False
+
+
+TRUE: Predicate[Any] = Predicate(_always_true)
+FALSE: Predicate[Any] = Predicate(_always_false)
 
 
 def _get_member(value: Any, name: str) -> Any:
@@ -85,4 +134,4 @@ def event_match(
 
         return True
 
-    return _predicate
+    return Predicate(_predicate)

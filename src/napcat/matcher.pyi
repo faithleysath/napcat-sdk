@@ -50,608 +50,618 @@ from .types.events.request import FriendRequestEvent, GroupRequestEvent, Request
 from .types.messages.base import UnknownMessageSegment
 from .types.messages.generated import Message
 
-type Predicate[T] = Callable[[T], bool]
+class Predicate[T]:
+    def __call__(self, value: T, /) -> bool: ...
+    def __or__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...
+    def __ror__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...
+    def __and__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...
+    def __rand__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...
+
+type PredicateLike[T] = Callable[[T], bool] | Predicate[T]
+
+TRUE: Predicate[Any]
+FALSE: Predicate[Any]
 
 class BotOfflineEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['bot_offline'] | Predicate[Literal['bot_offline']]
-    user_id: int | Predicate[int]
-    tag: Literal['BotOfflineEvent'] | str | Predicate[Literal['BotOfflineEvent'] | str]
-    message: Literal['BotOfflineEvent'] | str | Predicate[Literal['BotOfflineEvent'] | str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['bot_offline'] | PredicateLike[Literal['bot_offline']]
+    user_id: int | PredicateLike[int]
+    tag: Literal['BotOfflineEvent'] | str | PredicateLike[Literal['BotOfflineEvent'] | str]
+    message: Literal['BotOfflineEvent'] | str | PredicateLike[Literal['BotOfflineEvent'] | str]
 class EmojiLikeItemPattern(TypedDict, total=False):
-    emoji_id: str | Predicate[str]
-    emoji_type: str | Predicate[str]
-    likes_cnt: str | Predicate[str]
+    emoji_id: str | PredicateLike[str]
+    emoji_type: str | PredicateLike[str]
+    likes_cnt: str | PredicateLike[str]
 class FriendAddNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['friend_add'] | Predicate[Literal['friend_add']]
-    user_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['friend_add'] | PredicateLike[Literal['friend_add']]
+    user_id: int | PredicateLike[int]
 class FriendPokeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['poke'] | Predicate[Literal['poke']]
-    target_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    raw_info: Any | Predicate[Any]
-    sender_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['poke'] | PredicateLike[Literal['poke']]
+    target_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    raw_info: Any | PredicateLike[Any]
+    sender_id: int | PredicateLike[int]
 class FriendRecallNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['friend_recall'] | Predicate[Literal['friend_recall']]
-    user_id: int | Predicate[int]
-    message_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['friend_recall'] | PredicateLike[Literal['friend_recall']]
+    user_id: int | PredicateLike[int]
+    message_id: int | PredicateLike[int]
 class FriendRequestEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['request'] | Predicate[Literal['request']]
-    request_type: Literal['friend'] | Predicate[Literal['friend']]
-    user_id: int | Predicate[int]
-    comment: str | Predicate[str]
-    flag: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['request'] | PredicateLike[Literal['request']]
+    request_type: Literal['friend'] | PredicateLike[Literal['friend']]
+    user_id: int | PredicateLike[int]
+    comment: str | PredicateLike[str]
+    flag: str | PredicateLike[str]
 class GroupAdminNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_admin'] | Predicate[Literal['group_admin']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    sub_type: Literal['set', 'unset'] | Predicate[Literal['set', 'unset']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_admin'] | PredicateLike[Literal['group_admin']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    sub_type: Literal['set', 'unset'] | PredicateLike[Literal['set', 'unset']]
 class GroupBanEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_ban'] | Predicate[Literal['group_ban']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    operator_id: int | Predicate[int]
-    duration: int | Predicate[int]
-    sub_type: Literal['ban', 'lift_ban'] | Predicate[Literal['ban', 'lift_ban']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_ban'] | PredicateLike[Literal['group_ban']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    operator_id: int | PredicateLike[int]
+    duration: int | PredicateLike[int]
+    sub_type: Literal['ban', 'lift_ban'] | PredicateLike[Literal['ban', 'lift_ban']]
 class GroupCardEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_card'] | Predicate[Literal['group_card']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    card_new: str | Predicate[str]
-    card_old: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_card'] | PredicateLike[Literal['group_card']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    card_new: str | PredicateLike[str]
+    card_old: str | PredicateLike[str]
 class GroupDecreaseEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_decrease'] | Predicate[Literal['group_decrease']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    sub_type: Literal['leave', 'kick', 'kick_me', 'disband'] | Predicate[Literal['leave', 'kick', 'kick_me', 'disband']]
-    operator_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_decrease'] | PredicateLike[Literal['group_decrease']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    sub_type: Literal['leave', 'kick', 'kick_me', 'disband'] | PredicateLike[Literal['leave', 'kick', 'kick_me', 'disband']]
+    operator_id: int | PredicateLike[int]
 class GroupEssenceEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['essence'] | Predicate[Literal['essence']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    message_id: int | Predicate[int]
-    sender_id: int | Predicate[int]
-    operator_id: int | Predicate[int]
-    sub_type: Literal['add', 'delete'] | Predicate[Literal['add', 'delete']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['essence'] | PredicateLike[Literal['essence']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    message_id: int | PredicateLike[int]
+    sender_id: int | PredicateLike[int]
+    operator_id: int | PredicateLike[int]
+    sub_type: Literal['add', 'delete'] | PredicateLike[Literal['add', 'delete']]
 class GroupGrayTipEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['gray_tip'] | Predicate[Literal['gray_tip']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    message_id: int | Predicate[int]
-    busi_id: str | Predicate[str]
-    content: str | Predicate[str]
-    raw_info: Any | Predicate[Any]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['gray_tip'] | PredicateLike[Literal['gray_tip']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    message_id: int | PredicateLike[int]
+    busi_id: str | PredicateLike[str]
+    content: str | PredicateLike[str]
+    raw_info: Any | PredicateLike[Any]
 class GroupIncreaseEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_increase'] | Predicate[Literal['group_increase']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    operator_id: int | Predicate[int]
-    sub_type: Literal['approve', 'invite'] | Predicate[Literal['approve', 'invite']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_increase'] | PredicateLike[Literal['group_increase']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    operator_id: int | PredicateLike[int]
+    sub_type: Literal['approve', 'invite'] | PredicateLike[Literal['approve', 'invite']]
 class GroupMessageEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['message', 'message_sent'] | tuple[str, str] | Predicate[Literal['message', 'message_sent'] | tuple[str, str]]
-    message_id: int | Predicate[int]
-    user_id: int | str | Predicate[int | str]
-    message_seq: int | Predicate[int]
-    real_id: int | Predicate[int]
-    sender: MessageSenderPattern | Predicate[MessageSender]
-    raw_message: str | Predicate[str]
-    message: tuple[Message | UnknownMessageSegment, ...] | Predicate[tuple[Message | UnknownMessageSegment, ...]]
-    message_format: Literal['array'] | Predicate[Literal['array']]
-    font: int | Predicate[int]
-    real_seq: str | None | Predicate[str | None]
-    message_sent_type: str | None | Predicate[str | None]
-    sub_type: Literal['normal'] | str | None | Predicate[Literal['normal'] | str | None]
-    raw: Any | None | Predicate[Any | None]
-    emoji_likes_list: list[EmojiLikeItem] | None | Predicate[list[EmojiLikeItem] | None]
-    group_id: int | Predicate[int]
-    group_name: str | None | Predicate[str | None]
-    target_id: int | None | Predicate[int | None]
-    message_type: Literal['group'] | Predicate[Literal['group']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['message', 'message_sent'] | tuple[str, str] | PredicateLike[Literal['message', 'message_sent'] | tuple[str, str]]
+    message_id: int | PredicateLike[int]
+    user_id: int | str | PredicateLike[int | str]
+    message_seq: int | PredicateLike[int]
+    real_id: int | PredicateLike[int]
+    sender: MessageSenderPattern | PredicateLike[MessageSender]
+    raw_message: str | PredicateLike[str]
+    message: tuple[Message | UnknownMessageSegment, ...] | PredicateLike[tuple[Message | UnknownMessageSegment, ...]]
+    message_format: Literal['array'] | PredicateLike[Literal['array']]
+    font: int | PredicateLike[int]
+    real_seq: str | None | PredicateLike[str | None]
+    message_sent_type: str | None | PredicateLike[str | None]
+    sub_type: Literal['normal'] | str | None | PredicateLike[Literal['normal'] | str | None]
+    raw: Any | None | PredicateLike[Any | None]
+    emoji_likes_list: list[EmojiLikeItem] | None | PredicateLike[list[EmojiLikeItem] | None]
+    group_id: int | PredicateLike[int]
+    group_name: str | None | PredicateLike[str | None]
+    target_id: int | None | PredicateLike[int | None]
+    message_type: Literal['group'] | PredicateLike[Literal['group']]
 class GroupMsgEmojiLikeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_msg_emoji_like'] | Predicate[Literal['group_msg_emoji_like']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    message_id: int | Predicate[int]
-    likes: list[MsgEmojiLike] | Predicate[list[MsgEmojiLike]]
-    is_add: bool | Predicate[bool]
-    message_seq: str | None | Predicate[str | None]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_msg_emoji_like'] | PredicateLike[Literal['group_msg_emoji_like']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    message_id: int | PredicateLike[int]
+    likes: list[MsgEmojiLike] | PredicateLike[list[MsgEmojiLike]]
+    is_add: bool | PredicateLike[bool]
+    message_seq: str | None | PredicateLike[str | None]
 class GroupNameEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    sub_type: Literal['group_name'] | Predicate[Literal['group_name']]
-    name_new: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    sub_type: Literal['group_name'] | PredicateLike[Literal['group_name']]
+    name_new: str | PredicateLike[str]
 class GroupNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: str | Predicate[str]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: str | PredicateLike[str]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
 class GroupPokeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['poke'] | Predicate[Literal['poke']]
-    target_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    group_id: int | Predicate[int]
-    raw_info: Any | Predicate[Any]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['poke'] | PredicateLike[Literal['poke']]
+    target_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    group_id: int | PredicateLike[int]
+    raw_info: Any | PredicateLike[Any]
 class GroupRecallNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_recall'] | Predicate[Literal['group_recall']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    operator_id: int | Predicate[int]
-    message_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_recall'] | PredicateLike[Literal['group_recall']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    operator_id: int | PredicateLike[int]
+    message_id: int | PredicateLike[int]
 class GroupRequestEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['request'] | Predicate[Literal['request']]
-    request_type: Literal['group'] | Predicate[Literal['group']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    sub_type: Literal['add', 'invite'] | str | Predicate[Literal['add', 'invite'] | str]
-    comment: str | Predicate[str]
-    flag: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['request'] | PredicateLike[Literal['request']]
+    request_type: Literal['group'] | PredicateLike[Literal['group']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    sub_type: Literal['add', 'invite'] | str | PredicateLike[Literal['add', 'invite'] | str]
+    comment: str | PredicateLike[str]
+    flag: str | PredicateLike[str]
 class GroupTitleEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    sub_type: Literal['title'] | Predicate[Literal['title']]
-    title: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    sub_type: Literal['title'] | PredicateLike[Literal['title']]
+    title: str | PredicateLike[str]
 class GroupUploadFilePattern(TypedDict, total=False):
-    id: str | Predicate[str]
-    name: str | Predicate[str]
-    size: int | Predicate[int]
-    busid: int | Predicate[int]
+    id: str | PredicateLike[str]
+    name: str | PredicateLike[str]
+    size: int | PredicateLike[int]
+    busid: int | PredicateLike[int]
 class GroupUploadNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['group_upload'] | Predicate[Literal['group_upload']]
-    group_id: int | Predicate[int]
-    user_id: int | Predicate[int]
-    file: GroupUploadFilePattern | Predicate[GroupUploadFile]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['group_upload'] | PredicateLike[Literal['group_upload']]
+    group_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    file: GroupUploadFilePattern | PredicateLike[GroupUploadFile]
 class HeartbeatEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['meta_event'] | Predicate[Literal['meta_event']]
-    meta_event_type: Literal['heartbeat'] | Predicate[Literal['heartbeat']]
-    status: HeartbeatStatusPattern | Predicate[HeartbeatStatus]
-    interval: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['meta_event'] | PredicateLike[Literal['meta_event']]
+    meta_event_type: Literal['heartbeat'] | PredicateLike[Literal['heartbeat']]
+    status: HeartbeatStatusPattern | PredicateLike[HeartbeatStatus]
+    interval: int | PredicateLike[int]
 class HeartbeatStatusPattern(TypedDict, total=False):
-    online: bool | None | Predicate[bool | None]
-    good: bool | Predicate[bool]
+    online: bool | None | PredicateLike[bool | None]
+    good: bool | PredicateLike[bool]
 class InputStatusEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['input_status'] | Predicate[Literal['input_status']]
-    status_text: Literal['对方正在输入...'] | str | Predicate[Literal['对方正在输入...'] | str]
-    event_type: int | Predicate[int]
-    user_id: int | Predicate[int]
-    group_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['input_status'] | PredicateLike[Literal['input_status']]
+    status_text: Literal['对方正在输入...'] | str | PredicateLike[Literal['对方正在输入...'] | str]
+    event_type: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
+    group_id: int | PredicateLike[int]
 class LifecycleMetaEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['meta_event'] | Predicate[Literal['meta_event']]
-    meta_event_type: Literal['lifecycle'] | Predicate[Literal['lifecycle']]
-    sub_type: Literal['enable', 'disable', 'connect'] | Predicate[Literal['enable', 'disable', 'connect']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['meta_event'] | PredicateLike[Literal['meta_event']]
+    meta_event_type: Literal['lifecycle'] | PredicateLike[Literal['lifecycle']]
+    sub_type: Literal['enable', 'disable', 'connect'] | PredicateLike[Literal['enable', 'disable', 'connect']]
 class MessageEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['message', 'message_sent'] | tuple[str, str] | Predicate[Literal['message', 'message_sent'] | tuple[str, str]]
-    message_id: int | Predicate[int]
-    user_id: int | str | Predicate[int | str]
-    message_seq: int | Predicate[int]
-    real_id: int | Predicate[int]
-    sender: MessageSenderPattern | Predicate[MessageSender]
-    raw_message: str | Predicate[str]
-    message: tuple[Message | UnknownMessageSegment, ...] | Predicate[tuple[Message | UnknownMessageSegment, ...]]
-    message_format: Literal['array'] | Predicate[Literal['array']]
-    font: int | Predicate[int]
-    real_seq: str | None | Predicate[str | None]
-    message_sent_type: str | None | Predicate[str | None]
-    sub_type: Literal['friend', 'group', 'normal'] | str | None | Predicate[Literal['friend', 'group', 'normal'] | str | None]
-    raw: Any | None | Predicate[Any | None]
-    emoji_likes_list: list[EmojiLikeItem] | None | Predicate[list[EmojiLikeItem] | None]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['message', 'message_sent'] | tuple[str, str] | PredicateLike[Literal['message', 'message_sent'] | tuple[str, str]]
+    message_id: int | PredicateLike[int]
+    user_id: int | str | PredicateLike[int | str]
+    message_seq: int | PredicateLike[int]
+    real_id: int | PredicateLike[int]
+    sender: MessageSenderPattern | PredicateLike[MessageSender]
+    raw_message: str | PredicateLike[str]
+    message: tuple[Message | UnknownMessageSegment, ...] | PredicateLike[tuple[Message | UnknownMessageSegment, ...]]
+    message_format: Literal['array'] | PredicateLike[Literal['array']]
+    font: int | PredicateLike[int]
+    real_seq: str | None | PredicateLike[str | None]
+    message_sent_type: str | None | PredicateLike[str | None]
+    sub_type: Literal['friend', 'group', 'normal'] | str | None | PredicateLike[Literal['friend', 'group', 'normal'] | str | None]
+    raw: Any | None | PredicateLike[Any | None]
+    emoji_likes_list: list[EmojiLikeItem] | None | PredicateLike[list[EmojiLikeItem] | None]
 class MessageSenderPattern(TypedDict, total=False):
-    user_id: int | str | Predicate[int | str]
-    nickname: str | Predicate[str]
-    card: str | None | Predicate[str | None]
-    role: Literal['owner', 'admin', 'member'] | str | None | Predicate[Literal['owner', 'admin', 'member'] | str | None]
-    sex: Literal['male', 'female', 'unknown'] | str | None | Predicate[Literal['male', 'female', 'unknown'] | str | None]
-    age: int | None | Predicate[int | None]
-    area: str | None | Predicate[str | None]
-    level: str | None | Predicate[str | None]
-    title: str | None | Predicate[str | None]
+    user_id: int | str | PredicateLike[int | str]
+    nickname: str | PredicateLike[str]
+    card: str | None | PredicateLike[str | None]
+    role: Literal['owner', 'admin', 'member'] | str | None | PredicateLike[Literal['owner', 'admin', 'member'] | str | None]
+    sex: Literal['male', 'female', 'unknown'] | str | None | PredicateLike[Literal['male', 'female', 'unknown'] | str | None]
+    age: int | None | PredicateLike[int | None]
+    area: str | None | PredicateLike[str | None]
+    level: str | None | PredicateLike[str | None]
+    title: str | None | PredicateLike[str | None]
 class MetaEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['meta_event'] | Predicate[Literal['meta_event']]
-    meta_event_type: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['meta_event'] | PredicateLike[Literal['meta_event']]
+    meta_event_type: str | PredicateLike[str]
 class MsgEmojiLikePattern(TypedDict, total=False):
-    emoji_id: str | Predicate[str]
-    count: int | Predicate[int]
+    emoji_id: str | PredicateLike[str]
+    count: int | PredicateLike[int]
 class NapCatEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: str | tuple[str, ...] | Predicate[str | tuple[str, ...]]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: str | tuple[str, ...] | PredicateLike[str | tuple[str, ...]]
 class NoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: str | PredicateLike[str]
 class OnlineFileNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: str | Predicate[str]
-    peer_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: str | PredicateLike[str]
+    peer_id: int | PredicateLike[int]
 class OnlineFileReceiveEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['online_file_receive'] | Predicate[Literal['online_file_receive']]
-    peer_id: int | Predicate[int]
-    sub_type: Literal['cancel'] | Predicate[Literal['cancel']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['online_file_receive'] | PredicateLike[Literal['online_file_receive']]
+    peer_id: int | PredicateLike[int]
+    sub_type: Literal['cancel'] | PredicateLike[Literal['cancel']]
 class OnlineFileSendEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['online_file_send'] | Predicate[Literal['online_file_send']]
-    peer_id: int | Predicate[int]
-    sub_type: Literal['receive', 'refuse'] | Predicate[Literal['receive', 'refuse']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['online_file_send'] | PredicateLike[Literal['online_file_send']]
+    peer_id: int | PredicateLike[int]
+    sub_type: Literal['receive', 'refuse'] | PredicateLike[Literal['receive', 'refuse']]
 class PokeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['poke'] | Predicate[Literal['poke']]
-    target_id: int | Predicate[int]
-    user_id: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['poke'] | PredicateLike[Literal['poke']]
+    target_id: int | PredicateLike[int]
+    user_id: int | PredicateLike[int]
 class PrivateMessageEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['message', 'message_sent'] | tuple[str, str] | Predicate[Literal['message', 'message_sent'] | tuple[str, str]]
-    message_id: int | Predicate[int]
-    user_id: int | str | Predicate[int | str]
-    message_seq: int | Predicate[int]
-    real_id: int | Predicate[int]
-    sender: MessageSenderPattern | Predicate[MessageSender]
-    raw_message: str | Predicate[str]
-    message: tuple[Message | UnknownMessageSegment, ...] | Predicate[tuple[Message | UnknownMessageSegment, ...]]
-    message_format: Literal['array'] | Predicate[Literal['array']]
-    font: int | Predicate[int]
-    real_seq: str | None | Predicate[str | None]
-    message_sent_type: str | None | Predicate[str | None]
-    sub_type: Literal['friend', 'group'] | str | None | Predicate[Literal['friend', 'group'] | str | None]
-    raw: Any | None | Predicate[Any | None]
-    emoji_likes_list: list[EmojiLikeItem] | None | Predicate[list[EmojiLikeItem] | None]
-    target_id: int | None | Predicate[int | None]
-    temp_source: int | None | Predicate[int | None]
-    group_id: int | str | None | Predicate[int | str | None]
-    message_type: Literal['private'] | Predicate[Literal['private']]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['message', 'message_sent'] | tuple[str, str] | PredicateLike[Literal['message', 'message_sent'] | tuple[str, str]]
+    message_id: int | PredicateLike[int]
+    user_id: int | str | PredicateLike[int | str]
+    message_seq: int | PredicateLike[int]
+    real_id: int | PredicateLike[int]
+    sender: MessageSenderPattern | PredicateLike[MessageSender]
+    raw_message: str | PredicateLike[str]
+    message: tuple[Message | UnknownMessageSegment, ...] | PredicateLike[tuple[Message | UnknownMessageSegment, ...]]
+    message_format: Literal['array'] | PredicateLike[Literal['array']]
+    font: int | PredicateLike[int]
+    real_seq: str | None | PredicateLike[str | None]
+    message_sent_type: str | None | PredicateLike[str | None]
+    sub_type: Literal['friend', 'group'] | str | None | PredicateLike[Literal['friend', 'group'] | str | None]
+    raw: Any | None | PredicateLike[Any | None]
+    emoji_likes_list: list[EmojiLikeItem] | None | PredicateLike[list[EmojiLikeItem] | None]
+    target_id: int | None | PredicateLike[int | None]
+    temp_source: int | None | PredicateLike[int | None]
+    group_id: int | str | None | PredicateLike[int | str | None]
+    message_type: Literal['private'] | PredicateLike[Literal['private']]
 class ProfileLikeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: Literal['notify'] | Predicate[Literal['notify']]
-    sub_type: Literal['profile_like'] | Predicate[Literal['profile_like']]
-    operator_id: int | Predicate[int]
-    operator_nick: str | Predicate[str]
-    times: int | Predicate[int]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: Literal['notify'] | PredicateLike[Literal['notify']]
+    sub_type: Literal['profile_like'] | PredicateLike[Literal['profile_like']]
+    operator_id: int | PredicateLike[int]
+    operator_nick: str | PredicateLike[str]
+    times: int | PredicateLike[int]
 class RequestEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['request'] | Predicate[Literal['request']]
-    request_type: str | Predicate[str]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['request'] | PredicateLike[Literal['request']]
+    request_type: str | PredicateLike[str]
 class UnknownEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: str | Predicate[str]
-    raw_data: dict[str, Any] | Predicate[dict[str, Any]]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: str | PredicateLike[str]
+    raw_data: dict[str, Any] | PredicateLike[dict[str, Any]]
 class UnknownMessageSegmentPattern(TypedDict, total=False):
-    raw_type: str | Predicate[str]
-    raw_data: dict[str, Any] | Predicate[dict[str, Any]]
+    raw_type: str | PredicateLike[str]
+    raw_data: dict[str, Any] | PredicateLike[dict[str, Any]]
 class UnknownNoticeEventPattern(TypedDict, total=False):
-    time: int | Predicate[int]
-    self_id: int | Predicate[int]
-    post_type: Literal['notice'] | Predicate[Literal['notice']]
-    notice_type: str | Predicate[str]
-    raw_data: dict[str, Any] | Predicate[dict[str, Any]]
+    time: int | PredicateLike[int]
+    self_id: int | PredicateLike[int]
+    post_type: Literal['notice'] | PredicateLike[Literal['notice']]
+    notice_type: str | PredicateLike[str]
+    raw_data: dict[str, Any] | PredicateLike[dict[str, Any]]
 
 @overload
 def event_match(
     event_type: type[BotOfflineEvent],
     /,
     **pattern: Unpack[BotOfflineEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[FriendAddNoticeEvent],
     /,
     **pattern: Unpack[FriendAddNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[FriendPokeEvent],
     /,
     **pattern: Unpack[FriendPokeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[FriendRecallNoticeEvent],
     /,
     **pattern: Unpack[FriendRecallNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[FriendRequestEvent],
     /,
     **pattern: Unpack[FriendRequestEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupAdminNoticeEvent],
     /,
     **pattern: Unpack[GroupAdminNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupBanEvent],
     /,
     **pattern: Unpack[GroupBanEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupCardEvent],
     /,
     **pattern: Unpack[GroupCardEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupDecreaseEvent],
     /,
     **pattern: Unpack[GroupDecreaseEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupEssenceEvent],
     /,
     **pattern: Unpack[GroupEssenceEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupGrayTipEvent],
     /,
     **pattern: Unpack[GroupGrayTipEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupIncreaseEvent],
     /,
     **pattern: Unpack[GroupIncreaseEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupMessageEvent],
     /,
     **pattern: Unpack[GroupMessageEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupMsgEmojiLikeEvent],
     /,
     **pattern: Unpack[GroupMsgEmojiLikeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupNameEvent],
     /,
     **pattern: Unpack[GroupNameEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupNoticeEvent],
     /,
     **pattern: Unpack[GroupNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupPokeEvent],
     /,
     **pattern: Unpack[GroupPokeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupRecallNoticeEvent],
     /,
     **pattern: Unpack[GroupRecallNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupRequestEvent],
     /,
     **pattern: Unpack[GroupRequestEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupTitleEvent],
     /,
     **pattern: Unpack[GroupTitleEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[GroupUploadNoticeEvent],
     /,
     **pattern: Unpack[GroupUploadNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[HeartbeatEvent],
     /,
     **pattern: Unpack[HeartbeatEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[InputStatusEvent],
     /,
     **pattern: Unpack[InputStatusEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[LifecycleMetaEvent],
     /,
     **pattern: Unpack[LifecycleMetaEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[MessageEvent],
     /,
     **pattern: Unpack[MessageEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[MetaEvent],
     /,
     **pattern: Unpack[MetaEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[NapCatEvent],
     /,
     **pattern: Unpack[NapCatEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[NoticeEvent],
     /,
     **pattern: Unpack[NoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[OnlineFileNoticeEvent],
     /,
     **pattern: Unpack[OnlineFileNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[OnlineFileReceiveEvent],
     /,
     **pattern: Unpack[OnlineFileReceiveEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[OnlineFileSendEvent],
     /,
     **pattern: Unpack[OnlineFileSendEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[PokeEvent],
     /,
     **pattern: Unpack[PokeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[PrivateMessageEvent],
     /,
     **pattern: Unpack[PrivateMessageEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[ProfileLikeEvent],
     /,
     **pattern: Unpack[ProfileLikeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[RequestEvent],
     /,
     **pattern: Unpack[RequestEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[UnknownEvent],
     /,
     **pattern: Unpack[UnknownEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 @overload
 def event_match(
     event_type: type[UnknownNoticeEvent],
     /,
     **pattern: Unpack[UnknownNoticeEventPattern],
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 
 @overload
 def event_match(
     event_type: type[NapCatEvent],
     /,
     **pattern: Any,
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 
 @overload
 def event_match(
     event_type: UnionType,
     /,
     **pattern: Any,
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...
 
 def event_match(
     event_type: type[NapCatEvent] | UnionType,
     /,
     **pattern: Any,
-) -> Callable[[NapCatEvent], bool]: ...
+) -> Predicate[NapCatEvent]: ...

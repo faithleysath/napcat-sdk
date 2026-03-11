@@ -190,9 +190,9 @@ def _format_pattern_type(
     actual = _format_type(tp, imports)
 
     if isinstance(tp, type) and tp.__name__ in dataclass_names and is_dataclass(tp):
-        return f"{_pattern_name(tp)} | Predicate[{actual}]"
+        return f"{_pattern_name(tp)} | PredicateLike[{actual}]"
 
-    return f"{actual} | Predicate[{actual}]"
+    return f"{actual} | PredicateLike[{actual}]"
 
 
 def build_matcher_stub() -> str:
@@ -237,7 +237,7 @@ def build_matcher_stub() -> str:
                     f"    event_type: type[{cls.__name__}],",
                     "    /,",
                     f"    **pattern: Unpack[{_pattern_name(cls)}],",
-                    ") -> Callable[[NapCatEvent], bool]: ...",
+                    ") -> Predicate[NapCatEvent]: ...",
                 ]
             )
         )
@@ -255,7 +255,17 @@ def build_matcher_stub() -> str:
         "",
         *imports.render(),
         "",
-        "type Predicate[T] = Callable[[T], bool]",
+        "class Predicate[T]:",
+        "    def __call__(self, value: T, /) -> bool: ...",
+        "    def __or__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...",
+        "    def __ror__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...",
+        "    def __and__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...",
+        "    def __rand__(self, other: Callable[[T], bool] | Predicate[T], /) -> Predicate[T]: ...",
+        "",
+        "type PredicateLike[T] = Callable[[T], bool] | Predicate[T]",
+        "",
+        "TRUE: Predicate[Any]",
+        "FALSE: Predicate[Any]",
         "",
         *pattern_blocks,
         "",
@@ -266,20 +276,20 @@ def build_matcher_stub() -> str:
         "    event_type: type[NapCatEvent],",
         "    /,",
         "    **pattern: Any,",
-        ") -> Callable[[NapCatEvent], bool]: ...",
+        ") -> Predicate[NapCatEvent]: ...",
         "",
         "@overload",
         "def event_match(",
         "    event_type: UnionType,",
         "    /,",
         "    **pattern: Any,",
-        ") -> Callable[[NapCatEvent], bool]: ...",
+        ") -> Predicate[NapCatEvent]: ...",
         "",
         "def event_match(",
         "    event_type: type[NapCatEvent] | UnionType,",
         "    /,",
         "    **pattern: Any,",
-        ") -> Callable[[NapCatEvent], bool]: ...",
+        ") -> Predicate[NapCatEvent]: ...",
         "",
     ]
     return "\n".join(sections)
