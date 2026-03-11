@@ -16,32 +16,36 @@ def cmd_tldr() -> int:
             """
             NapCat CLI TL;DR
 
-            1) Configure an instance
-              napcat-sdk config <NAME> --ws <URL> [--token <TOKEN>]
-              napcat-sdk config <NAME> --rpc-mode on --rpc-host 0.0.0.0 --rpc-port 8080
-              napcat-sdk config rm <NAME>
+            1) Create / inspect config
+              napcat-sdk config mybot --ws ws://127.0.0.1:3001 --token <TOKEN>
+              napcat-sdk config mybot --ws ws://127.0.0.1:3001 --rpc-mode on --rpc-host 0.0.0.0 --rpc-port 8080
+              napcat-sdk config mybot
+              napcat-sdk config rm mybot
 
             2) Start / stop
-              napcat-sdk start <NAME>
-              napcat-sdk stop <NAME>
-              napcat-sdk restart <NAME>
+              napcat-sdk start mybot
+              napcat-sdk stop mybot
+              napcat-sdk restart mybot
 
             3) Check status / logs
               napcat-sdk list
-              napcat-sdk log <NAME> -f
+              napcat-sdk log mybot -f
 
-            4) Call OneBot API
-              napcat-sdk call <NAME> get_login_info
-              napcat-sdk call <NAME> send_private_msg '{"user_id":123,"message":"hi"}'
+            4) Call OneBot API (instance must be running)
+              napcat-sdk call mybot get_login_info
+              napcat-sdk call mybot send_private_msg '{"user_id":"123","message":"hi"}'
 
-            5) Manage webhooks (filter mode)
-              napcat-sdk webhook <NAME> add <URL> --event message
-              napcat-sdk webhook <NAME> list [URL] [--event TYPE]...
-              napcat-sdk webhook <NAME> rm [URL] [--event TYPE]...
+            5) Manage webhooks
+              napcat-sdk webhook mybot add https://example.com/hook --event message
+              napcat-sdk webhook mybot list
+              napcat-sdk webhook mybot rm https://example.com/hook
 
-            6) Docs / MCP
+            6) Browse SDK docs / MCP
               napcat-sdk doc apis
               napcat-sdk doc api send_private_msg
+              napcat-sdk doc files
+              napcat-sdk doc code client.py
+              napcat-sdk doc class NapCatClient
               napcat-sdk mcp doc
             """
         ).strip()
