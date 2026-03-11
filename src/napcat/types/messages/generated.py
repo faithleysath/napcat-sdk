@@ -353,6 +353,10 @@ class NodeInline(MessageSegment, register=False):
     """
 
     _type: ClassVar[str] = "node"
+    nickname: str
+    """
+    发送者昵称
+    """
     content: dict[str, Any]
     """
     消息内容 (OB11MessageMixType)
@@ -364,10 +368,6 @@ class NodeInline(MessageSegment, register=False):
     uin: int | str | None = None
     """
     发送者QQ号(兼容go-cqhttp)
-    """
-    nickname: str | None = None
-    """
-    发送者昵称
     """
     name: str | None = None
     """
