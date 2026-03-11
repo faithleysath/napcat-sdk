@@ -2076,7 +2076,11 @@ class CheckUrlSafelyPostRequest(TypedDict):
     """
 
 
-type CheckUrlSafelyPostResponse = None
+class CheckUrlSafelyPostResponse(TypedDict):
+    level: int
+    """
+    安全等级 (1: 安全, 2: 未知, 3: 危险)
+    """
 
 
 class GetOnlineClientsPostRequest(TypedDict):
@@ -2085,7 +2089,7 @@ class GetOnlineClientsPostRequest(TypedDict):
     """
 
 
-type GetOnlineClientsPostResponse = None
+type GetOnlineClientsPostResponse = list[Any]
 
 
 class OcrImagePostRequest(TypedDict):
@@ -2857,7 +2861,7 @@ class GetProfileLikePostRequest(TypedDict):
     """
 
 
-class Data36FavoriteInfo(TypedDict):
+class Data37FavoriteInfo(TypedDict):
     userInfos: list[Any]
     """
     点赞用户信息
@@ -2876,7 +2880,7 @@ class Data36FavoriteInfo(TypedDict):
     """
 
 
-class Data36VoteInfo(TypedDict):
+class Data37VoteInfo(TypedDict):
     total_count: int
     """
     总点赞数
@@ -2908,8 +2912,8 @@ class GetProfileLikePostResponse(TypedDict):
     """
     时间
     """
-    favoriteInfo: Data36FavoriteInfo
-    voteInfo: Data36VoteInfo
+    favoriteInfo: Data37FavoriteInfo
+    voteInfo: Data37VoteInfo
 
 
 class SetGroupPortraitPostRequest(TypedDict):
