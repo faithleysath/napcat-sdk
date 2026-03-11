@@ -9,7 +9,7 @@ NapCat 客户端实现
 import asyncio
 import logging
 import secrets
-from collections.abc import AsyncGenerator, Mapping
+from collections.abc import AsyncGenerator, Callable, Mapping
 from types import TracebackType
 from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
@@ -27,6 +27,7 @@ from .types import NapCatEvent
 from .types.messages import Message
 
 logger = logging.getLogger("napcat.client")
+type WaitPredicate = Callable[[NapCatEvent], bool]
 
 
 class NapCatClient(NapCatAPIMixin):
@@ -67,6 +68,9 @@ class NapCatClient(NapCatAPIMixin):
         self._rpc_server: WsServer | None = None
         self._rpc_tasks: list[asyncio.Task[None]] = []
         self._rpc_clients: set[ServerConnection] = set()
+        self._waiters: list[tuple[object, WaitPredicate]] = []
+        self._matched_waiter_events: dict[bytes, None] = {}
+        self._matched_waiter_cache_size = 1000
 
     @property
     def rpc_url_host(self) -> str:
@@ -202,7 +206,10 @@ class NapCatClient(NapCatAPIMixin):
                 if exc_type is None:
                     raise cleanup_errors[0]
 
-    async def _events(self) -> AsyncGenerator[NapCatEvent, None]:
+    async def _events(
+        self,
+        filter_waiters: bool = False,
+    ) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
             raise NapCatStateError("Client not connected")
         if not self._connection_running():
@@ -211,20 +218,121 @@ class NapCatClient(NapCatAPIMixin):
         async for event in self._conn.events():
             event = NapCatEvent.from_dict(event)
             object.__setattr__(event, "_client", self)
+            if filter_waiters:
+                if self._is_waiter_matched_event(event):
+                    continue
+                if self.matches_waiters(event):
+                    self._remember_waiter_match(event)
+                    continue
             yield event
 
-    def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
+    def events(self, filter_waiters: bool = False) -> AsyncGenerator[NapCatEvent, None]:
         async def _iter() -> AsyncGenerator[NapCatEvent, None]:
             if self._has_external_conn:
-                async for event in self._events():
+                async for event in self._events(filter_waiters=filter_waiters):
                     yield event
                 return
 
             async with self:
-                async for event in self._events():
+                async for event in self._events(filter_waiters=filter_waiters):
                     yield event
 
         return _iter()
+
+    def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
+        return self.events()
+
+    def _register_waiter(self, predicate: WaitPredicate) -> object:
+        token = object()
+        self._waiters.append((token, predicate))
+        return token
+
+    def _remove_waiter(self, token: object) -> None:
+        for index, (registered_token, _) in enumerate(self._waiters):
+            if registered_token is token:
+                del self._waiters[index]
+                break
+
+    def _event_fingerprint(self, event: NapCatEvent) -> bytes:
+        return orjson.dumps(event.to_dict(), option=orjson.OPT_SORT_KEYS)
+
+    def _remember_waiter_match(self, event: NapCatEvent) -> None:
+        signature = self._event_fingerprint(event)
+        self._matched_waiter_events.pop(signature, None)
+        self._matched_waiter_events[signature] = None
+
+        if len(self._matched_waiter_events) > self._matched_waiter_cache_size:
+            oldest_signature = next(iter(self._matched_waiter_events))
+            del self._matched_waiter_events[oldest_signature]
+
+    def _is_waiter_matched_event(self, event: NapCatEvent) -> bool:
+        signature = self._event_fingerprint(event)
+        return signature in self._matched_waiter_events
+
+    def _call_waiter_predicate(
+        self,
+        predicate: WaitPredicate,
+        event: NapCatEvent,
+        *,
+        suppress_exceptions: bool,
+    ) -> bool:
+        try:
+            return bool(predicate(event))
+        except Exception:
+            if suppress_exceptions:
+                logger.exception("Waiter predicate %r failed", predicate)
+                return False
+            raise
+
+    def _matches_registered_waiters(
+        self,
+        event: NapCatEvent,
+        *,
+        suppress_exceptions: bool,
+    ) -> bool:
+        waiters = tuple(self._waiters)
+        for _, predicate in waiters:
+            if self._call_waiter_predicate(
+                predicate,
+                event,
+                suppress_exceptions=suppress_exceptions,
+            ):
+                return True
+        return False
+
+    def matches_waiters(self, event: NapCatEvent) -> bool:
+        """Return whether any active waiter predicate matches this event."""
+        return self._matches_registered_waiters(event, suppress_exceptions=True)
+
+    async def wait_event(
+        self,
+        predicate: WaitPredicate,
+        timeout: float | None = None,
+    ) -> NapCatEvent:
+        """Wait until the first event satisfying ``predicate`` arrives."""
+
+        token = self._register_waiter(predicate)
+
+        async def _wait() -> NapCatEvent:
+            async for event in self.events():
+                if self._call_waiter_predicate(
+                    predicate,
+                    event,
+                    suppress_exceptions=False,
+                ):
+                    self._remember_waiter_match(event)
+                    return event
+            raise NapCatStateError(
+                "Client closed before wait_event received a matching event"
+            )
+
+        try:
+            if timeout is None:
+                return await _wait()
+            async with asyncio.timeout(timeout):
+                return await _wait()
+        finally:
+            self._remove_waiter(token)
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
