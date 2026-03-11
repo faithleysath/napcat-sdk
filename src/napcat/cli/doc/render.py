@@ -19,6 +19,11 @@ from .models import (
     OperationResult,
 )
 
+_CODE_INDEX_CATEGORY_GUIDANCE = {
+    "api-definitions": "API definitions - use CLI `napcat-sdk doc apis` or MCP `list_apis` to query",
+    "typed-dicts": "TypedDict definitions - use CLI `napcat-sdk doc api <NAME>` or MCP `get_api_details`",
+}
+
 
 def render_problem_text(problems: Sequence[DocProblem]) -> str:
     if not problems:
@@ -118,15 +123,23 @@ def _render_code_index_entries(entries: Iterable[CodeIndexEntry]) -> list[str]:
             seen_dirs.add(parent_parts)
             indent = "  " * depth
             lines.append(f"{indent}## {parent_parts[-1]}/")
-            lines.append("")
+        lines.append("")
 
         indent = "  " * len(parents)
         lines.append(f"{indent}- **{path.name}** (`{entry.path}`)")
-        if entry.summary:
-            lines.append(f"{indent}  {entry.summary}")
+        for detail_line in _render_code_index_detail_lines(entry):
+            lines.append(f"{indent}  {detail_line}")
         lines.append("")
 
     return lines
+
+
+def _render_code_index_detail_lines(entry: CodeIndexEntry) -> tuple[str, ...]:
+    if guidance := _CODE_INDEX_CATEGORY_GUIDANCE.get(entry.category):
+        return (guidance,)
+    if entry.summary:
+        return (entry.summary,)
+    return ()
 
 
 def _render_code_file_item_text(item: CodeFileItem) -> str:

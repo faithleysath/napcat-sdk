@@ -18,7 +18,9 @@ from .models import (
     CodeIndexEntry,
     DocProblem,
     OperationResult,
+    ProblemKind,
 )
+from .validation import normalize_string_values
 
 _CLIENT_API_PATH = "client_api.py"
 _SCHEMAS_PATH = "types/schemas.py"
@@ -47,22 +49,7 @@ class DocService:
             info = api_data.get(name)
             if info is None:
                 has_missing = True
-                items.append(
-                    ApiDetailItem(
-                        name=name,
-                        found=False,
-                        signature=None,
-                        description=None,
-                        response_type=None,
-                        problems=(
-                            DocProblem(
-                                kind="not_found",
-                                message=f"API not found: {name}",
-                                target=name,
-                            ),
-                        ),
-                    )
-                )
+                items.append(self._build_missing_api_detail_item(name))
                 continue
 
             items.append(
@@ -76,7 +63,7 @@ class DocService:
                 )
             )
 
-        return OperationResult(ok=not has_missing, items=tuple(items))
+        return self._build_lookup_result(items, has_missing=has_missing)
 
     def list_code_files(self) -> OperationResult[CodeIndexEntry]:
         items = tuple(
@@ -114,20 +101,7 @@ class DocService:
             infos = class_index.get(name)
             if not infos:
                 has_missing = True
-                items.append(
-                    ClassDefinitionItem(
-                        name=name,
-                        found=False,
-                        sources=(),
-                        problems=(
-                            DocProblem(
-                                kind="not_found",
-                                message=f"Class not found: {name}",
-                                target=name,
-                            ),
-                        ),
-                    )
-                )
+                items.append(self._build_missing_class_definition_item(name))
                 continue
 
             items.append(
@@ -141,7 +115,7 @@ class DocService:
                 )
             )
 
-        return OperationResult(ok=not has_missing, items=tuple(items))
+        return self._build_lookup_result(items, has_missing=has_missing)
 
     def _get_code_file_item(self, path: str) -> CodeFileItem:
         normalized_path = Path(path).as_posix()
@@ -150,61 +124,33 @@ class DocService:
             target = (source_root / normalized_path).resolve()
             target.relative_to(source_root)
         except (ValueError, RuntimeError):
-            return CodeFileItem(
-                path=normalized_path,
-                found=False,
-                content=None,
-                problems=(
-                    DocProblem(
-                        kind="invalid_input",
-                        message=f"Invalid file path: {normalized_path}",
-                        target=normalized_path,
-                    ),
-                ),
+            return self._build_code_file_problem_item(
+                normalized_path,
+                kind="invalid_input",
+                message=f"Invalid file path: {normalized_path}",
             )
 
         if not target.is_file():
-            return CodeFileItem(
-                path=normalized_path,
-                found=False,
-                content=None,
-                problems=(
-                    DocProblem(
-                        kind="not_found",
-                        message=f"File not found: {normalized_path}",
-                        target=normalized_path,
-                    ),
-                ),
+            return self._build_code_file_problem_item(
+                normalized_path,
+                kind="not_found",
+                message=f"File not found: {normalized_path}",
             )
 
         if target.suffix != ".py":
-            return CodeFileItem(
-                path=normalized_path,
-                found=False,
-                content=None,
-                problems=(
-                    DocProblem(
-                        kind="invalid_input",
-                        message=f"Not a Python file: {normalized_path}",
-                        target=normalized_path,
-                    ),
-                ),
+            return self._build_code_file_problem_item(
+                normalized_path,
+                kind="invalid_input",
+                message=f"Not a Python file: {normalized_path}",
             )
 
         try:
             content = target.read_text(encoding="utf-8")
         except Exception as exc:
-            return CodeFileItem(
-                path=normalized_path,
-                found=False,
-                content=None,
-                problems=(
-                    DocProblem(
-                        kind="internal",
-                        message=f"Failed to read file: {exc}",
-                        target=normalized_path,
-                    ),
-                ),
+            return self._build_code_file_problem_item(
+                normalized_path,
+                kind="internal",
+                message=f"Failed to read file: {exc}",
             )
 
         return CodeFileItem(path=normalized_path, found=True, content=content)
@@ -231,40 +177,79 @@ class DocService:
         *,
         field_name: str,
     ) -> tuple[tuple[str, ...], tuple[DocProblem, ...]]:
-        if isinstance(values, (str, bytes)):
-            return (), (
-                DocProblem(
-                    kind="invalid_input",
-                    message=f"Argument '{field_name}' must be a sequence of strings.",
-                    target=field_name,
-                ),
+        try:
+            normalized_values = normalize_string_values(
+                values,
+                invalid_container_message=f"Argument '{field_name}' must be a sequence of strings.",
+                empty_message=f"Argument '{field_name}' cannot be empty.",
+                invalid_item_message=f"Argument '{field_name}' must contain non-empty strings only.",
+            )
+        except ValueError as exc:
+            return (), self._build_problem(
+                kind="invalid_input",
+                message=str(exc),
+                target=field_name,
             )
 
-        normalized = list(values)
-        if not normalized:
-            return (), (
-                DocProblem(
-                    kind="invalid_input",
-                    message=f"Argument '{field_name}' cannot be empty.",
-                    target=field_name,
-                ),
-            )
+        return normalized_values, ()
 
-        invalid_values = [
-            value
-            for value in normalized
-            if not isinstance(value, str) or not value.strip()
-        ]
-        if invalid_values:
-            return (), (
-                DocProblem(
-                    kind="invalid_input",
-                    message=f"Argument '{field_name}' must contain non-empty strings only.",
-                    target=field_name,
-                ),
-            )
+    def _build_problem(
+        self,
+        *,
+        kind: ProblemKind,
+        message: str,
+        target: str | None,
+    ) -> tuple[DocProblem, ...]:
+        return (DocProblem(kind=kind, message=message, target=target),)
 
-        return tuple(
-            value for value in normalized
-            if isinstance(value, str) and value.strip()
-        ), ()
+    def _build_lookup_result[T](
+        self,
+        items: Sequence[T],
+        *,
+        has_missing: bool,
+    ) -> OperationResult[T]:
+        return OperationResult(ok=not has_missing, items=tuple(items))
+
+    def _build_missing_api_detail_item(self, name: str) -> ApiDetailItem:
+        return ApiDetailItem(
+            name=name,
+            found=False,
+            signature=None,
+            description=None,
+            response_type=None,
+            problems=self._build_problem(
+                kind="not_found",
+                message=f"API not found: {name}",
+                target=name,
+            ),
+        )
+
+    def _build_missing_class_definition_item(self, name: str) -> ClassDefinitionItem:
+        return ClassDefinitionItem(
+            name=name,
+            found=False,
+            sources=(),
+            problems=self._build_problem(
+                kind="not_found",
+                message=f"Class not found: {name}",
+                target=name,
+            ),
+        )
+
+    def _build_code_file_problem_item(
+        self,
+        path: str,
+        *,
+        kind: ProblemKind,
+        message: str,
+    ) -> CodeFileItem:
+        return CodeFileItem(
+            path=path,
+            found=False,
+            content=None,
+            problems=self._build_problem(
+                kind=kind,
+                message=message,
+                target=path,
+            ),
+        )

@@ -5,6 +5,7 @@ from typing import cast
 
 import pytest
 
+import napcat.cli as cli_module
 from napcat.cli.commands import doc as doc_module
 
 
@@ -78,3 +79,83 @@ def test_doc_code_json_returns_rendered_content(
     first_item = cast(dict[str, str], payload["items"][0])
     assert first_item["path"] == "client.py"
     assert "class NapCatClient" in first_item["content"]
+
+
+def test_doc_api_json_not_found_has_stable_problem_contract(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(
+        doc_command="api",
+        json_output=True,
+        names=[" __not_existing_api_for_test__ "],
+    )
+    captured = capsys.readouterr()
+
+    payload = json.loads(captured.out)
+    assert exit_code == 1
+    assert payload == {
+        "ok": False,
+        "items": [
+            {
+                "name": "__not_existing_api_for_test__",
+                "found": False,
+                "signature": None,
+                "description": None,
+                "response_type": None,
+                "typed_dict_codes": [],
+                "problems": [
+                    {
+                        "kind": "not_found",
+                        "message": "API not found: __not_existing_api_for_test__",
+                        "target": "__not_existing_api_for_test__",
+                    }
+                ],
+            }
+        ],
+        "problems": [],
+    }
+
+
+def test_doc_files_text_keeps_special_file_guidance(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="files")
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "# NapCat Source Code Index" in captured.out
+    assert (
+        "API definitions - use CLI `napcat-sdk doc apis` or MCP `list_apis` to query"
+        in captured.out
+    )
+    assert (
+        "TypedDict definitions - use CLI `napcat-sdk doc api <NAME>` or MCP `get_api_details`"
+        in captured.out
+    )
+
+
+def test_cli_main_doc_code_json_runs_full_parse_and_dispatch_chain(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = cli_module.main(["doc", "code", "client.py", "--json"])
+    captured = capsys.readouterr()
+
+    payload = json.loads(captured.out)
+    assert exit_code == 0
+    assert payload["ok"] is True
+    assert payload["items"][0]["path"] == "client.py"
+    assert "class NapCatClient" in payload["items"][0]["content"]
+
+
+def test_cli_main_doc_api_json_normalizes_argument_whitespace(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = cli_module.main(
+        ["doc", "api", " __not_existing_api_for_test__ ", "--json"]
+    )
+    captured = capsys.readouterr()
+
+    payload = json.loads(captured.out)
+    assert exit_code == 1
+    assert payload["items"][0]["name"] == "__not_existing_api_for_test__"
+    assert payload["items"][0]["problems"][0]["target"] == "__not_existing_api_for_test__"

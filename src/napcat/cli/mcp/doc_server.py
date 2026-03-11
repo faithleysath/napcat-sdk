@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import datetime
 import sys
-from collections.abc import Callable, Mapping
-from typing import Any, cast
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, BinaryIO, cast
 
 import orjson
 
@@ -27,8 +27,13 @@ SERVER_VERSION = "2.0"
 
 def send_response(response: dict[str, Any]) -> None:
     """Serialize a JSON-RPC response to stdout."""
-    sys.stdout.buffer.write(orjson.dumps(response) + b"\n")
-    sys.stdout.buffer.flush()
+    write_response(response, sys.stdout.buffer)
+
+
+def write_response(response: dict[str, Any], output_buffer: BinaryIO) -> None:
+    """Serialize a JSON-RPC response to the provided binary output."""
+    output_buffer.write(orjson.dumps(response) + b"\n")
+    output_buffer.flush()
 
 
 def log(msg: str) -> None:
@@ -193,11 +198,18 @@ def _require_dict(value: Any, *, error: str) -> dict[str, Any]:
     return cast(dict[str, Any], value)
 
 
-def main() -> None:
-    log("Starting Modern NapCat Docs Server (stdio/orjson)...")
-    service = DocService()
+def serve_stream(
+    input_buffer: Iterable[bytes],
+    output_buffer: BinaryIO,
+    *,
+    service: DocService | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> None:
+    """Process JSON-RPC requests from a binary line iterator."""
+    actual_service = service or DocService()
+    actual_logger = logger or log
 
-    for line in sys.stdin.buffer:
+    for line in input_buffer:
         line_content = line.strip()
         if not line_content:
             continue
@@ -208,12 +220,22 @@ def main() -> None:
                 raise ValueError("Invalid JSON-RPC request: payload must be an object")
             req = cast(dict[str, Any], req_obj)
         except Exception as exc:
-            log(f"Error processing request: {exc}")
+            actual_logger(f"Error processing request: {exc}")
             continue
 
-        response = handle_request(req, service=service, logger=log)
+        response = handle_request(req, service=actual_service, logger=actual_logger)
         if response is not None:
-            send_response(response)
+            write_response(response, output_buffer)
+
+
+def main() -> None:
+    log("Starting Modern NapCat Docs Server (stdio/orjson)...")
+    serve_stream(
+        sys.stdin.buffer,
+        sys.stdout.buffer,
+        service=DocService(),
+        logger=log,
+    )
 
 
 if __name__ == "__main__":

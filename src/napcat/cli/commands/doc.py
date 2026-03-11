@@ -10,7 +10,7 @@ import json
 import sys
 from typing import Any
 
-from ..doc.registry import get_cli_operation
+from ..doc.registry import get_cli_operation, list_cli_operations
 from ..doc.service import DocService
 
 
@@ -43,43 +43,26 @@ def cmd_doc(
         退出码
     """
     if doc_command is None:
-        print("Usage: napcat-sdk doc <command> [options]")
-        print("\nCommands:")
-        print("  apis               List all available APIs")
-        print("  api <NAME>...      Get API details")
-        print("  files              List source code files")
-        print("  code <PATH>...     View source code file")
-        print("  class <NAME>...    View class definition")
-        print("\nOptions:")
-        print("  --json             Output in JSON format")
+        _print_doc_help()
         return 0
 
-    match doc_command:
-        case "apis":
-            return _run_doc_operation(doc_command, json_output=json_output)
-        case "api":
-            if not names:
-                print_error("API name(s) required.")
-                print("Usage: napcat-sdk doc api <NAME> [NAME ...]")
-                return 1
-            return _run_doc_operation(doc_command, json_output=json_output, names=names)
-        case "files":
-            return _run_doc_operation(doc_command, json_output=json_output)
-        case "code":
-            if not paths:
-                print_error("File path(s) required.")
-                print("Usage: napcat-sdk doc code <PATH> [PATH ...]")
-                return 1
-            return _run_doc_operation(doc_command, json_output=json_output, paths=paths)
-        case "class":
-            if not names:
-                print_error("Class name(s) required.")
-                print("Usage: napcat-sdk doc class <NAME> [NAME ...]")
-                return 1
-            return _run_doc_operation(doc_command, json_output=json_output, names=names)
-        case _:
-            print_error(f"Unknown doc command: {doc_command}")
-            return 1
+    return _run_doc_operation(
+        doc_command,
+        json_output=json_output,
+        names=names,
+        paths=paths,
+    )
+
+
+def _print_doc_help() -> None:
+    print("Usage: napcat-sdk doc <command> [options]")
+    print("\nCommands:")
+    for spec in list_cli_operations():
+        if spec.cli_usage is None or spec.cli_help is None:
+            continue
+        print(f"  {spec.cli_usage:<18} {spec.cli_help}")
+    print("\nOptions:")
+    print("  --json             Output in JSON format")
 
 
 def _run_doc_operation(
@@ -89,18 +72,14 @@ def _run_doc_operation(
     names: list[str] | None = None,
     paths: list[str] | None = None,
 ) -> int:
-    try:
-        spec = get_cli_operation(doc_command)
-        if spec is None:
-            print_error(f"Unknown doc command: {doc_command}")
-            return 1
+    spec = get_cli_operation(doc_command)
+    if spec is None:
+        print_error(f"Unknown doc command: {doc_command}")
+        return 1
 
+    try:
         service = DocService()
-        args: dict[str, Any] = {}
-        if names is not None:
-            args["names"] = names
-        if paths is not None:
-            args["paths"] = paths
+        args = _collect_doc_arguments(names=names, paths=paths)
 
         normalized_args = spec.normalize_arguments(args)
         result = spec.invoke(service, normalized_args)
@@ -110,6 +89,24 @@ def _run_doc_operation(
         else:
             print(spec.render_text(result))
         return 0 if result.ok else 1
+    except ValueError as e:
+        print_error(str(e))
+        if spec.cli_usage is not None:
+            print(f"Usage: napcat-sdk doc {spec.cli_usage}")
+        return 1
     except Exception as e:
         print_error(str(e))
         return 1
+
+
+def _collect_doc_arguments(
+    *,
+    names: list[str] | None,
+    paths: list[str] | None,
+) -> dict[str, Any]:
+    args: dict[str, Any] = {}
+    if names is not None:
+        args["names"] = names
+    if paths is not None:
+        args["paths"] = paths
+    return args

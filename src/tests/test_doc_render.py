@@ -4,6 +4,7 @@ from napcat.cli.doc.models import (
     ApiDetailItem,
     ApiIndexItem,
     CodeFileItem,
+    CodeIndexEntry,
     DocProblem,
     OperationResult,
 )
@@ -11,6 +12,7 @@ from napcat.cli.doc.render import (
     render_api_details_text,
     render_api_index_text,
     render_code_files_text,
+    render_code_index_text,
     render_json_result,
 )
 
@@ -96,3 +98,35 @@ def test_render_api_details_text_marks_missing_items() -> None:
     text = render_api_details_text(result)
 
     assert text == "## missing_api\n(API not found)"
+
+
+def test_render_code_index_text_uses_category_guidance_for_special_files() -> None:
+    result = OperationResult(
+        ok=True,
+        items=(
+            CodeIndexEntry(
+                path="client_api.py",
+                summary="NapCat client API mixin",
+                category="api-definitions",
+            ),
+            CodeIndexEntry(
+                path="types/schemas.py",
+                summary="OneBot schemas",
+                category="typed-dicts",
+            ),
+            CodeIndexEntry(
+                path="client.py",
+                summary="Client entry point",
+                category="module",
+            ),
+        ),
+    )
+
+    text = render_code_index_text(result)
+
+    assert "API definitions - use CLI `napcat-sdk doc apis` or MCP `list_apis` to query" in text
+    assert (
+        "TypedDict definitions - use CLI `napcat-sdk doc api <NAME>` or MCP `get_api_details`"
+        in text
+    )
+    assert "Client entry point" in text

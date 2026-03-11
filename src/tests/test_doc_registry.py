@@ -5,6 +5,7 @@ import pytest
 from napcat.cli.doc.registry import (
     get_cli_operation,
     get_mcp_tool_operation,
+    list_cli_operations,
     list_mcp_tool_operations,
     match_resource_uri,
 )
@@ -23,6 +24,13 @@ def test_registry_exposes_expected_cli_and_mcp_names() -> None:
         "list_code_files",
         "get_code_file",
         "get_class_definition",
+    ]
+    assert [spec.cli_usage for spec in list_cli_operations()] == [
+        "apis",
+        "api <NAME>...",
+        "files",
+        "code <PATH>...",
+        "class <NAME>...",
     ]
 
 

@@ -25,9 +25,39 @@ from collections.abc import Sequence
 from napcat import __version__
 
 from .config import InstanceConfig
+from .doc.registry import list_cli_operations
 from .mcp.doc_server import main as run_doc_mcp_server
 
 __all__ = ["InstanceConfig", "main", "build_parser"]
+
+
+def _add_doc_subcommands(doc_parser: argparse.ArgumentParser) -> None:
+    doc_subparsers = doc_parser.add_subparsers(
+        dest="doc_command",
+        help="Documentation commands",
+    )
+
+    for spec in list_cli_operations():
+        if spec.cli_name is None or spec.cli_help is None:
+            continue
+
+        subparser = doc_subparsers.add_parser(
+            spec.cli_name,
+            help=spec.cli_help,
+            description=spec.cli_description or spec.cli_help,
+        )
+        if spec.argument_spec is not None:
+            subparser.add_argument(
+                spec.argument_spec.name,
+                nargs="+",
+                metavar=spec.argument_spec.metavar,
+                help=spec.argument_spec.description,
+            )
+        subparser.add_argument(
+            "--json",
+            action="store_true",
+            help="Output in JSON format",
+        )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -230,48 +260,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         help="Query SDK documentation",
         description="Query API definitions, source code, and documentation",
     )
-    doc_subparsers = doc_parser.add_subparsers(dest="doc_command", help="Documentation commands")
-
-    # doc apis
-    doc_subparsers.add_parser(
-        "apis",
-        help="List all available APIs",
-        description="List all NapCat SDK API methods",
-    ).add_argument("--json", action="store_true", help="Output in JSON format")
-
-    # doc api
-    api_parser = doc_subparsers.add_parser(
-        "api",
-        help="Get API details",
-        description="Get detailed information about one or more APIs",
-    )
-    api_parser.add_argument("names", nargs="+", help="API name(s) to query")
-    api_parser.add_argument("--json", action="store_true", help="Output in JSON format")
-
-    # doc files
-    doc_subparsers.add_parser(
-        "files",
-        help="List source code files",
-        description="List the source code directory structure",
-    ).add_argument("--json", action="store_true", help="Output in JSON format")
-
-    # doc code
-    code_parser = doc_subparsers.add_parser(
-        "code",
-        help="View source code",
-        description="View the content of source code files",
-    )
-    code_parser.add_argument("paths", nargs="+", help="File path(s) to view")
-    code_parser.add_argument("--json", action="store_true", help="Output in JSON format")
-
-    # doc class
-    class_parser = doc_subparsers.add_parser(
-        "class",
-        help="View class definition",
-        description="View class definitions by name",
-    )
-    class_parser.add_argument("names", nargs="+", help="Class name(s) to query")
-    class_parser.add_argument("--json", action="store_true", help="Output in JSON format")
+    _add_doc_subcommands(doc_parser)
 
     return parser
 
