@@ -10,8 +10,8 @@ import pytest
 from napcat.cli.commands.list import cmd_list
 from napcat.cli.commands.start import cmd_start
 from napcat.cli.config import InstanceConfig
+from napcat.cli.doc.service import DocService
 from napcat.cli.gateway import daemon as daemon_module
-from napcat.cli.mcp import doc_server
 
 
 def test_start_foreground_returns_error_when_gateway_fails(
@@ -43,8 +43,9 @@ def test_start_foreground_returns_error_when_gateway_fails(
 
 
 def test_doc_server_can_read_main_client_file() -> None:
-    content = doc_server.logic_get_code_file("client.py")
-    assert "class NapCatClient" in content
+    result = DocService().get_code_files(["client.py"])
+    assert result.ok is True
+    assert "class NapCatClient" in (result.items[0].content or "")
 
 
 def test_instance_is_running_rejects_stale_pid_metadata(

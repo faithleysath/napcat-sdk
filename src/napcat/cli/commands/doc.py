@@ -10,20 +10,8 @@ import json
 import sys
 from typing import Any
 
-from ..doc import (
-    logic_get_class_details,
-    logic_get_code_file,
-    logic_get_code_index,
-    logic_get_details,
-    logic_get_index,
-    logic_get_missing_apis,
-    logic_get_missing_classes,
-)
-
-
-def _is_logic_error(result: str) -> bool:
-    """判断 logic 层返回是否为错误结果"""
-    return result.startswith("# Error")
+from ..doc.registry import get_cli_operation
+from ..doc.service import DocService
 
 
 def print_error(msg: str) -> None:
@@ -68,124 +56,60 @@ def cmd_doc(
 
     match doc_command:
         case "apis":
-            return _handle_apis(json_output)
+            return _run_doc_operation(doc_command, json_output=json_output)
         case "api":
             if not names:
                 print_error("API name(s) required.")
                 print("Usage: napcat-sdk doc api <NAME> [NAME ...]")
                 return 1
-            return _handle_api(names, json_output)
+            return _run_doc_operation(doc_command, json_output=json_output, names=names)
         case "files":
-            return _handle_files(json_output)
+            return _run_doc_operation(doc_command, json_output=json_output)
         case "code":
             if not paths:
                 print_error("File path(s) required.")
                 print("Usage: napcat-sdk doc code <PATH> [PATH ...]")
                 return 1
-            return _handle_code(paths, json_output)
+            return _run_doc_operation(doc_command, json_output=json_output, paths=paths)
         case "class":
             if not names:
                 print_error("Class name(s) required.")
                 print("Usage: napcat-sdk doc class <NAME> [NAME ...]")
                 return 1
-            return _handle_class(names, json_output)
+            return _run_doc_operation(doc_command, json_output=json_output, names=names)
         case _:
             print_error(f"Unknown doc command: {doc_command}")
             return 1
 
 
-def _handle_apis(json_output: bool) -> int:
-    """处理 doc apis 命令"""
+def _run_doc_operation(
+    doc_command: str,
+    *,
+    json_output: bool,
+    names: list[str] | None = None,
+    paths: list[str] | None = None,
+) -> int:
     try:
-        result = logic_get_index()
+        spec = get_cli_operation(doc_command)
+        if spec is None:
+            print_error(f"Unknown doc command: {doc_command}")
+            return 1
+
+        service = DocService()
+        args: dict[str, Any] = {}
+        if names is not None:
+            args["names"] = names
+        if paths is not None:
+            args["paths"] = paths
+
+        normalized_args = spec.normalize_arguments(args)
+        result = spec.invoke(service, normalized_args)
         if json_output:
-            data = _parse_api_index(result)
+            data = spec.render_json(result)
             print_json(data)
         else:
-            print(result)
-        return 0
+            print(spec.render_text(result))
+        return 0 if result.ok else 1
     except Exception as e:
         print_error(str(e))
         return 1
-
-
-def _handle_api(names: list[str], json_output: bool) -> int:
-    """处理 doc api 命令"""
-    try:
-        result = logic_get_details(names)
-        missing = logic_get_missing_apis(names)
-        if json_output:
-            data = {"apis": names, "result": result}
-            print_json(data)
-        else:
-            print(result)
-        return 1 if missing else 0
-    except Exception as e:
-        print_error(str(e))
-        return 1
-
-
-def _handle_files(json_output: bool) -> int:
-    """处理 doc files 命令"""
-    try:
-        result = logic_get_code_index()
-        if json_output:
-            data = {"result": result}
-            print_json(data)
-        else:
-            print(result)
-        return 0
-    except Exception as e:
-        print_error(str(e))
-        return 1
-
-
-def _handle_code(paths: list[str], json_output: bool) -> int:
-    """处理 doc code 命令"""
-    try:
-        has_error = False
-        if json_output:
-            data: list[dict[str, str]] = []
-            for p in paths:
-                content = logic_get_code_file(p)
-                if _is_logic_error(content):
-                    has_error = True
-                data.append({"path": p, "content": content})
-            print_json(data)
-        else:
-            results = [logic_get_code_file(p) for p in paths]
-            has_error = any(_is_logic_error(result) for result in results)
-            print("\n\n---\n\n".join(results))
-        return 1 if has_error else 0
-    except Exception as e:
-        print_error(str(e))
-        return 1
-
-
-def _handle_class(names: list[str], json_output: bool) -> int:
-    """处理 doc class 命令"""
-    try:
-        result = logic_get_class_details(names)
-        missing = logic_get_missing_classes(names)
-        if json_output:
-            data = {"classes": names, "result": result}
-            print_json(data)
-        else:
-            print(result)
-        return 1 if missing else 0
-    except Exception as e:
-        print_error(str(e))
-        return 1
-
-def _parse_api_index(markdown: str) -> list[dict[str, str]]:
-    """解析 API 索引为 JSON 结构"""
-    apis: list[dict[str, str]] = []
-    for line in markdown.splitlines():
-        if line.startswith("- **"):
-            # 解析格式: - **name**: description
-            name_end = line.find("**:")
-            if name_end > 4:
-                name = line[4:name_end]
-                desc = line[name_end + 3:].strip()
-                apis.append({"name": name, "description": desc})
-    return apis

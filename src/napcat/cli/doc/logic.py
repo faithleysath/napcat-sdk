@@ -26,9 +26,23 @@ class ApiDoc(TypedDict):
     typed_dict_codes: list[str]
 
 
+class ModuleDoc(TypedDict):
+    """源码模块文档数据结构。"""
+
+    path: str
+    docstring: str
+
+
+class ClassSourceDoc(TypedDict):
+    """类定义源码数据结构。"""
+
+    path: str
+    code: str
+
+
 # 缓存变量
 _api_data_cache: dict[str, ApiDoc] | None = None
-_class_def_cache: dict[str, list[dict[str, str]]] = {}
+_class_def_cache: dict[str, list[ClassSourceDoc]] = {}
 _class_index_ready = False
 
 
@@ -254,10 +268,10 @@ def _extract_module_docstring(file_path: Path) -> str:
         return f"(Error reading file: {e})"
 
 
-def _scan_class_definitions() -> dict[str, list[dict[str, str]]]:
+def _scan_class_definitions() -> dict[str, list[ClassSourceDoc]]:
     """遍历源码文件并收集类定义"""
-    source_root = _get_source_root()
-    class_map: dict[str, list[dict[str, str]]] = {}
+    source_root = get_source_root_path()
+    class_map: dict[str, list[ClassSourceDoc]] = {}
 
     for root, dirs, files in os.walk(source_root):
         dirs[:] = [
@@ -306,196 +320,50 @@ def _ensure_class_index_ready() -> None:
         _class_index_ready = True
 
 
-# --- 公开的 logic_* 函数 ---
-
-def logic_get_index() -> str:
-    """生成 API 目录索引"""
-    api_data = _get_api_data()
-    lines: list[str] = ["# NapCat API Index"]
-    for name, info in api_data.items():
-        lines.append(f"- **{name}**: {info['description']}")
-    return "\n".join(lines)
+def get_api_data_map() -> dict[str, ApiDoc]:
+    """返回 API 元数据映射。"""
+    return dict(_get_api_data())
 
 
-def logic_get_details(api_names: list[str]) -> str:
-    """批量获取 API 详情"""
-    api_data = _get_api_data()
-    results: list[str] = []
-    for name in api_names:
-        if info := api_data.get(name):
-            response_type_section = ""
-            if info["response_type"]:
-                response_type_section = (
-                    f"\n\n### Response Type\n\n```python\n{info['response_type']}\n```"
-                )
-
-            typed_dict_section = ""
-            if info["typed_dict_codes"]:
-                typed_dict_blocks = "\n\n".join(
-                    f"```python\n{code}\n```" for code in info["typed_dict_codes"]
-                )
-                typed_dict_section = (
-                    f"\n\n### Referenced TypedDicts\n\n{typed_dict_blocks}"
-                )
-
-            results.append(
-                f"## {name}\n"
-                f"```python\n{info['sig']}\n```"
-                f"{response_type_section}"
-                f"{typed_dict_section}"
-            )
-        else:
-            results.append(f"## {name}\n(API not found)")
-    return "\n---\n".join(results)
+def get_source_root_path() -> Path:
+    """返回源码根目录。"""
+    return _get_source_root()
 
 
-def logic_get_missing_apis(api_names: list[str]) -> list[str]:
-    """返回不存在的 API 名称列表"""
-    api_data = _get_api_data()
-    return [name for name in api_names if name not in api_data]
+def get_module_docstring(file_path: Path) -> str:
+    """返回模块 docstring。"""
+    return _extract_module_docstring(file_path)
 
 
-def logic_get_code_index() -> str:
-    """生成源码目录树和模块 docstring 索引"""
-    source_root = _get_source_root()
-    lines: list[str] = [
-        "# NapCat Source Code Index",
-        "",
-        "NOTE: File contents can be accessed via CLI `napcat-sdk doc code <PATH>` or MCP tool `get_code_file`.",
-        "",
-    ]
+def list_python_modules() -> tuple[ModuleDoc, ...]:
+    """返回源码根目录下全部 Python 模块及其模块文档。"""
+    source_root = get_source_root_path()
+    modules: list[ModuleDoc] = []
 
-    # 遍历源码目录
     for root, dirs, files in os.walk(source_root):
-        # 排除 __pycache__ 等目录
         dirs[:] = [
-            d for d in dirs if not d.startswith("__") and not d.startswith(".")
+            entry for entry in dirs if not entry.startswith("__") and not entry.startswith(".")
         ]
         dirs.sort()
 
         root_path = Path(root)
-        relative_root = root_path.relative_to(source_root)
-
-        # 计算缩进层级
-        depth = len(relative_root.parts) if str(relative_root) != "." else 0
-        indent = "  " * depth
-
-        # 如果不是根目录，显示目录名
-        if str(relative_root) != ".":
-            dir_name = relative_root.parts[-1]
-            lines.append(f"{indent}## {dir_name}/")
-            lines.append("")
-
-        # 列出 Python 文件
-        py_files = sorted([f for f in files if f.endswith(".py")])
+        py_files = sorted(file_name for file_name in files if file_name.endswith(".py"))
         for py_file in py_files:
             file_path = root_path / py_file
-            relative_path = file_path.relative_to(source_root)
-            docstring = _extract_module_docstring(file_path)
+            modules.append(
+                {
+                    "path": file_path.relative_to(source_root).as_posix(),
+                    "docstring": get_module_docstring(file_path),
+                }
+            )
 
-            # 使用 POSIX 路径格式
-            posix_path = relative_path.as_posix()
-
-            # 特殊处理：client_api.py 和 types/schemas.py
-            if posix_path in ("client_api.py", "types/schemas.py"):
-                lines.append(f"{indent}- **{py_file}** (`{posix_path}`)")
-                if posix_path == "client_api.py":
-                    lines.append(
-                        f"{indent}  API definitions - use CLI `napcat-sdk doc apis` or MCP `list_apis` to query"
-                    )
-                else:  # types/schemas.py
-                    lines.append(
-                        f"{indent}  TypedDict definitions - use CLI `napcat-sdk doc api <NAME>` or MCP `get_api_details`"
-                    )
-                lines.append("")
-                continue
-
-            lines.append(f"{indent}- **{py_file}** (`{posix_path}`)")
-            if docstring and docstring not in ("(No module docstring)", "(Failed to parse)"):
-                # 取 docstring 第一行并限制长度
-                doc_lines = docstring.strip().split("\n")
-                first_line = doc_lines[0]
-                if len(first_line) > 80:
-                    first_line = first_line[:80] + "..."
-                lines.append(f"{indent}  {first_line}")
-            lines.append("")
-
-    return "\n".join(lines)
+    return tuple(modules)
 
 
-def logic_get_code_file(file_path: str) -> str:
-    """获取指定源码文件的完整内容"""
-    source_root = _get_source_root()
-
-    # 规范化路径格式
-    normalized_path = Path(file_path).as_posix()
-
-    # 特殊处理：client_api.py 和 types/schemas.py
-    if normalized_path == "client_api.py":
-        return (
-            f"# {file_path}\n\n"
-            "## API Definitions File\n\n"
-            "This file contains all NapCat SDK API definitions.\n\n"
-            "CLI: Use `napcat-sdk doc apis` to list all APIs.\n"
-            "CLI: Use `napcat-sdk doc api <NAME>` to get API details.\n"
-            "MCP: Use `list_apis` and `get_api_details` tools for structured lookup.\n"
-        )
-    elif normalized_path == "types/schemas.py":
-        return (
-            f"# {file_path}\n\n"
-            "## TypedDict Definitions File\n\n"
-            "This file contains all TypedDict type definitions.\n\n"
-            "CLI: Use `napcat-sdk doc api <NAME>` to see related TypedDicts.\n"
-            "MCP: Use `get_api_details` to include TypedDicts referenced by each API.\n"
-        )
-
-    # 安全性检查：确保路径在源码目录内
-    try:
-        target = (source_root / file_path).resolve()
-        target.relative_to(source_root)
-    except (ValueError, RuntimeError):
-        return f"# Error\n\nInvalid file path: {file_path}"
-
-    if not target.is_file():
-        return f"# Error\n\nFile not found: {file_path}"
-
-    if target.suffix != ".py":
-        return f"# Error\n\nNot a Python file: {file_path}"
-
-    try:
-        with open(target, encoding="utf-8") as f:
-            content = f.read()
-        return f"# {file_path}\n\n```python\n{content}\n```"
-    except Exception as e:
-        return f"# Error\n\nFailed to read file: {e}"
-
-
-def logic_get_class_detail(class_name: str) -> str:
-    """根据类名查询定义与文件路径"""
+def get_class_index() -> dict[str, tuple[ClassSourceDoc, ...]]:
+    """返回类定义索引。"""
     _ensure_class_index_ready()
-    infos = _class_def_cache.get(class_name)
-    if not infos:
-        return f"## {class_name}\n(Class not found)"
-
-    blocks: list[str] = []
-    for info in infos:
-        blocks.append(
-            f"**Source:** `{info['path']}`\n\n"
-            f"```python\n{info['code']}\n```"
-        )
-
-    return f"## {class_name}\n" + "\n\n---\n\n".join(blocks)
-
-
-def logic_get_class_details(class_names: list[str]) -> str:
-    """批量获取类定义与文件路径"""
-    results: list[str] = []
-    for name in class_names:
-        results.append(logic_get_class_detail(name))
-    return "\n\n---\n\n".join(results)
-
-
-def logic_get_missing_classes(class_names: list[str]) -> list[str]:
-    """返回不存在的类名列表"""
-    _ensure_class_index_ready()
-    return [name for name in class_names if name not in _class_def_cache]
+    return {
+        class_name: tuple(entries)
+        for class_name, entries in _class_def_cache.items()
+    }
