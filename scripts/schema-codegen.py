@@ -163,10 +163,13 @@ class CodegenConfig:
     events_init_output_path: str = "src/napcat/types/events/__init__.py"
     types_init_output_path: str = "src/napcat/types/__init__.py"
     client_api_output_path: str = "src/napcat/client_api.py"
+    matcher_stub_output_path: str = "src/napcat/matcher.pyi"
     openapi_input_path: str = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
     client_api_codegen_script_path: str = "scripts/client-api-codegen.py"
+    matcher_stub_codegen_script_path: str = "scripts/matcher-stub-codegen.py"
     update_init_script_path: str = "scripts/update-init.py"
     run_client_api_codegen_after_pipeline: bool = True
+    run_matcher_stub_codegen_after_pipeline: bool = True
     run_update_init_after_pipeline: bool = True
 
     # 是否在主流程前先构建 openapi.json
@@ -362,16 +365,18 @@ class TypedDictCompatibilityTransformer(cst.CSTTransformer):
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
-        if not any(get_base_class_name(base) == "TypedDict" for base in original_node.bases):
+        if not any(
+            get_base_class_name(base) == "TypedDict" for base in original_node.bases
+        ):
             return updated_node
 
         kept_keywords: list[cst.Arg] = []
         removed = False
         for keyword in updated_node.keywords:
-            if (
-                keyword.keyword is not None
-                and keyword.keyword.value in {"closed", "extra_items"}
-            ):
+            if keyword.keyword is not None and keyword.keyword.value in {
+                "closed",
+                "extra_items",
+            }:
                 self.removed_keyword_count += 1
                 removed = True
                 continue
@@ -428,7 +433,8 @@ def postprocess_typeddict_imports(path: str | os.PathLike[str]) -> None:
                     alias
                     for alias in small_stmt.names
                     if not (
-                        isinstance(alias.name, cst.Name) and alias.name.value == "TypedDict"
+                        isinstance(alias.name, cst.Name)
+                        and alias.name.value == "TypedDict"
                     )
                 ]
                 if len(kept_aliases) != len(small_stmt.names):
@@ -612,6 +618,33 @@ def format_generated_files_with_ruff(
     logger.info("✨ Formatted generated files with Ruff: %s", ", ".join(str_paths))
 
 
+def _collect_paths_for_ruff_formatting(cfg: CodegenConfig) -> list[str]:
+    """Return Ruff targets, keeping optional generated artifacts truly optional."""
+    paths = [
+        cfg.generated_output_path,
+        cfg.schemas_output_path,
+        cfg.messages_init_output_path,
+        cfg.events_init_output_path,
+        cfg.types_init_output_path,
+    ]
+
+    optional_paths = [
+        (
+            cfg.run_client_api_codegen_after_pipeline,
+            cfg.client_api_output_path,
+        ),
+        (
+            cfg.run_matcher_stub_codegen_after_pipeline,
+            cfg.matcher_stub_output_path,
+        ),
+    ]
+    for was_generated, path in optional_paths:
+        if path and (was_generated or Path(path).exists()):
+            paths.append(path)
+
+    return paths
+
+
 def run_datamodel_codegen_profiles(
     profiles: Sequence[str],
     *,
@@ -695,6 +728,34 @@ def run_update_init_codegen(*, script_path: str | os.PathLike[str]) -> None:
     if stderr:
         for line in stderr.splitlines():
             logger.warning("[update-init] %s", line)
+
+
+def run_matcher_stub_codegen(
+    *,
+    script_path: str | os.PathLike[str],
+    output_path: str | os.PathLike[str],
+) -> None:
+    """Generate src/napcat/matcher.pyi from final event dataclasses."""
+    script = str(script_path)
+    out = str(output_path)
+
+    logger.info("🛠️  Running matcher stub codegen: %s", script)
+    completed = subprocess.run(
+        [sys.executable, script, "--out", out],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    stdout = (completed.stdout or "").strip()
+    if stdout:
+        for line in stdout.splitlines():
+            logger.info("%s", line)
+
+    stderr = (completed.stderr or "").strip()
+    if stderr:
+        for line in stderr.splitlines():
+            logger.warning("[matcher-stub-codegen] %s", line)
 
 
 def cleanup_codegen_input_files(paths: Sequence[str | os.PathLike[str]]) -> list[str]:
@@ -1794,18 +1855,18 @@ def run_pipeline(config: CodegenConfig | None = None, *, verbose: bool = False) 
             "✅ Wrote client API mixin module to: %s", cfg.client_api_output_path
         )
 
+    if cfg.run_matcher_stub_codegen_after_pipeline:
+        run_matcher_stub_codegen(
+            script_path=cfg.matcher_stub_codegen_script_path,
+            output_path=cfg.matcher_stub_output_path,
+        )
+        logger.info("✅ Wrote matcher stub module to: %s", cfg.matcher_stub_output_path)
+
     # Format with Ruff
     if cfg.format_with_ruff:
         try:
             format_generated_files_with_ruff(
-                [
-                    cfg.generated_output_path,
-                    cfg.schemas_output_path,
-                    cfg.messages_init_output_path,
-                    cfg.events_init_output_path,
-                    cfg.types_init_output_path,
-                    cfg.client_api_output_path,
-                ],
+                _collect_paths_for_ruff_formatting(cfg),
                 ruff_runner=cfg.ruff_runner,
             )
         except FileNotFoundError as _:
