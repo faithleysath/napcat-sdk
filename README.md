@@ -57,6 +57,15 @@ uv add napcat-sdk
 pip install napcat-sdk
 ```
 
+## 🧪 示例
+
+可运行的示例脚本都放在 `examples/` 目录。建议先看 `examples/README.md`，再用 `uv run python examples/<file>.py` 运行对应示例。
+如果你想看更贴近 SDK 风格的写法，优先看 `examples/05_pattern_matching.py`。
+
+## 📚 指南
+
+- [最佳实践：模式匹配的艺术](docs/pattern-matching.md)
+
 ---
 
 ## 🤖 CLI
