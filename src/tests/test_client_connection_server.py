@@ -5,11 +5,12 @@ import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import suppress
 from types import TracebackType
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import orjson
 import pytest
 
+import napcat.client as client_module
 from napcat.client import NapCatClient
 from napcat.connection import Connection
 from napcat.exceptions import NapCatAPIError
@@ -100,6 +101,67 @@ class EventWS:
             return
         self.closed = True
         await self._incoming.put(_WS_STOP)
+
+
+class ClientModeWS(EventWS):
+    def __init__(self) -> None:
+        super().__init__()
+        self.close_calls: int = 0
+
+    async def send(self, data: bytes) -> None:
+        payload = cast(dict[str, Any], orjson.loads(data))
+        echo = payload.get("echo")
+        if payload.get("action") == "get_login_info" and echo:
+            await self.emit(
+                {
+                    "status": "ok",
+                    "retcode": 0,
+                    "data": {
+                        "user_id": 10001,
+                        "nickname": "tester",
+                    },
+                    "echo": echo,
+                }
+            )
+
+    async def close(self) -> None:
+        self.close_calls += 1
+        await super().close()
+
+
+class FakeConnectContext:
+    def __init__(self, ws: ClientModeWS) -> None:
+        self.ws = ws
+        self.exit_calls: int = 0
+
+    async def __aenter__(self) -> ClientModeWS:
+        return self.ws
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.exit_calls += 1
+        await self.ws.close()
+
+
+class InspectableConnection(Connection):
+    last_instance: ClassVar[InspectableConnection | None] = None
+
+    def __init__(self, ws: Any) -> None:
+        super().__init__(ws)
+        self.active_event_streams: int = 0
+        type(self).last_instance = self
+
+    async def events(self) -> AsyncGenerator[dict[str, Any], None]:
+        self.active_event_streams += 1
+        try:
+            async for event in super().events():
+                yield event
+        finally:
+            self.active_event_streams -= 1
 
 
 class FakeServer:
@@ -348,6 +410,68 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
             )
         finally:
             await conn.close()
+
+    asyncio.run(_run())
+
+
+def test_concurrent_wait_event_in_client_mode_keeps_connection_open(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _run() -> None:
+        ws = ClientModeWS()
+        ws_ctx = FakeConnectContext(ws)
+
+        def fake_ws_connect(*args: object, **kwargs: object) -> FakeConnectContext:
+            _ = args, kwargs
+            return ws_ctx
+
+        InspectableConnection.last_instance = None
+        monkeypatch.setattr(client_module, "ws_connect", cast(Any, fake_ws_connect))
+        monkeypatch.setattr(client_module, "Connection", InspectableConnection)
+
+        client = NapCatClient(ws_url="ws://example.invalid")
+        waiter1 = asyncio.create_task(
+            client.wait_event(is_group_message_with_text("12"), timeout=1.0)
+        )
+        waiter2 = asyncio.create_task(
+            client.wait_event(is_group_message_with_text("13"), timeout=1.0)
+        )
+        try:
+            for _ in range(100):
+                conn = InspectableConnection.last_instance
+                if conn is not None and conn.active_event_streams == 2:
+                    break
+                await asyncio.sleep(0.01)
+            else:
+                pytest.fail("wait_event consumers did not start in time")
+
+            await ws.emit(make_group_message_event("12", message_id=21))
+            matched1 = await asyncio.wait_for(waiter1, timeout=1.0)
+
+            assert isinstance(matched1, GroupMessageEvent)
+            assert matched1.raw_message == "12"
+            assert not waiter2.done()
+            assert not ws.closed
+            assert ws_ctx.exit_calls == 0
+
+            await ws.emit(make_group_message_event("13", message_id=22))
+            matched2 = await asyncio.wait_for(waiter2, timeout=1.0)
+            for _ in range(100):
+                if ws_ctx.exit_calls:
+                    break
+                await asyncio.sleep(0.01)
+
+            assert isinstance(matched2, GroupMessageEvent)
+            assert matched2.raw_message == "13"
+            assert ws.closed is True
+            assert ws_ctx.exit_calls == 1
+            assert ws.close_calls >= 1
+        finally:
+            for task in (waiter1, waiter2):
+                if not task.done():
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
 
     asyncio.run(_run())
 
