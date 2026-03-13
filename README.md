@@ -158,11 +158,12 @@ from napcat import (
     Text,
     Image,
     At,
+    Message,
 )
 
-async def send_rich_media(client: NapCatClient, group_id: int):
+async def send_rich_media(client: NapCatClient, group_id: str):
     # 构建消息链：@某人 + 文本 + 图片
-    message = [
+    message: list[Message] = [
         At(qq="12345678"),
         Text(text=" 来看这张图："),
         Image(file="https://example.com/image.jpg"),
@@ -186,7 +187,7 @@ async def managing_bot(client: NapCatClient):
 
     # 获取群成员列表
     members = await client.get_group_member_list(
-        group_id=123456, 
+        group_id="123456",
         no_cache=True
     )
     for member in members:
