@@ -57,10 +57,37 @@ uv add napcat-sdk
 pip install napcat-sdk
 ```
 
+## 🚀 Quick Start
+
+第一次接入时，先确保你已经准备好一个可用的 NapCat 实例。
+
+- NapCat 官网: <https://napneko.github.io>
+- 本 SDK 通过 OneBot WebSocket 与 NapCat 通信，最常见的是正向 WebSocket 地址 `ws://127.0.0.1:3001`
+- 如果你给 NapCat 配了 Token，后面的示例里也要带上同一个 Token
+
+最短路径建议按这 3 步走：
+
+1. 在 NapCat 里开启 OneBot WebSocket，并确认你能拿到 `ws://...` 地址。
+2. 安装 SDK。
+3. 运行最小示例，先让 `/ping -> pong` 跑通。
+
+如果你是在仓库里体验，可以直接运行：
+
+```bash
+export NAPCAT_WS_URL=ws://127.0.0.1:3001
+# 如果你配置了鉴权，再取消下一行注释
+# export NAPCAT_TOKEN=your-token
+
+uv run python examples/01_forward_client.py
+```
+
+如果你是从 PyPI 安装、手边没有 `examples/` 目录，也可以直接复制下面的 `Quick Look` 到你的脚本里运行。
+如果你现在还没配置好 NapCat，建议先看 NapCat 文档完成 WebSocket 配置，再回来运行 SDK 示例。
+
 ## 🧪 示例
 
 可运行的示例脚本都放在 `examples/` 目录。建议先看 `examples/README.md`，再用 `uv run python examples/<file>.py` 运行对应示例。
-如果你想看更贴近 SDK 风格的写法，优先看 `examples/05_pattern_matching.py`。
+第一次接入建议先跑 `examples/01_forward_client.py`，确认链路畅通后再看 `examples/05_pattern_matching.py`。
 
 ## 📚 指南
 
@@ -88,35 +115,38 @@ uv run napcat-sdk mcp doc
 
 ```python
 import asyncio
-from napcat import NapCatClient, GroupMessageEvent, PrivateMessageEvent
+import os
 
-async def listen_private(client: NapCatClient):
-    print(">> 私聊监听启动")
-    async for event in client:
-        match event:
-            case PrivateMessageEvent():
-                print(f"[私信] {event.sender.nickname}: {event.raw_message}")
-                await event.send_msg("已阅")
-            case _:
-                pass
+from napcat import GroupMessageEvent, NapCatClient, PrivateMessageEvent, Text
 
-async def listen_group(client: NapCatClient):
-    print(">> 群聊监听启动")
-    async for event in client:
-        match event:
-            case GroupMessageEvent():
-                print(f"[群消息] {event.group_id}: {event.raw_message}")
-                await event.reply("复读")
-            case _:
-                pass
 
-async def main():
-    # 正向 WebSocket 连接（支持自动管理上下文）
-    client = NapCatClient(ws_url="ws://localhost:3001", token="123")
-    await asyncio.gather(
-        listen_private(client),
-        listen_group(client)
+def require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise SystemExit(f"缺少必填环境变量：{name}")
+    return value
+
+
+async def main() -> None:
+    client = NapCatClient(
+        ws_url=require_env("NAPCAT_WS_URL"),
+        token=os.getenv("NAPCAT_TOKEN"),
     )
+
+    async for event in client:
+        match event:
+            case PrivateMessageEvent(sender=sender, message=[Text(text="/ping")]):
+                print(f"[私聊] {sender.nickname}: /ping")
+                await event.send_msg("pong")
+            case GroupMessageEvent(
+                group_id=gid,
+                sender=sender,
+                message=[Text(text="/ping")],
+            ):
+                print(f"[群:{gid}] {sender.nickname}: /ping")
+                await event.reply("pong", at=True)
+            case _:
+                continue
 
 if __name__ == "__main__":
     asyncio.run(main())

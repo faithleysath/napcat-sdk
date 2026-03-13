@@ -4,11 +4,27 @@
 
 ## 运行方式
 
+先确保你已经有一个正在运行的 NapCat 实例，并且已经开启 OneBot WebSocket。
+
+- NapCat 官网: <https://napneko.github.io>
+- 首次接入时，推荐先使用正向 WebSocket 示例
+
 在仓库根目录执行：
 
 ```bash
 uv sync
+export NAPCAT_WS_URL=ws://127.0.0.1:3001
+# 如果你配置了 Token，再取消下一行注释
+# export NAPCAT_TOKEN=your-token
+
 uv run python examples/01_forward_client.py
+```
+
+如果你想直接验证消息发送，再额外设置：
+
+```bash
+export NAPCAT_GROUP_ID=123456789
+uv run python examples/03_send_rich_media.py
 ```
 
 ## 文件说明
@@ -23,8 +39,8 @@ uv run python examples/01_forward_client.py
 ## 推荐阅读顺序
 
 1. `01_forward_client.py`：先熟悉最基础的事件循环和对象匹配。
-2. `05_pattern_matching.py`：重点看模式匹配如何直接表达业务意图。
-3. `03_send_rich_media.py`：看强类型消息段如何参与发送。
+2. `03_send_rich_media.py`：看强类型消息段如何参与发送。
+3. `05_pattern_matching.py`：在基础链路跑通后，再看模式匹配如何直接表达业务意图。
 4. `02_reverse_server.py`：了解反向 WebSocket 的服务端写法。
 5. `04_wait_for_keyword.py`：最后看 `event_match(...)` 和等待单次事件的组合。
 6. `06_leave_approval_plugin.py`：综合示例，适合参考真实插件组织方式。

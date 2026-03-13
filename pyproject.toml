@@ -43,7 +43,8 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/faithleysath/napcat-sdk"
 "Repository" = "https://github.com/faithleysath/napcat-sdk"
-"Documentation" = "https://github.com/faithleysath/napcat-sdk/blob/main/README.md"
+"Documentation" = "https://faithleysath.github.io/napcat-sdk/"
+"NapCat" = "https://napneko.github.io"
 "Bug Tracker" = "https://github.com/faithleysath/napcat-sdk/issues"
 
 [project.scripts]
