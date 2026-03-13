@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from napcat.cli.doc.models import (
+    AgentBundleSection,
     ApiDetailItem,
     ApiIndexItem,
     CodeFileItem,
@@ -9,6 +10,7 @@ from napcat.cli.doc.models import (
     OperationResult,
 )
 from napcat.cli.doc.render import (
+    render_agent_bundle_text,
     render_api_details_text,
     render_api_index_text,
     render_code_files_text,
@@ -46,6 +48,23 @@ def test_render_json_result_serializes_nested_problems() -> None:
     assert payload["ok"] is False
     assert payload["problems"][0]["message"] == "lookup failed"
     assert payload["items"][0]["problems"][0]["kind"] == "not_found"
+
+
+def test_render_agent_bundle_text_wraps_sections() -> None:
+    result = OperationResult(
+        ok=True,
+        items=(
+            AgentBundleSection(title="Overview", content="Primary CLI entrypoint: `napcat-sdk`"),
+            AgentBundleSection(title="API Index", content="- **ping**: Ping API"),
+        ),
+    )
+
+    text = render_agent_bundle_text(result)
+
+    assert text.startswith("# NapCat Agent Bundle")
+    assert "## Overview" in text
+    assert "## API Index" in text
+    assert "Ping API" in text
 
 
 def test_render_code_files_text_wraps_real_source_content() -> None:

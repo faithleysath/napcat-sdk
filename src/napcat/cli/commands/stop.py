@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from ..config import InstanceConfig
 from ..gateway.daemon import stop_daemon
-from ..utils import print_error, print_success
+from ..utils import print_error, print_instance_create_hint, print_success
 
 
 def cmd_stop(
@@ -29,6 +29,7 @@ def cmd_stop(
 
     if not config.exists():
         print_error(f"Instance '{instance_name}' does not exist.")
+        print_instance_create_hint(instance_name)
         return 1
 
     if not config.is_running():

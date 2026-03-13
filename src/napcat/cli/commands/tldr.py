@@ -37,8 +37,10 @@ def cmd_tldr() -> int:
               napcat-sdk call mybot send_private_msg '{"user_id":"123","message":"hi"}'
 
             5) Manage webhooks
+              --event TYPE supports: message, notice, request, meta, *
               napcat-sdk webhook <NAME> rm [URL] [--event TYPE]...
               napcat-sdk webhook mybot add https://example.com/hook --event message
+              napcat-sdk webhook mybot add https://example.com/hook --event meta
               napcat-sdk webhook mybot list
               napcat-sdk webhook mybot rm https://example.com/hook
 
@@ -48,6 +50,8 @@ def cmd_tldr() -> int:
               napcat-sdk doc files
               napcat-sdk doc code client.py
               napcat-sdk doc class NapCatClient
+              napcat-sdk doc agent --full
+              napcat-sdk doc agent --full --with-code
               napcat-sdk mcp doc
             """
         ).strip()

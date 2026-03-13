@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 from typing import cast
 
@@ -159,3 +160,82 @@ def test_cli_main_doc_api_json_normalizes_argument_whitespace(
     assert exit_code == 1
     assert payload["items"][0]["name"] == "__not_existing_api_for_test__"
     assert payload["items"][0]["problems"][0]["target"] == "__not_existing_api_for_test__"
+
+
+def test_doc_agent_text_returns_bundle_sections(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="agent")
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "# NapCat Agent Bundle" in captured.out
+    assert "## CLI Workflow" in captured.out
+    assert "## API Index" in captured.out
+    assert "uv run napcat-sdk" in captured.out
+
+
+def test_doc_agent_json_returns_structured_sections(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="agent", json_output=True)
+    captured = capsys.readouterr()
+
+    payload = json.loads(captured.out)
+    assert exit_code == 0
+    assert payload["ok"] is True
+    assert payload["problems"] == []
+    assert payload["items"]
+    assert payload["items"][0]["title"] == "Overview"
+    assert "Primary CLI entrypoints" in payload["items"][0]["content"]
+
+
+def test_doc_agent_full_includes_expanded_reference_sections(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="agent", full=True)
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "## API Signatures and Responses" in captured.out
+    assert "## TypedDict Appendix" in captured.out
+    assert "## Key Class Definitions" in captured.out
+    assert "## send_private_msg" in captured.out
+
+
+def test_doc_agent_with_code_embeds_curated_source_files(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="agent", with_code=True)
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "## Embedded Source Files" in captured.out
+    assert "### client.py" in captured.out
+    assert "### cli/__init__.py" in captured.out
+    assert "Use `napcat-sdk doc code <PATH>` for additional files" in captured.out
+
+
+def test_doc_agent_json_with_code_includes_embedded_code_section(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = doc_module.cmd_doc(doc_command="agent", json_output=True, with_code=True)
+    captured = capsys.readouterr()
+
+    payload = json.loads(captured.out)
+    assert exit_code == 0
+    section_titles = [item["title"] for item in payload["items"]]
+    assert "Embedded Source Files" in section_titles
+
+
+def test_doc_agent_ignores_broken_pipe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def raise_broken_pipe(*_args: object, **_kwargs: object) -> None:
+        raise BrokenPipeError
+
+    monkeypatch.setattr(builtins, "print", raise_broken_pipe)
+
+    exit_code = doc_module.cmd_doc(doc_command="agent")
+
+    assert exit_code == 0

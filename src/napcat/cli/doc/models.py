@@ -65,6 +65,12 @@ class ClassDefinitionItem:
 
 
 @dataclass(slots=True, frozen=True)
+class AgentBundleSection:
+    title: str
+    content: str
+
+
+@dataclass(slots=True, frozen=True)
 class OperationResult[T]:
     ok: bool
     items: tuple[T, ...]

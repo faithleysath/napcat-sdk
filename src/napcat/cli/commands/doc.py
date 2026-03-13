@@ -29,6 +29,8 @@ def cmd_doc(
     json_output: bool = False,
     names: list[str] | None = None,
     paths: list[str] | None = None,
+    full: bool = False,
+    with_code: bool = False,
 ) -> int:
     """
     文档查询命令
@@ -38,6 +40,8 @@ def cmd_doc(
         json_output: 是否以 JSON 格式输出
         names: API 或类名列表
         paths: 文件路径列表
+        full: 是否输出扩展的大上下文文档包
+        with_code: 是否内嵌关键源码文件
 
     Returns:
         退出码
@@ -51,6 +55,8 @@ def cmd_doc(
         json_output=json_output,
         names=names,
         paths=paths,
+        full=full,
+        with_code=with_code,
     )
 
 
@@ -71,6 +77,8 @@ def _run_doc_operation(
     json_output: bool,
     names: list[str] | None = None,
     paths: list[str] | None = None,
+    full: bool = False,
+    with_code: bool = False,
 ) -> int:
     spec = get_cli_operation(doc_command)
     if spec is None:
@@ -79,7 +87,12 @@ def _run_doc_operation(
 
     try:
         service = DocService()
-        args = _collect_doc_arguments(names=names, paths=paths)
+        args = _collect_doc_arguments(
+            names=names,
+            paths=paths,
+            full=full,
+            with_code=with_code,
+        )
 
         normalized_args = spec.normalize_arguments(args)
         result = spec.invoke(service, normalized_args)
@@ -89,6 +102,8 @@ def _run_doc_operation(
         else:
             print(spec.render_text(result))
         return 0 if result.ok else 1
+    except BrokenPipeError:
+        return 0
     except ValueError as e:
         print_error(str(e))
         if spec.cli_usage is not None:
@@ -103,10 +118,14 @@ def _collect_doc_arguments(
     *,
     names: list[str] | None,
     paths: list[str] | None,
+    full: bool,
+    with_code: bool,
 ) -> dict[str, Any]:
     args: dict[str, Any] = {}
     if names is not None:
         args["names"] = names
     if paths is not None:
         args["paths"] = paths
+    args["full"] = full
+    args["with_code"] = with_code
     return args

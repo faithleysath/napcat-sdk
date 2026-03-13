@@ -48,6 +48,8 @@ def test_call_help_includes_examples(
 
     assert "napcat-sdk call mybot get_login_info" in captured.out
     assert "send_private_msg" in captured.out
+    assert "napcat-sdk doc apis" in captured.out
+    assert "napcat-sdk doc api <ACTION>" in captured.out
 
 
 def test_doc_help_includes_examples(
@@ -61,6 +63,23 @@ def test_doc_help_includes_examples(
 
     assert "napcat-sdk doc apis" in captured.out
     assert "napcat-sdk doc class NapCatClient" in captured.out
+    assert "napcat-sdk doc agent --full" in captured.out
+
+
+def test_doc_agent_help_includes_full_flag(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli_module.main(["doc", "agent", "--help"])
+
+    _assert_help_exit(exc_info)
+    captured = capsys.readouterr()
+
+    assert "AI agents" in captured.out
+    assert "--full" in captured.out
+    assert "--with-code" in captured.out
+    assert "napcat-sdk doc agent --full" in captured.out
+    assert "napcat-sdk doc agent --with-code" in captured.out
 
 
 def test_mcp_help_includes_stdio_guidance(
@@ -112,6 +131,7 @@ def test_webhook_help_mentions_live_and_config_modes(
 
     assert "live Gateway state" in captured.out
     assert "local config" in captured.out
+    assert "message, notice, request, meta, or *" in captured.out
 
 
 def test_webhook_add_help_describes_online_and_offline_behavior(
@@ -125,6 +145,7 @@ def test_webhook_add_help_describes_online_and_offline_behavior(
 
     assert "live Gateway is updated immediately" in captured.out
     assert "applied on the next start" in captured.out
+    assert "message/notice/request/meta/*" in captured.out
 
 
 def test_call_missing_instance_prints_create_hint(
@@ -150,6 +171,21 @@ def test_webhook_missing_instance_prints_create_hint(
     monkeypatch.setattr(InstanceConfig, "BASE_DIR", tmp_path)
 
     exit_code = cli_module.main(["webhook", "demo", "list"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Instance 'demo' does not exist." in captured.err
+    assert "Create it with: napcat-sdk config demo --ws <URL>" in captured.out
+
+
+def test_stop_missing_instance_prints_create_hint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(InstanceConfig, "BASE_DIR", tmp_path)
+
+    exit_code = cli_module.main(["stop", "demo"])
     captured = capsys.readouterr()
 
     assert exit_code == 1

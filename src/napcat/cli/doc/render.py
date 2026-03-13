@@ -10,6 +10,7 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from .models import (
+    AgentBundleSection,
     ApiDetailItem,
     ApiIndexItem,
     ClassDefinitionItem,
@@ -47,6 +48,23 @@ def render_json_result(result: OperationResult[Any]) -> dict[str, Any]:
         "items": [asdict(item) for item in result.items],
         "problems": [asdict(problem) for problem in result.problems],
     }
+
+
+def render_agent_bundle_text(result: OperationResult[AgentBundleSection]) -> str:
+    if result.problems:
+        return render_problem_text(result.problems)
+
+    lines = [
+        "# NapCat Agent Bundle",
+        "",
+        (
+            "Optimized for large-context AI agents that need to understand the CLI,"
+            " API surface, and source layout in a single pass."
+        ),
+    ]
+    for section in result.items:
+        lines.extend(("", f"## {section.title}", "", section.content.strip()))
+    return "\n".join(lines).strip()
 
 
 def render_api_details_text(result: OperationResult[ApiDetailItem]) -> str:

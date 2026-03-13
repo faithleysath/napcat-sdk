@@ -51,6 +51,7 @@ def cmd_call(
             params = json.loads(params_json)
         except json.JSONDecodeError as e:
             print_error(f"Invalid JSON params: {e}")
+            print(f"Inspect the schema with: napcat-sdk doc api {action}")
             return 1
 
     # 调用 API
@@ -66,6 +67,7 @@ def cmd_call(
         return 0
     except GatewayError as e:
         print_error(f"API error: {e}")
+        print(f"Inspect the schema with: napcat-sdk doc api {action}")
         return 1
     except ConnectionError as e:
         print_error(f"Connection error: {e}")

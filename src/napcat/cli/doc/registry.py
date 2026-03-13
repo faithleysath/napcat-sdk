@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 from .models import OperationResult
 from .render import (
+    render_agent_bundle_text,
     render_api_details_text,
     render_api_index_text,
     render_class_definitions_text,
@@ -37,7 +38,9 @@ class OperationSpec:
     cli_usage: str | None
     cli_help: str | None
     cli_description: str | None
+    cli_examples: tuple[str, ...]
     argument_spec: StringListArgumentSpec | None
+    cli_flags: tuple[BooleanFlagSpec, ...]
     mcp_tool_name: str | None
     description: str
     arg_schema: dict[str, Any]
@@ -72,17 +75,29 @@ class StringListArgumentSpec:
 
 
 @dataclass(slots=True, frozen=True)
+class BooleanFlagSpec:
+    name: str
+    help: str
+
+
+@dataclass(slots=True, frozen=True)
 class OperationDefinition:
     key: str
     cli_name: str | None
     cli_usage: str | None
     cli_help: str | None
     cli_description: str | None
+    cli_examples: tuple[str, ...]
     mcp_tool_name: str | None
     description: str
     service_method_name: str
     render_text: TextRenderer
     argument_spec: StringListArgumentSpec | None = None
+    cli_flags: tuple[BooleanFlagSpec, ...] = ()
+    argument_normalizer: ArgumentNormalizer | None = None
+    invoke_argument_name: str | None = None
+    arg_schema: dict[str, Any] | None = None
+    invoke: OperationHandler | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -100,6 +115,19 @@ class ResourceDefinition:
 
 
 _EMPTY_OBJECT_SCHEMA: dict[str, Any] = {"type": "object", "properties": {}}
+_AGENT_FLAG_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "full": {
+            "type": "boolean",
+            "description": "Include expanded API signatures, deduplicated TypedDicts, and key class definitions.",
+        },
+        "with_code": {
+            "type": "boolean",
+            "description": "Embed a curated set of high-signal source files for single-pass agent onboarding.",
+        },
+    },
+}
 
 _API_NAMES_ARGUMENT = StringListArgumentSpec(
     name="names",
@@ -164,6 +192,13 @@ def _build_string_list_schema(argument_spec: StringListArgumentSpec) -> dict[str
     }
 
 
+def _normalize_agent_flags(args: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "full": bool(args.get("full", False)),
+        "with_code": bool(args.get("with_code", False)),
+    }
+
+
 def _get_service_method(service: DocService, method_name: str) -> DocServiceMethod:
     return cast(DocServiceMethod, getattr(service, method_name))
 
@@ -209,16 +244,37 @@ def _build_argument_normalizer(
 
 
 def _materialize_operation(definition: OperationDefinition) -> OperationSpec:
-    actual_normalizer = _build_argument_normalizer(definition.argument_spec)
+    actual_normalizer = (
+        definition.argument_normalizer
+        if definition.argument_normalizer is not None
+        else _build_argument_normalizer(definition.argument_spec)
+    )
     actual_schema = (
-        _EMPTY_OBJECT_SCHEMA
-        if definition.argument_spec is None
-        else _build_string_list_schema(definition.argument_spec)
+        definition.arg_schema
+        if definition.arg_schema is not None
+        else (
+            _EMPTY_OBJECT_SCHEMA
+            if definition.argument_spec is None
+            else _build_string_list_schema(definition.argument_spec)
+        )
     )
     actual_argument_name = (
-        None
-        if definition.argument_spec is None
-        else definition.argument_spec.name
+        definition.invoke_argument_name
+        if definition.invoke_argument_name is not None
+        else (
+            None
+            if definition.argument_spec is None
+            else definition.argument_spec.name
+        )
+    )
+
+    actual_invoke = (
+        definition.invoke
+        if definition.invoke is not None
+        else _build_operation_handler(
+            definition.service_method_name,
+            argument_name=actual_argument_name,
+        )
     )
 
     return OperationSpec(
@@ -227,14 +283,13 @@ def _materialize_operation(definition: OperationDefinition) -> OperationSpec:
         cli_usage=definition.cli_usage,
         cli_help=definition.cli_help,
         cli_description=definition.cli_description or definition.cli_help,
+        cli_examples=definition.cli_examples,
         argument_spec=definition.argument_spec,
+        cli_flags=definition.cli_flags,
         mcp_tool_name=definition.mcp_tool_name,
         description=definition.description,
         arg_schema=actual_schema,
-        invoke=_build_operation_handler(
-            definition.service_method_name,
-            argument_name=actual_argument_name,
-        ),
+        invoke=actual_invoke,
         render_text=definition.render_text,
         render_json=render_json_result,
         normalize_arguments=actual_normalizer,
@@ -304,6 +359,9 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
         cli_usage="apis",
         cli_help="List all available APIs",
         cli_description="List all NapCat SDK API methods",
+        cli_examples=(
+            "napcat-sdk doc apis",
+        ),
         mcp_tool_name="list_apis",
         description="列出 NapCat SDK 的全部 API",
         service_method_name="list_apis",
@@ -315,6 +373,10 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
         cli_usage="api <NAME>...",
         cli_help="Get API details",
         cli_description="Get detailed information about one or more APIs",
+        cli_examples=(
+            "napcat-sdk doc api send_private_msg",
+            "napcat-sdk doc api get_login_info send_group_msg",
+        ),
         mcp_tool_name="get_api_details",
         description="获取 NapCat SDK API 的函数签名、返回类型与相关 TypedDict 定义",
         service_method_name="get_api_details",
@@ -327,6 +389,9 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
         cli_usage="files",
         cli_help="List source code files",
         cli_description="List the source code directory structure",
+        cli_examples=(
+            "napcat-sdk doc files",
+        ),
         mcp_tool_name="list_code_files",
         description="列出 NapCat SDK 源码目录树及每个文件的模块 docstring（文件内容必须通过 get_code_file 访问，不得直接读取文件系统）",
         service_method_name="list_code_files",
@@ -338,6 +403,10 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
         cli_usage="code <PATH>...",
         cli_help="View source code file",
         cli_description="View the content of source code files",
+        cli_examples=(
+            "napcat-sdk doc code client.py",
+            "napcat-sdk doc code cli/__init__.py --json",
+        ),
         mcp_tool_name="get_code_file",
         description="获取 NapCat SDK 指定源码文件的完整内容",
         service_method_name="get_code_files",
@@ -350,11 +419,49 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
         cli_usage="class <NAME>...",
         cli_help="View class definition",
         cli_description="View class definitions by name",
+        cli_examples=(
+            "napcat-sdk doc class NapCatClient",
+            "napcat-sdk doc class InstanceConfig WebhookDispatcher",
+        ),
         mcp_tool_name="get_class_definition",
         description="根据类名查询类定义和其所在源码文件路径",
         service_method_name="get_class_definitions",
         render_text=render_class_definitions_text,
         argument_spec=_CLASS_NAMES_ARGUMENT,
+    ),
+    OperationDefinition(
+        key="get_agent_bundle",
+        cli_name="agent",
+        cli_usage="agent [--full]",
+        cli_help="Generate an AI-oriented documentation bundle",
+        cli_description="Generate a large-context documentation bundle for AI agents",
+        cli_examples=(
+            "napcat-sdk doc agent",
+            "napcat-sdk doc agent --full",
+            "napcat-sdk doc agent --with-code",
+            "napcat-sdk doc agent --full --with-code",
+            "napcat-sdk doc agent --json",
+        ),
+        mcp_tool_name=None,
+        description="生成面向 AI agent 的大上下文文档包，汇总 CLI、API 和源码入口信息",
+        service_method_name="get_agent_bundle",
+        render_text=render_agent_bundle_text,
+        cli_flags=(
+            BooleanFlagSpec(
+                name="full",
+                help="Include expanded API signatures, deduplicated TypedDicts, and key class definitions",
+            ),
+            BooleanFlagSpec(
+                name="with-code",
+                help="Embed a curated set of high-signal source files for single-pass agent onboarding",
+            ),
+        ),
+        argument_normalizer=_normalize_agent_flags,
+        arg_schema=_AGENT_FLAG_SCHEMA,
+        invoke=lambda service, args: service.get_agent_bundle(
+            full=bool(args.get("full", False)),
+            with_code=bool(args.get("with_code", False)),
+        ),
     ),
 )
 

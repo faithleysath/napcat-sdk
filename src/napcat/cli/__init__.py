@@ -107,6 +107,8 @@ def _add_doc_subcommands(doc_parser: argparse.ArgumentParser) -> None:
             spec.cli_name,
             help=spec.cli_help,
             description=spec.cli_description or spec.cli_help,
+            formatter_class=CLIHelpFormatter,
+            epilog=_format_examples(*spec.cli_examples),
         )
         if spec.argument_spec is not None:
             subparser.add_argument(
@@ -120,6 +122,12 @@ def _add_doc_subcommands(doc_parser: argparse.ArgumentParser) -> None:
             action="store_true",
             help="Output in JSON format",
         )
+        for flag in spec.cli_flags:
+            subparser.add_argument(
+                f"--{flag.name}",
+                action="store_true",
+                help=flag.help,
+            )
 
 
 def _add_mcp_subcommands(mcp_parser: argparse.ArgumentParser) -> None:
@@ -323,9 +331,15 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     call_parser = subparsers.add_parser(
         "call",
         help="Call OneBot API",
-        description="Call a OneBot API through the running Gateway",
+        description=(
+            "Call a OneBot API through the running Gateway.\n\n"
+            "Discover action names with `napcat-sdk doc apis` and inspect request/response"
+            " schemas with `napcat-sdk doc api <ACTION>` before calling."
+        ),
         formatter_class=CLIHelpFormatter,
         epilog=_format_examples(
+            "napcat-sdk doc apis",
+            "napcat-sdk doc api send_private_msg",
             "napcat-sdk call mybot get_login_info",
             "napcat-sdk call mybot send_private_msg '{\"user_id\":\"123\",\"message\":\"hi\"}'",
         ),
@@ -340,7 +354,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "params",
         nargs="?",
         metavar="PARAMS",
-        help="JSON parameters (optional)",
+        help="JSON parameters (optional; inspect expected fields with `napcat-sdk doc api <ACTION>`)",
     )
 
     # webhook 命令组
@@ -350,11 +364,13 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         description=(
             "Manage event webhooks for an instance.\n\n"
             "If the instance is running, commands operate on the live Gateway state.\n"
-            "Otherwise they read or update the local config, and changes apply on the next start."
+            "Otherwise they read or update the local config, and changes apply on the next start.\n\n"
+            "Supported event filters: message, notice, request, meta, or * for all events."
         ),
         formatter_class=CLIHelpFormatter,
         epilog=_format_examples(
             "napcat-sdk webhook mybot add https://example.com/hook --event message",
+            "napcat-sdk webhook mybot add https://example.com/hook --event meta",
             "napcat-sdk webhook mybot list --event message",
             "napcat-sdk webhook mybot rm https://example.com/hook",
         ),
@@ -373,12 +389,14 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         description=(
             "Add an event webhook.\n\n"
             "If the instance is running, the live Gateway is updated immediately.\n"
-            "Otherwise the webhook is saved to the local config and applied on the next start."
+            "Otherwise the webhook is saved to the local config and applied on the next start.\n\n"
+            "Supported event filters: message, notice, request, meta, or * for all events."
         ),
         formatter_class=CLIHelpFormatter,
         epilog=_format_examples(
             "napcat-sdk webhook mybot add https://example.com/hook",
             "napcat-sdk webhook mybot add https://example.com/hook --event message --event notice",
+            "napcat-sdk webhook mybot add https://example.com/hook --event meta",
             "napcat-sdk webhook mybot add https://example.com/hook --secret supersecret",
         ),
     )
@@ -392,7 +410,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         action="append",
         dest="events",
         metavar="TYPE",
-        help="Subscribe to event type (repeatable)",
+        help="Subscribe to event type (message/notice/request/meta/*; repeatable)",
     )
     webhook_add_parser.add_argument(
         "--secret",
@@ -406,12 +424,14 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         description=(
             "List current webhooks.\n\n"
             "If the instance is running, the list comes from the live Gateway.\n"
-            "Otherwise the list comes from the local config."
+            "Otherwise the list comes from the local config.\n\n"
+            "Supported event filters: message, notice, request, meta, or * for all events."
         ),
         formatter_class=CLIHelpFormatter,
         epilog=_format_examples(
             "napcat-sdk webhook mybot list",
             "napcat-sdk webhook mybot list https://example.com/hook",
+            "napcat-sdk webhook mybot list --event meta",
             "napcat-sdk webhook mybot list --event message",
         ),
     )
@@ -426,7 +446,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         action="append",
         dest="events",
         metavar="TYPE",
-        help="Filter by event type (repeatable)",
+        help="Filter by event type (message/notice/request/meta/*; repeatable)",
     )
 
     webhook_rm_parser = webhook_subparsers.add_parser(
@@ -436,12 +456,14 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         description=(
             "Remove matching webhooks.\n\n"
             "If the instance is running, matching rules are removed from the live Gateway.\n"
-            "Otherwise matching rules are removed from the local config and the change applies on the next start."
+            "Otherwise matching rules are removed from the local config and the change applies on the next start.\n\n"
+            "Supported event filters: message, notice, request, meta, or * for all events."
         ),
         formatter_class=CLIHelpFormatter,
         epilog=_format_examples(
             "napcat-sdk webhook mybot rm",
             "napcat-sdk webhook mybot rm https://example.com/hook",
+            "napcat-sdk webhook mybot rm --event meta",
             "napcat-sdk webhook mybot rm https://example.com/hook --event notice",
         ),
     )
@@ -456,7 +478,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         action="append",
         dest="events",
         metavar="TYPE",
-        help="Filter by event type before removing (repeatable)",
+        help="Filter by event type before removing (message/notice/request/meta/*; repeatable)",
     )
 
     # mcp 命令组
@@ -485,6 +507,7 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
             "napcat-sdk doc api send_private_msg",
             "napcat-sdk doc code client.py --json",
             "napcat-sdk doc class NapCatClient",
+            "napcat-sdk doc agent --full",
         ),
     )
     _add_doc_subcommands(doc_parser)
@@ -634,6 +657,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json_output=getattr(args, 'json', False),
                 names=getattr(args, 'names', None),
                 paths=getattr(args, 'paths', None),
+                full=getattr(args, 'full', False),
+                with_code=getattr(args, 'with_code', False),
             )
 
         case "mcp":

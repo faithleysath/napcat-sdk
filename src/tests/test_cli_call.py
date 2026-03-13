@@ -75,3 +75,20 @@ def test_cmd_call_returns_error_when_gateway_raises(
     captured = capsys.readouterr()
     assert exit_code == 1
     assert "API error: boom" in captured.err
+    assert "Inspect the schema with: napcat-sdk doc api friend_poke" in captured.out
+
+
+def test_cmd_call_invalid_json_prints_schema_hint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _prepare_instance(monkeypatch, tmp_path)
+    monkeypatch.setattr(InstanceConfig, "is_running", _always_running)
+
+    exit_code = cmd_call("demo", "send_private_msg", "{bad json}")
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Invalid JSON params:" in captured.err
+    assert "Inspect the schema with: napcat-sdk doc api send_private_msg" in captured.out
