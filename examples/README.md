@@ -18,6 +18,7 @@ uv run python examples/01_forward_client.py
 - `03_send_rich_media.py`：发送由 `At`、`Text`、`Image` 组成的强类型消息链。
 - `04_wait_for_keyword.py`：使用 `event_match(...)` 等待匹配事件，并自动回复。
 - `05_pattern_matching.py`：集中演示类型匹配、属性过滤、消息段序列匹配和 guard 写法。
+- `06_leave_approval_plugin.py`：单文件复杂插件示例，展示多轮补参、图片凭证、审批流、群内广播和私聊通知。
 
 ## 推荐阅读顺序
 
@@ -26,6 +27,7 @@ uv run python examples/01_forward_client.py
 3. `03_send_rich_media.py`：看强类型消息段如何参与发送。
 4. `02_reverse_server.py`：了解反向 WebSocket 的服务端写法。
 5. `04_wait_for_keyword.py`：最后看 `event_match(...)` 和等待单次事件的组合。
+6. `06_leave_approval_plugin.py`：综合示例，适合参考真实插件组织方式。
 
 ## 延伸阅读
 
@@ -38,6 +40,7 @@ uv run python examples/01_forward_client.py
 - `NAPCAT_GROUP_ID`：发送消息或等待事件时使用的目标群号。当前请求模型里这类 ID 多为字符串。
 - `NAPCAT_SERVER_HOST`：反向服务端监听地址，默认 `0.0.0.0`。
 - `NAPCAT_SERVER_PORT`：反向服务端监听端口，默认 `8080`。
+- `NAPCAT_APPROVER_IDS`：审批人 QQ 号列表，使用英文逗号分隔，例如 `10001,10002`。
 
 ## 说明
 
