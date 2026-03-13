@@ -45,7 +45,7 @@
 - 🔌 **双模支持**: 完美支持正向 (Client) 与反向 (Server) WebSocket 连接。
 - 🌐 **远程 RPC**: 内置透明网关，让外部应用跨语言调用 NapCat API。
 - 🤖 **CLI 集成**: 支持 MCP、Skills、CLI，让 AI 助手实时查询 SDK 文档。
-- 📦 **极轻量级**: 仅依赖 `websockets` 和 `orjson`，极速安装，拒绝臃肿。
+- 📦 **依赖克制**: 仅包含少量运行时依赖，核心基于 `websockets` 和 `orjson`。
 
 ---
 

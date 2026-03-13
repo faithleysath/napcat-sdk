@@ -13,7 +13,12 @@ from typing import Any
 from ..config import InstanceConfig
 from ..gateway.client import GatewayClient
 from ..gateway.protocol import GatewayError
-from ..utils import print_error, print_instance_create_hint, print_instance_start_hint, print_json
+from ..utils import (
+    print_error,
+    print_instance_create_hint,
+    print_instance_start_hint,
+    print_json,
+)
 
 
 def cmd_call(

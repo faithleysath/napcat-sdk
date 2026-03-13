@@ -31,6 +31,7 @@ def test_registry_exposes_expected_cli_and_mcp_names() -> None:
         "files",
         "code <PATH>...",
         "class <NAME>...",
+        "agent [--full] [--with-code]",
     ]
 
 

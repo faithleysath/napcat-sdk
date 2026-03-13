@@ -432,7 +432,7 @@ _OPERATION_DEFINITIONS: tuple[OperationDefinition, ...] = (
     OperationDefinition(
         key="get_agent_bundle",
         cli_name="agent",
-        cli_usage="agent [--full]",
+        cli_usage="agent [--full] [--with-code]",
         cli_help="Generate an AI-oriented documentation bundle",
         cli_description="Generate a large-context documentation bundle for AI agents",
         cli_examples=(

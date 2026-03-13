@@ -7,7 +7,12 @@ restart 命令
 from __future__ import annotations
 
 from ..config import InstanceConfig
-from ..utils import print_error, print_instance_create_hint, print_success, print_warning
+from ..utils import (
+    print_error,
+    print_instance_create_hint,
+    print_success,
+    print_warning,
+)
 from .start import cmd_start
 from .stop import cmd_stop
 
