@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use NapCat SDK"
+  short_description: "Build Python bots and scripts with napcat-sdk"
+  default_prompt: "Use $use-napcat-sdk to confirm Python 3.12+, install napcat-sdk, choose the right doc lookup path, and build a typed Python bot or script."
