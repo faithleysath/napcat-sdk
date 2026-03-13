@@ -59,6 +59,22 @@ pip install napcat-sdk
 
 ---
 
+## 🤖 CLI
+
+CLI 是自举的：只要记住入口 `uv run napcat-sdk`（安装后也可以直接用 `napcat-sdk`），其余用法都可以从命令本身继续发现。
+
+```bash
+uv run napcat-sdk --help
+uv run napcat-sdk tldr
+uv run napcat-sdk doc agent
+uv run napcat-sdk doc agent --full --with-code
+uv run napcat-sdk mcp doc
+```
+
+它适合做三件事：管理本地实例、查询 SDK/API 文档、给 AI agent 一次性导出大上下文文档包。
+
+---
+
 ## 📸 Quick Look
 
 ```python
