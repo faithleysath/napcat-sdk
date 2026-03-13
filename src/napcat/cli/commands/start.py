@@ -13,7 +13,7 @@ import sys
 from ..config import InstanceConfig, InstanceConfigDict
 from ..gateway.daemon import setup_signal_handlers
 from ..gateway.server import Gateway
-from ..utils import print_error, print_success
+from ..utils import print_error, print_instance_create_hint, print_success
 
 
 def cmd_start(
@@ -69,7 +69,7 @@ def cmd_start(
     # 检查配置是否存在
     if not config.exists():
         print_error(f"Instance '{instance_name}' does not exist.")
-        print(f"Create it with: napcat-sdk config {instance_name} --ws <URL>")
+        print_instance_create_hint(instance_name)
         return 1
 
     # 加载配置

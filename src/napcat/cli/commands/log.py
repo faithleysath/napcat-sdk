@@ -9,7 +9,7 @@ from __future__ import annotations
 import subprocess
 
 from ..config import InstanceConfig
-from ..utils import print_error
+from ..utils import print_error, print_instance_create_hint
 
 
 def cmd_log(
@@ -32,6 +32,7 @@ def cmd_log(
 
     if not config.exists():
         print_error(f"Instance '{instance_name}' does not exist.")
+        print_instance_create_hint(instance_name)
         return 1
 
     if not config.log_file.exists():

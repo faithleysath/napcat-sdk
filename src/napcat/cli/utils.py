@@ -26,6 +26,16 @@ def print_warning(message: str) -> None:
     print(f"\033[33mWarning:\033[0m {message}")
 
 
+def print_instance_create_hint(instance_name: str) -> None:
+    """Print the canonical hint for creating an instance."""
+    print(f"Create it with: napcat-sdk config {instance_name} --ws <URL>")
+
+
+def print_instance_start_hint(instance_name: str) -> None:
+    """Print the canonical hint for starting an instance."""
+    print(f"Start it with: napcat-sdk start {instance_name}")
+
+
 def print_json(data: Any, indent: int = 2) -> None:
     """格式化打印 JSON"""
     print(json.dumps(data, indent=indent, ensure_ascii=False))

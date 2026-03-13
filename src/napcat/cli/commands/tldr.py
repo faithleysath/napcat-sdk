@@ -17,6 +17,7 @@ def cmd_tldr() -> int:
             NapCat CLI TL;DR
 
             1) Create / inspect config
+              napcat-sdk config <NAME> --ws <URL>
               napcat-sdk config mybot --ws ws://127.0.0.1:3001 --token <TOKEN>
               napcat-sdk config mybot --ws ws://127.0.0.1:3001 --rpc-mode on --rpc-host 0.0.0.0 --rpc-port 8080
               napcat-sdk config mybot
@@ -36,6 +37,7 @@ def cmd_tldr() -> int:
               napcat-sdk call mybot send_private_msg '{"user_id":"123","message":"hi"}'
 
             5) Manage webhooks
+              napcat-sdk webhook <NAME> rm [URL] [--event TYPE]...
               napcat-sdk webhook mybot add https://example.com/hook --event message
               napcat-sdk webhook mybot list
               napcat-sdk webhook mybot rm https://example.com/hook

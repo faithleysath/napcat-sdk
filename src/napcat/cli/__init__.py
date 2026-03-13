@@ -20,6 +20,7 @@ NapCat CLI 模块
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 
 from napcat import __version__
@@ -29,6 +30,67 @@ from .doc.registry import list_cli_operations
 from .mcp.doc_server import main as run_doc_mcp_server
 
 __all__ = ["InstanceConfig", "main", "build_parser"]
+
+CLIHelpFormatter = argparse.RawDescriptionHelpFormatter
+
+
+def _format_examples(*examples: str) -> str:
+    """Format example commands for argparse epilog output."""
+    if not examples:
+        return ""
+    return "Examples:\n" + "\n".join(f"  {example}" for example in examples)
+
+
+def _build_config_rm_help_parser() -> argparse.ArgumentParser:
+    """Build the dedicated help parser for `config rm`."""
+    parser = argparse.ArgumentParser(
+        prog="napcat-sdk config rm",
+        description="Remove an instance configuration.",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk config rm mybot",
+        ),
+    )
+    parser.add_argument(
+        "name",
+        metavar="NAME",
+        help="Instance name to remove (must be stopped first)",
+    )
+    return parser
+
+
+def _build_mcp_help_parser() -> argparse.ArgumentParser:
+    """Build the dedicated help parser for `mcp`."""
+    parser = argparse.ArgumentParser(
+        prog="napcat-sdk mcp",
+        description=(
+            "Run MCP-related commands for NapCat SDK.\n\n"
+            "Use `doc` to start a stdio MCP server that exposes SDK docs, API definitions, and source lookups."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk mcp doc",
+        ),
+    )
+    _add_mcp_subcommands(parser)
+    return parser
+
+
+def _normalize_argv(argv: Sequence[str] | None) -> list[str]:
+    """Normalize argv for parser preprocessing."""
+    if argv is None:
+        return list(sys.argv[1:])
+    return list(argv)
+
+
+def _should_print_config_rm_help(argv: Sequence[str]) -> bool:
+    """Detect `napcat-sdk config rm --help` before the main parser runs."""
+    return (
+        len(argv) >= 3
+        and argv[0] == "config"
+        and argv[1] == "rm"
+        and any(token in {"-h", "--help"} for token in argv[2:])
+    )
 
 
 def _add_doc_subcommands(doc_parser: argparse.ArgumentParser) -> None:
@@ -60,11 +122,32 @@ def _add_doc_subcommands(doc_parser: argparse.ArgumentParser) -> None:
         )
 
 
+def _add_mcp_subcommands(mcp_parser: argparse.ArgumentParser) -> None:
+    """Add MCP subcommands to the provided parser."""
+    mcp_subparsers = mcp_parser.add_subparsers(
+        dest="mcp_command",
+        metavar="{doc}",
+        help="MCP commands",
+    )
+    mcp_subparsers.add_parser(
+        "doc",
+        help="Start NapCat docs MCP server (stdio)",
+        description=(
+            "Start the NapCat docs MCP server over stdio.\n\n"
+            "The server exposes SDK documentation, API definitions, source indexes, and code lookups to MCP clients."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk mcp doc",
+        ),
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="napcat-sdk",
         description="NapCat SDK - CLI for managing QQ bot instances",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CLIHelpFormatter,
         epilog="""
 Examples:
   napcat-sdk config mybot --ws ws://127.0.0.1:3001 --token mytoken
@@ -89,15 +172,24 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "config",
         help="Manage instance configuration",
         description="View, update, or remove instance configuration",
+        usage="napcat-sdk config <NAME> [options]\n       napcat-sdk config rm <NAME>",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk config mybot --ws ws://127.0.0.1:3001 --token <TOKEN>",
+            "napcat-sdk config mybot",
+            "napcat-sdk config rm mybot",
+        ),
     )
     config_parser.add_argument(
         "name",
         nargs="?",
-        help="Instance name, or use 'rm <NAME>' to remove an instance",
+        metavar="NAME",
+        help="Instance name to inspect or update",
     )
     config_parser.add_argument(
         "rm_name",
         nargs="?",
+        metavar="NAME",
         help=argparse.SUPPRESS,
     )
     config_parser.add_argument("--ws", metavar="URL", help="NapCat WebSocket URL")
@@ -121,8 +213,14 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "start",
         help="Start Gateway daemon",
         description="Start the Gateway daemon for an instance",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk start mybot",
+            "napcat-sdk start mybot --foreground",
+            "napcat-sdk start mybot --ws ws://127.0.0.1:3001 --rpc-mode on --rpc-port 8080",
+        ),
     )
-    start_parser.add_argument("name", help="Instance name")
+    start_parser.add_argument("name", metavar="NAME", help="Instance name")
     start_parser.add_argument("--ws", metavar="URL", help="Update WebSocket URL before starting")
     start_parser.add_argument("--token", metavar="STR", help="Update token before starting")
     start_parser.add_argument(
@@ -149,8 +247,13 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "stop",
         help="Stop Gateway daemon",
         description="Stop the Gateway daemon",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk stop mybot",
+            "napcat-sdk stop mybot --force",
+        ),
     )
-    stop_parser.add_argument("name", help="Instance name")
+    stop_parser.add_argument("name", metavar="NAME", help="Instance name")
     stop_parser.add_argument(
         "-f", "--force",
         action="store_true",
@@ -162,8 +265,13 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "restart",
         help="Restart Gateway daemon",
         description="Restart the Gateway daemon",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk restart mybot",
+            "napcat-sdk restart mybot --foreground",
+        ),
     )
-    restart_parser.add_argument("name", help="Instance name")
+    restart_parser.add_argument("name", metavar="NAME", help="Instance name")
     restart_parser.add_argument(
         "-f", "--foreground",
         action="store_true",
@@ -190,8 +298,14 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "log",
         help="View Gateway logs",
         description="View or follow Gateway logs",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk log mybot",
+            "napcat-sdk log mybot --follow",
+            "napcat-sdk log mybot --lines 200",
+        ),
     )
-    log_parser.add_argument("name", help="Instance name")
+    log_parser.add_argument("name", metavar="NAME", help="Instance name")
     log_parser.add_argument(
         "-f", "--follow",
         action="store_true",
@@ -210,12 +324,22 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
         "call",
         help="Call OneBot API",
         description="Call a OneBot API through the running Gateway",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk call mybot get_login_info",
+            "napcat-sdk call mybot send_private_msg '{\"user_id\":\"123\",\"message\":\"hi\"}'",
+        ),
     )
-    call_parser.add_argument("name", help="Instance name")
-    call_parser.add_argument("action", help="API action name (e.g., get_login_info)")
+    call_parser.add_argument("name", metavar="NAME", help="Instance name")
+    call_parser.add_argument(
+        "action",
+        metavar="ACTION",
+        help="API action name (e.g., get_login_info)",
+    )
     call_parser.add_argument(
         "params",
         nargs="?",
+        metavar="PARAMS",
         help="JSON parameters (optional)",
     )
 
@@ -223,42 +347,145 @@ For more information, visit: https://github.com/faithleysath/napcat-sdk
     webhook_parser = subparsers.add_parser(
         "webhook",
         help="Manage webhooks",
-        description="Manage event webhooks for an instance",
+        description=(
+            "Manage event webhooks for an instance.\n\n"
+            "If the instance is running, commands operate on the live Gateway state.\n"
+            "Otherwise they read or update the local config, and changes apply on the next start."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk webhook mybot add https://example.com/hook --event message",
+            "napcat-sdk webhook mybot list --event message",
+            "napcat-sdk webhook mybot rm https://example.com/hook",
+        ),
     )
-    webhook_parser.add_argument("name", help="Instance name")
-    webhook_parser.add_argument(
-        "subcommand",
-        choices=["add", "list", "rm"],
-        help="Subcommand: add, list, rm",
+    webhook_parser.add_argument("name", metavar="NAME", help="Instance name")
+    webhook_subparsers = webhook_parser.add_subparsers(
+        dest="webhook_command",
+        metavar="{add,list,rm}",
+        help="Webhook operations",
+        required=True,
     )
-    webhook_parser.add_argument(
+
+    webhook_add_parser = webhook_subparsers.add_parser(
+        "add",
+        help="Add a webhook",
+        description=(
+            "Add an event webhook.\n\n"
+            "If the instance is running, the live Gateway is updated immediately.\n"
+            "Otherwise the webhook is saved to the local config and applied on the next start."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk webhook mybot add https://example.com/hook",
+            "napcat-sdk webhook mybot add https://example.com/hook --event message --event notice",
+            "napcat-sdk webhook mybot add https://example.com/hook --secret supersecret",
+        ),
+    )
+    webhook_add_parser.add_argument(
         "url",
-        nargs="?",
-        help="Webhook URL (for add; URL filter for list/rm)",
+        metavar="URL",
+        help="Webhook URL",
     )
-    webhook_parser.add_argument(
+    webhook_add_parser.add_argument(
         "--event",
         action="append",
         dest="events",
         metavar="TYPE",
-        help="Event type(s): add as subscription; list/rm as filter (repeatable)",
+        help="Subscribe to event type (repeatable)",
     )
-    webhook_parser.add_argument(
+    webhook_add_parser.add_argument(
         "--secret",
         metavar="STR",
         help="HMAC secret for webhook signature",
     )
 
+    webhook_list_parser = webhook_subparsers.add_parser(
+        "list",
+        help="List webhooks",
+        description=(
+            "List current webhooks.\n\n"
+            "If the instance is running, the list comes from the live Gateway.\n"
+            "Otherwise the list comes from the local config."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk webhook mybot list",
+            "napcat-sdk webhook mybot list https://example.com/hook",
+            "napcat-sdk webhook mybot list --event message",
+        ),
+    )
+    webhook_list_parser.add_argument(
+        "url",
+        nargs="?",
+        metavar="URL",
+        help="Optional webhook URL filter",
+    )
+    webhook_list_parser.add_argument(
+        "--event",
+        action="append",
+        dest="events",
+        metavar="TYPE",
+        help="Filter by event type (repeatable)",
+    )
+
+    webhook_rm_parser = webhook_subparsers.add_parser(
+        "rm",
+        aliases=["remove"],
+        help="Remove matching webhooks",
+        description=(
+            "Remove matching webhooks.\n\n"
+            "If the instance is running, matching rules are removed from the live Gateway.\n"
+            "Otherwise matching rules are removed from the local config and the change applies on the next start."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk webhook mybot rm",
+            "napcat-sdk webhook mybot rm https://example.com/hook",
+            "napcat-sdk webhook mybot rm https://example.com/hook --event notice",
+        ),
+    )
+    webhook_rm_parser.add_argument(
+        "url",
+        nargs="?",
+        metavar="URL",
+        help="Optional webhook URL filter",
+    )
+    webhook_rm_parser.add_argument(
+        "--event",
+        action="append",
+        dest="events",
+        metavar="TYPE",
+        help="Filter by event type before removing (repeatable)",
+    )
+
     # mcp 命令组
-    mcp_parser = subparsers.add_parser("mcp", help="MCP related commands")
-    mcp_subparsers = mcp_parser.add_subparsers(dest="mcp_command")
-    mcp_subparsers.add_parser("doc", help="Start NapCat docs MCP server (stdio)")
+    mcp_parser = subparsers.add_parser(
+        "mcp",
+        help="MCP related commands",
+        description=(
+            "Run MCP-related commands for NapCat SDK.\n\n"
+            "Use `doc` to start a stdio MCP server that exposes SDK docs, API definitions, and source lookups."
+        ),
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk mcp doc",
+        ),
+    )
+    _add_mcp_subcommands(mcp_parser)
 
     # doc 命令组
     doc_parser = subparsers.add_parser(
         "doc",
         help="Query SDK documentation",
         description="Query API definitions, source code, and documentation",
+        formatter_class=CLIHelpFormatter,
+        epilog=_format_examples(
+            "napcat-sdk doc apis",
+            "napcat-sdk doc api send_private_msg",
+            "napcat-sdk doc code client.py --json",
+            "napcat-sdk doc class NapCatClient",
+        ),
     )
     _add_doc_subcommands(doc_parser)
 
@@ -273,8 +500,13 @@ def _parse_rpc_mode_arg(value: str | None) -> bool | None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    raw_argv = _normalize_argv(argv)
     parser = build_parser()
-    args = parser.parse_args(argv)
+    if _should_print_config_rm_help(raw_argv):
+        _build_config_rm_help_parser().print_help()
+        return 0
+
+    args = parser.parse_args(raw_argv)
 
     # 无命令或 help
     if args.command is None:
@@ -390,10 +622,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         case "webhook":
             return cmd_webhook(
                 instance_name=args.name,
-                subcommand=args.subcommand,
-                url=args.url,
-                events=args.events,
-                secret=args.secret,
+                subcommand=args.webhook_command,
+                url=getattr(args, "url", None),
+                events=getattr(args, "events", None),
+                secret=getattr(args, "secret", None),
             )
 
         case "doc":
@@ -408,7 +640,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.mcp_command == "doc":
                 run_doc_mcp_server()
                 return 0
-            parser.parse_args(["mcp", "--help"])
+            _build_mcp_help_parser().print_help()
             return 0
 
         case _:

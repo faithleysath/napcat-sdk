@@ -6,7 +6,8 @@ restart 命令
 
 from __future__ import annotations
 
-from ..utils import print_error, print_success
+from ..config import InstanceConfig
+from ..utils import print_error, print_instance_create_hint, print_success, print_warning
 from .start import cmd_start
 from .stop import cmd_stop
 
@@ -25,22 +26,29 @@ def cmd_restart(
     Returns:
         退出码
     """
-    print(f"Restarting Gateway '{instance_name}'...")
+    config = InstanceConfig(instance_name)
+    if not config.exists():
+        print_error(f"Instance '{instance_name}' does not exist.")
+        print_instance_create_hint(instance_name)
+        return 1
 
-    # 停止
-    stop_result = cmd_stop(instance_name)
+    was_running = config.is_running()
 
-    # 如果 stop 返回非零且不是因为实例未运行，则失败
-    if stop_result != 0:
-        from ..config import InstanceConfig
-        config = InstanceConfig(instance_name)
-        if config.is_running():
+    if was_running:
+        print(f"Restarting Gateway '{instance_name}'...")
+        stop_result = cmd_stop(instance_name)
+
+        # 如果 stop 返回非零且不是因为实例未运行，则失败
+        if stop_result != 0 and config.is_running():
             print_error("Failed to stop Gateway.")
             return stop_result
+    else:
+        print_warning(f"Gateway '{instance_name}' is not running. Starting it instead.")
 
     # 启动
     start_result = cmd_start(instance_name, foreground=foreground)
 
     if start_result == 0:
-        print_success(f"Gateway '{instance_name}' restarted.")
+        action = "restarted" if was_running else "started"
+        print_success(f"Gateway '{instance_name}' {action}.")
     return start_result

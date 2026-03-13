@@ -13,7 +13,7 @@ from typing import Any
 from ..config import InstanceConfig
 from ..gateway.client import GatewayClient
 from ..gateway.protocol import GatewayError
-from ..utils import print_error, print_json
+from ..utils import print_error, print_instance_create_hint, print_instance_start_hint, print_json
 
 
 def cmd_call(
@@ -36,11 +36,12 @@ def cmd_call(
 
     if not config.exists():
         print_error(f"Instance '{instance_name}' does not exist.")
+        print_instance_create_hint(instance_name)
         return 1
 
     if not config.is_running():
         print_error(f"Instance '{instance_name}' is not running.")
-        print(f"Start it with: napcat-sdk start {instance_name}")
+        print_instance_start_hint(instance_name)
         return 1
 
     # 解析参数
