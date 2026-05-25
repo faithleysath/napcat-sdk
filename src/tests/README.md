@@ -46,7 +46,7 @@
 **目标**：把静态质量检查纳入测试体系。
 
 包含：
-- `ruff check src scripts`
+- `ruff check src`
 - `pyright`
 
 说明：

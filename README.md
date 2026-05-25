@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/faithleysath/napcat-sdk/refs/heads/main/docs/img/logo.png" width="250" height="200" alt="NapCat Logo">
-
   # NapCat-SDK for Python
 
   <p align="center">
@@ -23,9 +21,6 @@
     <a href="https://deepwiki.com/faithleysath/napcat-sdk">
         <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
     </a>
-    <a href="https://faithleysath.github.io/napcat-sdk/">
-        <img src="https://img.shields.io/badge/Docs-📖-blue?style=flat-square&color=2986cc" alt="Documentation">
-    </a>
     <img src="https://img.shields.io/badge/QQ%E7%BE%A4-819085771-54a3ff?style=flat-square&logo=tencent-qq&logoColor=white" alt="QQ Group">
   </p>
 
@@ -44,7 +39,7 @@
 - ⚡ **完全异步**: 基于 `websockets` + `asyncio` 原生开发，无惧高并发。
 - 🔌 **双模支持**: 完美支持正向 (Client) 与反向 (Server) WebSocket 连接。
 - 🌐 **远程 RPC**: 内置透明网关，让外部应用跨语言调用 NapCat API。
-- 🤖 **CLI 集成**: 支持 MCP、Skills、CLI，让 AI 助手实时查询 SDK 文档。
+- 🤖 **CLI 集成**: 支持 MCP 与 CLI，让 AI 助手实时查询 SDK 文档。
 - 📦 **依赖克制**: 仅包含少量运行时依赖，核心基于 `websockets` 和 `orjson`。
 
 ---
@@ -71,27 +66,8 @@ pip install napcat-sdk
 2. 安装 SDK。
 3. 运行最小示例，先让 `/ping -> pong` 跑通。
 
-如果你是在仓库里体验，可以直接运行：
-
-```bash
-export NAPCAT_WS_URL=ws://127.0.0.1:3001
-# 如果你配置了鉴权，再取消下一行注释
-# export NAPCAT_TOKEN=your-token
-
-uv run python examples/01_forward_client.py
-```
-
-如果你是从 PyPI 安装、手边没有 `examples/` 目录，也可以直接复制下面的 `Quick Look` 到你的脚本里运行。
+可以直接复制下面的 `Quick Look` 到你的脚本里运行。
 如果你现在还没配置好 NapCat，建议先看 NapCat 文档完成 WebSocket 配置，再回来运行 SDK 示例。
-
-## 🧪 示例
-
-可运行的示例脚本都放在 `examples/` 目录。建议先看 `examples/README.md`，再用 `uv run python examples/<file>.py` 运行对应示例。
-第一次接入建议先跑 `examples/01_forward_client.py`，确认链路畅通后再看 `examples/05_pattern_matching.py`。
-
-## 📚 指南
-
-- [最佳实践：模式匹配的艺术](docs/pattern-matching.md)
 
 ---
 
@@ -276,20 +252,7 @@ pnpm install --frozen-lockfile
 cd ..
 ```
 
-2. **同步协议定义**: SDK 的核心代码由 OpenAPI 规范自动生成，请运行以下命令重新生成代码：
-```
-uv run scripts/schema-codegen.py
-```
-*这会自动更新 `src/napcat/types/messages/generated.py`、`src/napcat/types/schemas.py`、`src/napcat/client_api.py` 以及相关的 `__init__.py`。如果你的环境里没有全局 `pnpm`，请先在 `NapCatQQ` 中执行 `corepack pnpm --filter napcat-schema run build:openapi`，然后改用 `uv run scripts/schema-codegen.py --no-openapi-pre-codegen`。*
-
-3. **如需同步 `notice` 事件定义**:
-```
-OPENAI_API_KEY=你的key uv run scripts/notice-codegen.py
-uv run scripts/update-init.py
-```
-*脚本默认已经配置好 Google 的 OpenAI-compatible `base_url` 和模型；通常只需要传 `OPENAI_API_KEY`。*
-
-4. **运行测试**:
+2. **运行测试**:
 ```
 # 运行 tests
 uv run pytest src/tests -q

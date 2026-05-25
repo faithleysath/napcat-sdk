@@ -16,7 +16,7 @@ def _run(cmd: list[str]) -> tuple[int, str]:
 def test_ruff_strict_all_rules() -> None:
     assert shutil.which("uv"), "uv not found in PATH"
 
-    code, output = _run(["uv", "run", "ruff", "check", "src", "scripts"])
+    code, output = _run(["uv", "run", "ruff", "check", "src"])
     assert code == 0, f"Ruff check failed (exit={code})\n\n{output}"
 
 
@@ -27,12 +27,3 @@ def test_pyright_strict_type_check() -> None:
     code, output = _run(["uv", "run", "pyright"])
     assert code == 0, f"Pyright type check failed (exit={code})\n\n{output}"
 
-
-@pytest.mark.static
-def test_generated_matcher_stub_is_up_to_date() -> None:
-    assert shutil.which("uv"), "uv not found in PATH"
-
-    code, output = _run(
-        ["uv", "run", "python", "scripts/matcher-stub-codegen.py", "--check"]
-    )
-    assert code == 0, f"Matcher stub drift detected (exit={code})\n\n{output}"
