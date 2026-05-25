@@ -59,39 +59,11 @@ module-name = "napcat"
 
 [dependency-groups]
 dev = [
-    "datamodel-code-generator[ruff]>=0.55.0",
     "libcst>=1.8.6",
-    "openai>=2.28.0",
     "pyright>=1.1.408",
     "pytest>=9.0.2",
     "ruff>=0.15.6",
 ]
-docs = ["zensical>=0.0.27"]
-
-[tool.datamodel-codegen]
-formatters = ["ruff-check", "ruff-format"]
-naming-strategy = "full-path"
-target-python-version = "3.12"
-use-type-alias = true
-use-schema-description = true
-use-field-description = true
-use-attribute-docstrings = true
-
-[tool.datamodel-codegen.profiles.api-typedict]
-input = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
-input-file-type = "openapi"
-openapi-scopes = ["paths", "schemas"]
-output = "api_typedict.py"
-output-model-type = "typing.TypedDict"
-enum-field-as-literal = "all"
-
-[tool.datamodel-codegen.profiles.api-dataclass]
-input = "NapCatQQ/packages/napcat-schema/dist/openapi.json"
-input-file-type = "openapi"
-openapi-scopes = ["schemas"]
-output = "api_dataclass.py"
-output-model-type = "dataclasses.dataclass"
-enum-field-as-literal = "all"
 
 [tool.pyright]
 typeCheckingMode = "strict"
