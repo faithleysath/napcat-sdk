@@ -38,8 +38,6 @@
 - 💎 **极致类型**: 100% 类型覆盖，每一个参数都有定义，享受极致 IDE 补全。
 - ⚡ **完全异步**: 基于 `websockets` + `asyncio` 原生开发，无惧高并发。
 - 🔌 **双模支持**: 完美支持正向 (Client) 与反向 (Server) WebSocket 连接。
-- 🌐 **远程 RPC**: 内置透明网关，让外部应用跨语言调用 NapCat API。
-- 🤖 **CLI 集成**: 支持 MCP 与 CLI，让 AI 助手实时查询 SDK 文档。
 - 📦 **依赖克制**: 仅包含少量运行时依赖，核心基于 `websockets` 和 `orjson`。
 
 ---
@@ -68,22 +66,6 @@ pip install napcat-sdk
 
 可以直接复制下面的 `Quick Look` 到你的脚本里运行。
 如果你现在还没配置好 NapCat，建议先看 NapCat 文档完成 WebSocket 配置，再回来运行 SDK 示例。
-
----
-
-## 🤖 CLI
-
-CLI 是自举的：只要记住入口 `uv run napcat-sdk`（安装后也可以直接用 `napcat-sdk`），其余用法都可以从命令本身继续发现。
-
-```bash
-uv run napcat-sdk --help
-uv run napcat-sdk tldr
-uv run napcat-sdk doc agent
-uv run napcat-sdk doc agent --full --with-code
-uv run napcat-sdk mcp doc
-```
-
-它适合做三件事：管理本地实例、查询 SDK/API 文档、给 AI agent 一次性导出大上下文文档包。
 
 ---
 
