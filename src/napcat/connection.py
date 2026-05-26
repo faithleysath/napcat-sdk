@@ -2,9 +2,6 @@
 WebSocket 连接管理
 
 Connection 类封装了底层的 WebSocket 连接，处理消息收发、请求响应匹配 (Echo 机制) 和事件分发。
-采用双流设计：
-1. event_stream: 仅包含 OneBot 事件，供 Python 客户端使用。
-2. proxy_stream: 包含 OneBot 事件和外部 RPC 调用的响应，供 RPC 服务使用。
 """
 
 import asyncio
@@ -32,8 +29,6 @@ class Connection:
 
         # event_queues: 仅存储 OneBot 事件 (给 Python Client 用)
         self._event_queues: set[Queue[dict[str, Any] | object]] = set()
-        # proxy_queues: 存储 事件 + RPC 响应 (给 RPC Server 用)
-        self._proxy_queues: set[Queue[dict[str, Any] | object]] = set()
 
         self._task: Task[None] | None = None
         self._closed = asyncio.Event()
@@ -93,17 +88,6 @@ class Connection:
         finally:
             self._futures.pop(echo, None)
 
-    async def send_raw(self, data: dict[str, Any] | str | bytes) -> None:
-        """RPC 代理调用：透传数据，不修改 echo，不挂载 Future。"""
-        if not self._task or self._task.done():
-            raise NapCatStateError("Connection closed")
-        if isinstance(data, dict):
-            await self.ws.send(orjson.dumps(data))
-        else:
-            await self.ws.send(data)
-
-    # === 数据流接口 ===
-
     async def events(self) -> AsyncGenerator[dict[str, Any], None]:
         """仅产出 OneBot 事件 (给 Python Client)，过滤所有 API 响应。"""
         q: Queue[dict[str, Any] | object] = Queue(maxsize=500)
@@ -117,20 +101,6 @@ class Connection:
                     yield data
         finally:
             self._event_queues.discard(q)
-
-    async def proxy_stream(self) -> AsyncGenerator[dict[str, Any], None]:
-        """产出 事件 + 外部 RPC 响应 (给 RPC Server)，过滤 Python 内部调用的响应。"""
-        q: Queue[dict[str, Any] | object] = Queue(maxsize=1000)
-        self._proxy_queues.add(q)
-        try:
-            while True:
-                data = await q.get()
-                if data is _STOP:
-                    break
-                if isinstance(data, dict):
-                    yield data
-        finally:
-            self._proxy_queues.discard(q)
 
     async def _loop(self) -> None:
         cancelled = False
@@ -147,17 +117,12 @@ class Connection:
                 echo = data.get("echo")
 
                 if echo:
-                    # A: Python 内部请求的响应 → Future 消费，不广播
                     if fut := self._futures.get(echo):
                         if not fut.done():
                             fut.set_result(data)
-                        continue
-                    # B: RPC 客户端请求的响应 → 仅发 proxy 队列
-                    self._dispatch(self._proxy_queues, data)
+                    continue
                 else:
-                    # C: OneBot 事件 → 两边都发
                     self._dispatch(self._event_queues, data)
-                    self._dispatch(self._proxy_queues, data)
 
         except asyncio.CancelledError:
             cancelled = True
@@ -175,9 +140,7 @@ class Connection:
         self._futures.clear()
 
         self._dispatch(self._event_queues, _STOP)
-        self._dispatch(self._proxy_queues, _STOP)
         self._event_queues.clear()
-        self._proxy_queues.clear()
         self._closed.set()
 
     def _dispatch(self, queues: set[Queue[dict[str, Any] | object]], item: dict[str, Any] | object) -> None:

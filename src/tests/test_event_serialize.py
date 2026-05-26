@@ -56,14 +56,9 @@ def _friend_request_payload() -> dict[str, Any]:
     }
 
 
-def _make_mock_client(rpc_mode: bool = False) -> Any:
+def _make_mock_client() -> Any:
     """创建一个 mock client，模拟 NapCatClient 的关键属性。"""
-    client = AsyncMock()
-    client.rpc_mode = rpc_mode
-    client.rpc_url_host = "10.0.0.1"
-    client.rpc_port = 9090
-    client.rpc_token = "test-token"
-    return client
+    return AsyncMock()
 
 
 # === to_dict 往返一致性 ===
@@ -162,75 +157,3 @@ def test_from_dict_with_client_unknown_event() -> None:
     event = NapCatEvent.from_dict(payload, client=client)
     assert isinstance(event, UnknownEvent)
     assert event.client is client
-
-
-# === _rpc 注入/提取 ===
-
-
-def test_to_dict_injects_rpc_when_rpc_mode() -> None:
-    payload = _private_msg_payload()
-    client = _make_mock_client(rpc_mode=True)
-
-    event = NapCatEvent.from_dict(payload, client=client)
-    result = event.to_dict()
-
-    assert "_rpc" in result
-    assert result["_rpc"]["host"] == "10.0.0.1"
-    assert result["_rpc"]["port"] == 9090
-    assert result["_rpc"]["token"] == "test-token"
-
-
-def test_to_dict_no_rpc_when_not_rpc_mode() -> None:
-    payload = _private_msg_payload()
-    client = _make_mock_client(rpc_mode=False)
-
-    event = NapCatEvent.from_dict(payload, client=client)
-    result = event.to_dict()
-
-    assert "_rpc" not in result
-
-
-def test_to_dict_no_rpc_when_no_client() -> None:
-    payload = _private_msg_payload()
-
-    event = NapCatEvent.from_dict(payload)
-    result = event.to_dict()
-
-    assert "_rpc" not in result
-
-
-def test_from_dict_strips_rpc_from_raw() -> None:
-    """_rpc 信息不应被保存到 _raw 中。"""
-    payload = _private_msg_payload() | {
-        "_rpc": {"host": "10.0.0.1", "port": 9090, "token": "abc"},
-    }
-
-    event = NapCatEvent.from_dict(payload)
-    assert isinstance(event, PrivateMessageEvent)
-    assert "_rpc" not in event.to_dict()
-
-
-def test_full_roundtrip_with_rpc() -> None:
-    """模拟完整的序列化 → 传输 → 反序列化流程。"""
-    # 进程 A: event + rpc client
-    payload = _group_msg_payload()
-    client_a = _make_mock_client(rpc_mode=True)
-    event_a = NapCatEvent.from_dict(payload, client=client_a)
-    serialized = event_a.to_dict()
-
-    # 传输...
-    assert "_rpc" in serialized
-
-    # 进程 B: 从 _rpc 信息创建新 client，反序列化
-    rpc_info = serialized["_rpc"]
-    client_b = _make_mock_client(rpc_mode=False)  # 远端不需要 rpc_mode
-    event_b = NapCatEvent.from_dict(serialized, client=client_b)
-
-    assert isinstance(event_b, GroupMessageEvent)
-    assert event_b.client is client_b
-    assert event_b.group_id == 999
-    # _rpc 已被剥离
-    assert "_rpc" not in event_b.to_dict()
-    # 原始事件数据完整
-    assert rpc_info["host"] == "10.0.0.1"
-    assert rpc_info["port"] == 9090

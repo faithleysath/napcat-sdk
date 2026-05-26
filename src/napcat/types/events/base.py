@@ -48,15 +48,8 @@ class NapCatEvent(FromDictMixin, ABC):
         return self
 
     def to_dict(self) -> dict[str, Any]:
-        """序列化为 dict。若绑定的 client 开启了 rpc_mode，自动注入 _rpc 连接信息。"""
-        data = dict(self._raw)
-        if self._client is not None and getattr(self._client, "rpc_mode", False):
-            data["_rpc"] = {
-                "host": self._client.rpc_url_host,
-                "port": self._client.rpc_port,
-                "token": self._client.rpc_token,
-            }
-        return data
+        """序列化为原始事件 dict。"""
+        return dict(self._raw)
 
     # --- 自动注册机制 ---
     _registry: ClassVar[dict[str, type[NapCatEvent]]] = {}
@@ -123,8 +116,7 @@ class NapCatEvent(FromDictMixin, ABC):
         *,
         client: NapCatClient | None = None,
     ) -> NapCatEvent:
-        # 提取并移除 _rpc 元数据（不属于原始 event）
-        clean_data = {k: v for k, v in data.items() if k != "_rpc"}
+        clean_data = data
 
         post_type = clean_data.get("post_type")
 
