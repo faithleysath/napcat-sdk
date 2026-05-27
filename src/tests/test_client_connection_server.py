@@ -379,7 +379,7 @@ def test_connection_send_timeout_also_covers_send_phase() -> None:
     asyncio.run(_run())
 
 
-def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
+def test_wait_event_returns_matching_event() -> None:
     async def _run() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
@@ -390,13 +390,6 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
         await asyncio.sleep(0)
 
-        assert (
-            client.is_waited_event(
-                NapCatEvent.from_dict(make_group_message_event("12", message_id=10))
-            )
-            is True
-        )
-
         try:
             await ws.emit(make_group_message_event("11", message_id=1))
             await ws.emit(make_group_message_event("12", message_id=2))
@@ -406,14 +399,6 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
             assert isinstance(matched, GroupMessageEvent)
             assert matched.raw_message == "12"
             assert matched.message_id == 2
-            assert (
-                client.is_waited_event(
-                    NapCatEvent.from_dict(
-                        make_group_message_event("12", message_id=11)
-                    )
-                )
-                is False
-            )
         finally:
             await conn.close()
 
@@ -510,10 +495,10 @@ def test_wait_event_accepts_composed_matcher_predicate() -> None:
 
     asyncio.run(_run())
 
-def test_wait_event_timeout_removes_waiter() -> None:
+def test_wait_event_timeout_closes_event_stream() -> None:
     async def _run() -> None:
         ws = EventWS()
-        conn = Connection(cast(Any, ws))
+        conn = InspectableConnection(cast(Any, ws))
         await conn.__aenter__()
         client = NapCatClient.from_connection(conn)
 
@@ -521,12 +506,7 @@ def test_wait_event_timeout_removes_waiter() -> None:
             with pytest.raises(TimeoutError):
                 await client.wait_event(always_true, timeout=0.01)
 
-            assert (
-                client.is_waited_event(
-                    NapCatEvent.from_dict(make_group_message_event("12", message_id=20))
-                )
-                is False
-            )
+            assert conn.active_event_streams == 0
         finally:
             await conn.close()
 
@@ -561,81 +541,7 @@ def test_multiple_waiters_can_match_same_event() -> None:
     asyncio.run(_run())
 
 
-def test_filtered_events_skip_waiter_matches() -> None:
-    async def _run() -> None:
-        ws = EventWS()
-        conn = Connection(cast(Any, ws))
-        await conn.__aenter__()
-        client = NapCatClient.from_connection(conn)
-
-        predicate = is_group_message_with_text("12")
-        waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
-        filtered = asyncio.create_task(
-            collect_first_event(client.events(skip_waited=True))
-        )
-        await asyncio.sleep(0)
-
-        try:
-            await ws.emit(make_group_message_event("12", message_id=40))
-            await asyncio.sleep(0)
-            assert filtered.done() is False
-
-            await ws.emit(make_group_message_event("13", message_id=41))
-            waited_event = await asyncio.wait_for(waiter, timeout=1.0)
-            filtered_event = await asyncio.wait_for(filtered, timeout=1.0)
-
-            assert isinstance(waited_event, GroupMessageEvent)
-            assert isinstance(filtered_event, GroupMessageEvent)
-            assert waited_event.raw_message == "12"
-            assert filtered_event.raw_message == "13"
-        finally:
-            await conn.close()
-
-    asyncio.run(_run())
-
-
-def test_filtered_events_skip_waiter_matches_after_consumer_delay() -> None:
-    async def _run() -> None:
-        ws = EventWS()
-        conn = Connection(cast(Any, ws))
-        await conn.__aenter__()
-        client = NapCatClient.from_connection(conn)
-
-        predicate = is_group_message_with_text("12")
-        waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
-        filtered_events = client.events(skip_waited=True)
-
-        try:
-            await ws.emit(make_group_message_event("11", message_id=42))
-            first_event = await asyncio.wait_for(anext(filtered_events), timeout=1.0)
-            assert isinstance(first_event, GroupMessageEvent)
-            assert first_event.raw_message == "11"
-
-            await ws.emit(make_group_message_event("12", message_id=43))
-            waited_event = await asyncio.wait_for(waiter, timeout=1.0)
-            assert isinstance(waited_event, GroupMessageEvent)
-            assert waited_event.raw_message == "12"
-
-            # Simulate a slow filtered consumer. The waiter match should still be
-            # filtered when this iterator resumes much later.
-            await asyncio.sleep(1.1)
-
-            next_event_task = asyncio.create_task(anext(filtered_events))
-            await asyncio.sleep(0)
-            assert next_event_task.done() is False
-
-            await ws.emit(make_group_message_event("13", message_id=44))
-            next_event = await asyncio.wait_for(next_event_task, timeout=1.0)
-            assert isinstance(next_event, GroupMessageEvent)
-            assert next_event.raw_message == "13"
-        finally:
-            await filtered_events.aclose()
-            await conn.close()
-
-    asyncio.run(_run())
-
-
-def test_unfiltered_events_keep_waiter_matches() -> None:
+def test_wait_event_does_not_consume_event_stream() -> None:
     async def _run() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
@@ -662,7 +568,7 @@ def test_unfiltered_events_keep_waiter_matches() -> None:
     asyncio.run(_run())
 
 
-def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
+def test_wait_event_predicate_errors_do_not_break_independent_stream() -> None:
     async def _run() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
@@ -674,9 +580,7 @@ def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
             raise ValueError("boom")
 
         waiter = asyncio.create_task(client.wait_event(explode, timeout=1.0))
-        filtered = asyncio.create_task(
-            collect_first_event(client.events(skip_waited=True))
-        )
+        event_stream = asyncio.create_task(collect_first_event(client.events()))
         await asyncio.sleep(0)
 
         try:
@@ -685,15 +589,9 @@ def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
             with pytest.raises(ValueError, match="boom"):
                 await asyncio.wait_for(waiter, timeout=1.0)
 
-            filtered_event = await asyncio.wait_for(filtered, timeout=1.0)
-            assert isinstance(filtered_event, GroupMessageEvent)
-            assert filtered_event.raw_message == "12"
-            assert (
-                client.is_waited_event(
-                    NapCatEvent.from_dict(make_group_message_event("12", message_id=61))
-                )
-                is False
-            )
+            streamed_event = await asyncio.wait_for(event_stream, timeout=1.0)
+            assert isinstance(streamed_event, GroupMessageEvent)
+            assert streamed_event.raw_message == "12"
         finally:
             await conn.close()
 

@@ -11,7 +11,6 @@ from collections.abc import AsyncGenerator, Callable, Mapping
 from types import TracebackType
 from typing import Any, Self, cast
 
-import orjson
 from websockets.asyncio.client import connect as ws_connect
 
 from .client_api import NapCatAPIMixin
@@ -55,10 +54,6 @@ class NapCatClient(NapCatAPIMixin):
         self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
         self.self_id: int | None = None
-
-        self._waiters: list[tuple[object, WaitPredicate]] = []
-        self._matched_waiter_events: dict[bytes, None] = {}
-        self._matched_waiter_cache_size = 1000
 
     @classmethod
     def from_connection(cls, conn: Connection) -> Self:
@@ -226,10 +221,7 @@ class NapCatClient(NapCatAPIMixin):
                 if exc_type is None:
                     raise cleanup_errors[0]
 
-    async def _events(
-        self,
-        skip_waited: bool = False,
-    ) -> AsyncGenerator[NapCatEvent, None]:
+    async def _events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
             raise NapCatStateError("Client not connected")
         if not self._connection_running():
@@ -238,23 +230,13 @@ class NapCatClient(NapCatAPIMixin):
         async for event in self._conn.events():
             event = NapCatEvent.from_dict(event)
             object.__setattr__(event, "_client", self)
-            if skip_waited:
-                if self._is_waiter_matched_event(event):
-                    continue
-                if self.is_waited_event(event):
-                    self._remember_waiter_match(event)
-                    continue
             yield event
 
-    def events(self, skip_waited: bool = False) -> AsyncGenerator[NapCatEvent, None]:
+    def events(self) -> AsyncGenerator[NapCatEvent, None]:
         """迭代接收到的 NapCat 事件。
 
         主动连接模式下，这个方法会在迭代开始和结束时自动管理连接生命
         周期。反向连接模式下，连接生命周期由外部服务器管理。
-
-        Args:
-            skip_waited: 是否跳过已经被当前 ``wait_event`` 调用匹配到的
-                事件，用于避免主事件循环和等待任务重复处理同一个事件。
 
         Yields:
             已解析并绑定当前客户端的 NapCat 事件对象。
@@ -263,14 +245,12 @@ class NapCatClient(NapCatAPIMixin):
             NapCatStateError: 客户端未连接或连接已经关闭时抛出。
         """
 
-        async def _iter() -> AsyncGenerator[NapCatEvent, None]:
-            if self._has_external_conn:
-                async for event in self._events(skip_waited=skip_waited):
-                    yield event
-                return
+        if self._has_external_conn:
+            return self._events()
 
+        async def _iter() -> AsyncGenerator[NapCatEvent, None]:
             async with self:
-                async for event in self._events(skip_waited=skip_waited):
+                async for event in self._events():
                     yield event
 
         return _iter()
@@ -284,85 +264,16 @@ class NapCatClient(NapCatAPIMixin):
 
         return self.events()
 
-    def _register_waiter(self, predicate: WaitPredicate) -> object:
-        token = object()
-        self._waiters.append((token, predicate))
-        return token
-
-    def _remove_waiter(self, token: object) -> None:
-        for index, (registered_token, _) in enumerate(self._waiters):
-            if registered_token is token:
-                del self._waiters[index]
-                break
-
-    def _event_fingerprint(self, event: NapCatEvent) -> bytes:
-        return orjson.dumps(event.to_dict(), option=orjson.OPT_SORT_KEYS)
-
-    def _remember_waiter_match(self, event: NapCatEvent) -> None:
-        signature = self._event_fingerprint(event)
-        self._matched_waiter_events.pop(signature, None)
-        self._matched_waiter_events[signature] = None
-
-        if len(self._matched_waiter_events) > self._matched_waiter_cache_size:
-            oldest_signature = next(iter(self._matched_waiter_events))
-            del self._matched_waiter_events[oldest_signature]
-
-    def _is_waiter_matched_event(self, event: NapCatEvent) -> bool:
-        signature = self._event_fingerprint(event)
-        return signature in self._matched_waiter_events
-
-    def _call_waiter_predicate(
-        self,
-        predicate: WaitPredicate,
-        event: NapCatEvent,
-        *,
-        suppress_exceptions: bool,
-    ) -> bool:
-        try:
-            return bool(predicate(event))
-        except Exception:
-            if suppress_exceptions:
-                logger.exception("Waiter predicate %r failed", predicate)
-                return False
-            raise
-
-    def _matches_registered_waiters(
-        self,
-        event: NapCatEvent,
-        *,
-        suppress_exceptions: bool,
-    ) -> bool:
-        waiters = tuple(self._waiters)
-        for _, predicate in waiters:
-            if self._call_waiter_predicate(
-                predicate,
-                event,
-                suppress_exceptions=suppress_exceptions,
-            ):
-                return True
-        return False
-
-    def is_waited_event(self, event: NapCatEvent) -> bool:
-        """判断事件是否会命中当前活跃的 ``wait_event``。
-
-        这个方法只做匹配判断，不会消费事件，也不会移除等待任务。
-
-        Args:
-            event: 要检查的事件对象。
-
-        Returns:
-            如果任意活跃的 ``wait_event`` predicate 匹配该事件，则返回
-            ``True``。
-        """
-
-        return self._matches_registered_waiters(event, suppress_exceptions=True)
-
     async def wait_event(
         self,
         predicate: WaitPredicate,
         timeout: float | None = None,
     ) -> NapCatEvent:
         """等待第一个满足条件的事件。
+
+        这个方法会创建一个独立的事件观察流。它不会消费或隐藏事件，因此同一
+        个事件仍然会出现在其他 ``events()`` 迭代器中，也可以同时唤醒多个
+        ``wait_event`` 调用。
 
         Args:
             predicate: 接收事件并返回布尔值的判断函数。
@@ -376,28 +287,22 @@ class NapCatClient(NapCatAPIMixin):
             NapCatStateError: 客户端关闭且没有等到匹配事件时抛出。
         """
 
-        token = self._register_waiter(predicate)
-
         async def _wait() -> NapCatEvent:
-            async for event in self.events():
-                if self._call_waiter_predicate(
-                    predicate,
-                    event,
-                    suppress_exceptions=False,
-                ):
-                    self._remember_waiter_match(event)
-                    return event
+            events = self.events()
+            try:
+                async for event in events:
+                    if predicate(event):
+                        return event
+            finally:
+                await events.aclose()
             raise NapCatStateError(
                 "Client closed before wait_event received a matching event"
             )
 
-        try:
-            if timeout is None:
-                return await _wait()
-            async with asyncio.timeout(timeout):
-                return await _wait()
-        finally:
-            self._remove_waiter(token)
+        if timeout is None:
+            return await _wait()
+        async with asyncio.timeout(timeout):
+            return await _wait()
 
     async def _send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
