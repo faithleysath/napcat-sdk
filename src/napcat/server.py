@@ -62,7 +62,7 @@ class ReverseWebSocketServer:
 
         # 2. 创建连接对象并追踪任务
         conn = Connection(ws)
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
         current_task = asyncio.current_task()
         if current_task:
             self._active_tasks.add(current_task)

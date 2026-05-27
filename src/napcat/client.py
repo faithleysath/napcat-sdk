@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import AsyncGenerator, Callable, Mapping
 from types import TracebackType
-from typing import Any, cast
+from typing import Any, Self, cast
 
 import orjson
 from websockets.asyncio.client import connect as ws_connect
@@ -29,21 +29,27 @@ class NapCatClient(NapCatAPIMixin):
         self,
         ws_url: str | None = None,
         token: str | None = None,
-        _existing_conn: Connection | None = None,
     ):
         self.ws_url = ws_url
         self.token = token
-        self._conn = _existing_conn
-        self._has_external_conn = _existing_conn is not None
+        self._conn: Connection | None = None
+        self._has_external_conn = False
         self._ws_ctx: ws_connect | None = None
         self._entered = False
         self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
-        self.self_id: int = -1  # 连接后更新
+        self.self_id: int | None = None
 
         self._waiters: list[tuple[object, WaitPredicate]] = []
         self._matched_waiter_events: dict[bytes, None] = {}
         self._matched_waiter_cache_size = 1000
+
+    @classmethod
+    def from_connection(cls, conn: Connection) -> Self:
+        client = cls()
+        client._conn = conn
+        client._has_external_conn = True
+        return client
 
     def _connection_running(self) -> bool:
         return bool(self._conn and self._conn.is_running)
@@ -67,7 +73,7 @@ class NapCatClient(NapCatAPIMixin):
             conn_entered = False
 
             try:
-                # 如果是 Server 模式（_existing_conn 存在），直接启动该连接的循环
+                # 如果是 Server 模式，直接启动 from_connection 传入的连接
                 if self._has_external_conn:
                     if not self._conn:
                         raise ValueError("Invalid Client: Missing existing connection")
@@ -96,7 +102,7 @@ class NapCatClient(NapCatAPIMixin):
                     self.self_id = resp["user_id"]
                 except NapCatError as e:
                     logger.warning("Failed to get self_id: %s", e)
-                    self.self_id = -1
+                    self.self_id = None
 
                 return self
             except Exception:
@@ -291,7 +297,7 @@ class NapCatClient(NapCatAPIMixin):
         finally:
             self._remove_waiter(token)
 
-    async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
+    async def _send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         if not self._conn:
             raise NapCatStateError("Client not connected")
         return await self._conn.send(data, timeout)
@@ -339,7 +345,7 @@ class NapCatClient(NapCatAPIMixin):
         elif action == ".handle_quick_operation":
             params = self._normalize_quick_operation_params(params)
 
-        resp = await self.send({"action": action, "params": params})
+        resp = await self._send({"action": action, "params": params})
         if resp.get("status") != "ok" or resp.get("retcode") != 0:
             raise NapCatAPIError(
                 f"API call failed: {resp}",
@@ -384,7 +390,7 @@ class NapCatClient(NapCatAPIMixin):
     # --- 黑魔法区域 ---
 
     def __getattr__(self, item: str):
-        if item.startswith("_"):
+        if item.startswith("_") or item == "send":
             raise AttributeError(item)
 
         async def dynamic_api_call(**kwargs: Any) -> Mapping[str, Any] | None:

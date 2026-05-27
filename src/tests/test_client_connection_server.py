@@ -25,7 +25,7 @@ class StubClient(NapCatClient):
         super().__init__()
         self._response = response
 
-    async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
+    async def _send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         return self._response
 
 
@@ -34,7 +34,7 @@ class RecordingClient(NapCatClient):
         super().__init__()
         self.last_request: dict[str, Any] | None = None
 
-    async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
+    async def _send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         self.last_request = data
         return {"status": "ok", "retcode": 0, "data": None}
 
@@ -268,6 +268,12 @@ def test_call_action_returns_data_on_success() -> None:
     asyncio.run(_run())
 
 
+def test_send_is_not_public_dynamic_api() -> None:
+    client = NapCatClient()
+
+    assert hasattr(client, "send") is False
+
+
 def test_dot_handle_quick_operation_normalizes_segment_reply() -> None:
     async def _run() -> None:
         client = RecordingClient()
@@ -333,7 +339,7 @@ def test_send_forward_msg_normalizes_messages_segments() -> None:
 def test_client_aexit_does_not_mask_original_error() -> None:
     async def _run() -> None:
         conn = cast(Connection, FailingExitConnection())
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
         with pytest.raises(ValueError, match="biz error"):
             async with client:
                 raise ValueError("biz error")
@@ -344,7 +350,7 @@ def test_client_aexit_does_not_mask_original_error() -> None:
 def test_client_aexit_raises_cleanup_error_without_original_error() -> None:
     async def _run() -> None:
         conn = cast(Connection, FailingExitConnection())
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
         with pytest.raises(RuntimeError, match="cleanup failed"):
             async with client:
                 pass
@@ -378,7 +384,7 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
@@ -481,7 +487,7 @@ def test_wait_event_accepts_composed_matcher_predicate() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         def has_expected_text(event: NapCatEvent) -> bool:
             return isinstance(event, GroupMessageEvent) and event.raw_message == "12"
@@ -509,7 +515,7 @@ def test_wait_event_timeout_removes_waiter() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         try:
             with pytest.raises(TimeoutError):
@@ -532,7 +538,7 @@ def test_multiple_waiters_can_match_same_event() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         predicate = is_group_message_with_text("12")
         waiter1 = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
@@ -560,7 +566,7 @@ def test_filtered_events_skip_waiter_matches() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
@@ -593,7 +599,7 @@ def test_filtered_events_skip_waiter_matches_after_consumer_delay() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
@@ -634,7 +640,7 @@ def test_unfiltered_events_keep_waiter_matches() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
@@ -661,7 +667,7 @@ def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
         ws = EventWS()
         conn = Connection(cast(Any, ws))
         await conn.__aenter__()
-        client = NapCatClient(_existing_conn=conn)
+        client = NapCatClient.from_connection(conn)
 
         def explode(event: NapCatEvent) -> bool:
             _ = event
