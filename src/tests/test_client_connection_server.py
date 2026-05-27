@@ -391,7 +391,7 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
         await asyncio.sleep(0)
 
         assert (
-            client.matches_waiters(
+            client.is_waited_event(
                 NapCatEvent.from_dict(make_group_message_event("12", message_id=10))
             )
             is True
@@ -407,7 +407,7 @@ def test_wait_event_returns_matching_event_and_cleans_up_waiter() -> None:
             assert matched.raw_message == "12"
             assert matched.message_id == 2
             assert (
-                client.matches_waiters(
+                client.is_waited_event(
                     NapCatEvent.from_dict(
                         make_group_message_event("12", message_id=11)
                     )
@@ -522,7 +522,7 @@ def test_wait_event_timeout_removes_waiter() -> None:
                 await client.wait_event(always_true, timeout=0.01)
 
             assert (
-                client.matches_waiters(
+                client.is_waited_event(
                     NapCatEvent.from_dict(make_group_message_event("12", message_id=20))
                 )
                 is False
@@ -571,7 +571,7 @@ def test_filtered_events_skip_waiter_matches() -> None:
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
         filtered = asyncio.create_task(
-            collect_first_event(client.events(filter_waiters=True))
+            collect_first_event(client.events(skip_waited=True))
         )
         await asyncio.sleep(0)
 
@@ -603,7 +603,7 @@ def test_filtered_events_skip_waiter_matches_after_consumer_delay() -> None:
 
         predicate = is_group_message_with_text("12")
         waiter = asyncio.create_task(client.wait_event(predicate, timeout=1.0))
-        filtered_events = client.events(filter_waiters=True)
+        filtered_events = client.events(skip_waited=True)
 
         try:
             await ws.emit(make_group_message_event("11", message_id=42))
@@ -675,7 +675,7 @@ def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
 
         waiter = asyncio.create_task(client.wait_event(explode, timeout=1.0))
         filtered = asyncio.create_task(
-            collect_first_event(client.events(filter_waiters=True))
+            collect_first_event(client.events(skip_waited=True))
         )
         await asyncio.sleep(0)
 
@@ -689,7 +689,7 @@ def test_wait_event_predicate_errors_do_not_break_filtered_stream() -> None:
             assert isinstance(filtered_event, GroupMessageEvent)
             assert filtered_event.raw_message == "12"
             assert (
-                client.matches_waiters(
+                client.is_waited_event(
                     NapCatEvent.from_dict(make_group_message_event("12", message_id=61))
                 )
                 is False

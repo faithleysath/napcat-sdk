@@ -1,8 +1,8 @@
-"""
-NapCat 客户端实现
+"""NapCat 异步客户端。
 
-提供 NapCatClient 类，用于与 NapCatQQ 建立连接（正向 WebSocket）或复用现有连接（反向 WebSocket）。
-包含事件生成器 (_events) 和 API 调用方法 (call_action)。
+本模块提供 ``NapCatClient``，用于通过 OneBot WebSocket 与 NapCatQQ
+通信。客户端支持主动连接 NapCat，也支持复用反向 WebSocket 服务端接收到的
+连接，并把事件流、API 调用和事件等待统一到一个 Python 原生异步对象上。
 """
 
 import asyncio
@@ -25,6 +25,22 @@ type WaitPredicate = Callable[[NapCatEvent], bool]
 
 
 class NapCatClient(NapCatAPIMixin):
+    """NapCat 的异步 WebSocket 客户端。
+
+    这个对象负责管理 WebSocket 生命周期、接收并解析事件、调用 OneBot
+    API，并提供等待特定事件的轻量工具。它既可以作为异步上下文管理器用于
+    直接 API 调用，也可以直接作为异步迭代器消费事件。
+
+    Args:
+        ws_url: NapCat 正向 WebSocket 地址。通过 ``from_connection`` 复用
+            外部连接时可以省略。
+        token: 可选访问令牌。主动连接时会以 Bearer token 的形式发送。
+
+    Attributes:
+        self_id: 连接建立后获取到的机器人账号 ID。获取失败或尚未连接时为
+            ``None``。
+    """
+
     def __init__(
         self,
         ws_url: str | None = None,
@@ -46,6 +62,18 @@ class NapCatClient(NapCatAPIMixin):
 
     @classmethod
     def from_connection(cls, conn: Connection) -> Self:
+        """从已有 WebSocket 连接创建客户端。
+
+        这个构造器主要供 ``ReverseWebSocketServer`` 使用，用于把反向
+        WebSocket 接入转换成和主动连接一致的 ``NapCatClient`` 接口。
+
+        Args:
+            conn: 已经建立的底层连接。
+
+        Returns:
+            复用该连接的客户端实例。
+        """
+
         client = cls()
         client._conn = conn
         client._has_external_conn = True
@@ -56,9 +84,24 @@ class NapCatClient(NapCatAPIMixin):
 
     @property
     def is_running(self) -> bool:
+        """当前客户端连接是否正在运行。"""
+
         return self._connection_running()
 
     async def __aenter__(self):
+        """进入客户端连接上下文。
+
+        如果客户端尚未连接，会根据初始化参数建立连接；如果连接已经运行，
+        则复用当前连接并增加上下文引用计数。
+
+        Returns:
+            已连接的客户端实例。
+
+        Raises:
+            ValueError: 未提供 WebSocket 地址且没有可复用连接时抛出。
+            NapCatError: 初始化连接后获取登录信息失败以外的 SDK 错误。
+        """
+
         async with self._lifecycle_lock:
             self._context_refs += 1
 
@@ -132,6 +175,20 @@ class NapCatClient(NapCatAPIMixin):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ):
+        """退出客户端连接上下文。
+
+        当最后一个上下文引用退出时关闭底层连接。若用户代码已经抛出异常，
+        清理阶段的异常只会记录日志，不会覆盖原始异常。
+
+        Args:
+            exc_type: 上下文中的异常类型。
+            exc_val: 上下文中的异常实例。
+            exc_tb: 上下文中的异常调用栈。
+
+        Raises:
+            BaseException: 没有原始异常且清理失败时，重新抛出清理异常。
+        """
+
         async with self._lifecycle_lock:
             if self._context_refs == 0:
                 return
@@ -171,7 +228,7 @@ class NapCatClient(NapCatAPIMixin):
 
     async def _events(
         self,
-        filter_waiters: bool = False,
+        skip_waited: bool = False,
     ) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
             raise NapCatStateError("Client not connected")
@@ -181,28 +238,50 @@ class NapCatClient(NapCatAPIMixin):
         async for event in self._conn.events():
             event = NapCatEvent.from_dict(event)
             object.__setattr__(event, "_client", self)
-            if filter_waiters:
+            if skip_waited:
                 if self._is_waiter_matched_event(event):
                     continue
-                if self.matches_waiters(event):
+                if self.is_waited_event(event):
                     self._remember_waiter_match(event)
                     continue
             yield event
 
-    def events(self, filter_waiters: bool = False) -> AsyncGenerator[NapCatEvent, None]:
+    def events(self, skip_waited: bool = False) -> AsyncGenerator[NapCatEvent, None]:
+        """迭代接收到的 NapCat 事件。
+
+        主动连接模式下，这个方法会在迭代开始和结束时自动管理连接生命
+        周期。反向连接模式下，连接生命周期由外部服务器管理。
+
+        Args:
+            skip_waited: 是否跳过已经被当前 ``wait_event`` 调用匹配到的
+                事件，用于避免主事件循环和等待任务重复处理同一个事件。
+
+        Yields:
+            已解析并绑定当前客户端的 NapCat 事件对象。
+
+        Raises:
+            NapCatStateError: 客户端未连接或连接已经关闭时抛出。
+        """
+
         async def _iter() -> AsyncGenerator[NapCatEvent, None]:
             if self._has_external_conn:
-                async for event in self._events(filter_waiters=filter_waiters):
+                async for event in self._events(skip_waited=skip_waited):
                     yield event
                 return
 
             async with self:
-                async for event in self._events(filter_waiters=filter_waiters):
+                async for event in self._events(skip_waited=skip_waited):
                     yield event
 
         return _iter()
 
     def __aiter__(self) -> AsyncGenerator[NapCatEvent, None]:
+        """把客户端作为异步事件迭代器使用。
+
+        Returns:
+            默认事件流，等价于调用 ``events()``。
+        """
+
         return self.events()
 
     def _register_waiter(self, predicate: WaitPredicate) -> object:
@@ -263,8 +342,19 @@ class NapCatClient(NapCatAPIMixin):
                 return True
         return False
 
-    def matches_waiters(self, event: NapCatEvent) -> bool:
-        """Return whether any active waiter predicate matches this event."""
+    def is_waited_event(self, event: NapCatEvent) -> bool:
+        """判断事件是否会命中当前活跃的 ``wait_event``。
+
+        这个方法只做匹配判断，不会消费事件，也不会移除等待任务。
+
+        Args:
+            event: 要检查的事件对象。
+
+        Returns:
+            如果任意活跃的 ``wait_event`` predicate 匹配该事件，则返回
+            ``True``。
+        """
+
         return self._matches_registered_waiters(event, suppress_exceptions=True)
 
     async def wait_event(
@@ -272,7 +362,19 @@ class NapCatClient(NapCatAPIMixin):
         predicate: WaitPredicate,
         timeout: float | None = None,
     ) -> NapCatEvent:
-        """Wait until the first event satisfying ``predicate`` arrives."""
+        """等待第一个满足条件的事件。
+
+        Args:
+            predicate: 接收事件并返回布尔值的判断函数。
+            timeout: 最长等待秒数。为 ``None`` 时一直等待。
+
+        Returns:
+            第一个满足 ``predicate`` 的事件对象。
+
+        Raises:
+            TimeoutError: 在指定时间内没有等到匹配事件时抛出。
+            NapCatStateError: 客户端关闭且没有等到匹配事件时抛出。
+        """
 
         token = self._register_waiter(predicate)
 
@@ -307,9 +409,23 @@ class NapCatClient(NapCatAPIMixin):
         action: str,
         params: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any] | None:
+        """调用原始 OneBot action。
+
+        这个方法是所有自动生成 API 方法的底层入口，也可以用于调用尚未手工
+        封装的新接口。
+
+        Args:
+            action: OneBot action 名称。
+            params: action 参数映射。省略时使用空参数。
+
+        Returns:
+            响应中的 ``data`` 字段。如果响应没有 data，则返回 ``None``。
+
+        Raises:
+            NapCatAPIError: NapCat 返回非成功状态或非零 retcode 时抛出。
+            NapCatStateError: 客户端未连接时抛出。
         """
-        统一调用入口
-        """
+
         if params is None:
             params = {}
 
@@ -359,6 +475,8 @@ class NapCatClient(NapCatAPIMixin):
     def _normalize_message_for_send(
         message: str | list[Message] | Message,
     ) -> str | list[dict[str, Any]] | dict[str, Any]:
+        """把 SDK 消息对象转换为 NapCat 可发送的数据结构。"""
+
         if isinstance(message, str):
             return message
         if isinstance(message, list):
@@ -370,6 +488,8 @@ class NapCatClient(NapCatAPIMixin):
         cls,
         params: Mapping[str, Any],
     ) -> dict[str, Any]:
+        """规范化快速操作参数中的回复消息。"""
+
         operation = params.get("operation")
         if not isinstance(operation, Mapping) or "reply" not in operation:
             return dict(params)
@@ -390,6 +510,21 @@ class NapCatClient(NapCatAPIMixin):
     # --- 黑魔法区域 ---
 
     def __getattr__(self, item: str):
+        """把未知公开属性转换为动态 API 调用。
+
+        这个 fallback 用于兼容尚未封装成方法的新 OneBot action。私有属性和
+        ``send`` 不会走动态调用，以避免隐藏真实的属性错误。
+
+        Args:
+            item: 被访问的属性名，也会作为 OneBot action 名称。
+
+        Returns:
+            一个异步函数，调用后会把关键字参数传给 ``call_action``。
+
+        Raises:
+            AttributeError: 访问私有属性或被保留的属性名时抛出。
+        """
+
         if item.startswith("_") or item == "send":
             raise AttributeError(item)
 
