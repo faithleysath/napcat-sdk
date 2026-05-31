@@ -7,6 +7,7 @@
 
 import asyncio
 import logging
+import warnings
 from collections.abc import AsyncGenerator, Callable, Mapping
 from types import TracebackType
 from typing import Any, Self, cast
@@ -15,7 +16,7 @@ from websockets.asyncio.client import connect as ws_connect
 
 from .client_api import NapCatAPIMixin
 from .connection import Connection
-from .exceptions import NapCatAPIError, NapCatError, NapCatStateError
+from .exceptions import NapCatAPIError, NapCatProtocolError, NapCatStateError
 from .types import NapCatEvent
 from .types.messages import Message
 
@@ -50,7 +51,6 @@ class NapCatClient(NapCatAPIMixin):
         self._conn: Connection | None = None
         self._has_external_conn = False
         self._ws_ctx: ws_connect | None = None
-        self._entered = False
         self._context_refs = 0
         self._lifecycle_lock = asyncio.Lock()
         self.self_id: int | None = None
@@ -94,7 +94,8 @@ class NapCatClient(NapCatAPIMixin):
 
         Raises:
             ValueError: 未提供 WebSocket 地址且没有可复用连接时抛出。
-            NapCatError: 初始化连接后获取登录信息失败以外的 SDK 错误。
+            NapCatProtocolError: 登录信息响应缺失或包含非法的 ``user_id``。
+            NapCatError: 初始化连接失败，或获取登录信息时发生非 API 失败的 SDK 错误。
         """
 
         async with self._lifecycle_lock:
@@ -103,7 +104,6 @@ class NapCatClient(NapCatAPIMixin):
             # 已有活跃连接时，仅增加上下文引用计数即可
             # 不依赖引用计数值判断复用，直接以连接运行状态为准
             if self._connection_running():
-                self._entered = True
                 return self
 
             # 用于跟踪已打开的资源，便于异常时回滚
@@ -133,35 +133,32 @@ class NapCatClient(NapCatAPIMixin):
                         "Invalid Client: No URL and no existing connection"
                     )
 
-                self._entered = True
                 # 获取自身 ID (增加容错处理)
                 try:
                     resp = await self.get_login_info()
-                    self.self_id = resp["user_id"]
-                except NapCatError as e:
+                    self.self_id = self._extract_self_id(resp)
+                except NapCatAPIError as e:
                     logger.warning("Failed to get self_id: %s", e)
                     self.self_id = None
 
                 return self
-            except Exception:
+            except BaseException:
                 # 异常时回滚已打开的资源
                 if conn_entered and self._conn:
                     try:
                         await self._conn.__aexit__(None, None, None)
-                    except Exception:
+                    except (Exception, asyncio.CancelledError):
                         pass
                 if ws_ctx_entered and self._ws_ctx:
                     try:
                         await self._ws_ctx.__aexit__(None, None, None)
-                    except Exception:
+                    except (Exception, asyncio.CancelledError):
                         pass
                 # 清理状态
                 if not self._has_external_conn:
                     self._conn = None
                 self._ws_ctx = None
                 self._context_refs -= 1
-                if self._context_refs == 0:
-                    self._entered = False
                 raise
 
     async def __aexit__(
@@ -210,7 +207,6 @@ class NapCatClient(NapCatAPIMixin):
                     except Exception as e:
                         cleanup_errors.append(e)
             finally:
-                self._entered = False
                 if not self._has_external_conn:
                     self._conn = None
                 self._ws_ctx = None
@@ -220,6 +216,19 @@ class NapCatClient(NapCatAPIMixin):
                     logger.warning("Cleanup error: %s", err)
                 if exc_type is None:
                     raise cleanup_errors[0]
+
+    @staticmethod
+    def _extract_self_id(resp: Any) -> int:
+        if not isinstance(resp, Mapping):
+            raise NapCatProtocolError("Invalid get_login_info response: data is not a mapping")
+
+        response_data = cast(Mapping[str, Any], resp)
+        user_id = response_data.get("user_id")
+        if isinstance(user_id, bool) or not isinstance(user_id, int):
+            raise NapCatProtocolError(
+                "Invalid get_login_info response: user_id must be an integer"
+            )
+        return user_id
 
     async def _events(self) -> AsyncGenerator[NapCatEvent, None]:
         if not self._conn:
@@ -434,6 +443,14 @@ class NapCatClient(NapCatAPIMixin):
             raise AttributeError(item)
 
         async def dynamic_api_call(**kwargs: Any) -> Mapping[str, Any] | None:
+            warnings.warn(
+                (
+                    f"NapCatClient 动态调用未封装的 API {item!r}，"
+                    "此调用没有静态类型检查；建议优先使用已定义方法或 call_action()。"
+                ),
+                RuntimeWarning,
+                stacklevel=2,
+            )
             return await self.call_action(item, kwargs)
 
         return dynamic_api_call

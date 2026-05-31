@@ -65,13 +65,20 @@ class Connection:
             return
 
         # 正常关闭路径
-        if not self._task.done():
-            self._task.cancel()
+        task = self._task
+        if not task.done():
+            task.cancel()
         try:
             await self.ws.close()
         except Exception:
             pass
-        await self._closed.wait()
+        if task is not asyncio.current_task():
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        if not self._closed.is_set():
+            await self._cleanup()
 
     async def send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         """Python 内部调用：自动挂载 UUID echo 并等待结果。"""

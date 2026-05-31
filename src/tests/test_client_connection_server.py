@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Mapping
 from contextlib import suppress
 from types import TracebackType
 from typing import Any, ClassVar, cast
@@ -13,7 +13,7 @@ import pytest
 import napcat.client as client_module
 from napcat.client import NapCatClient
 from napcat.connection import Connection
-from napcat.exceptions import NapCatAPIError
+from napcat.exceptions import NapCatAPIError, NapCatProtocolError, NapCatStateError
 from napcat.matcher import event_match
 from napcat.server import ReverseWebSocketServer
 from napcat.types import GroupMessageEvent, NapCatEvent
@@ -37,6 +37,58 @@ class RecordingClient(NapCatClient):
     async def _send(self, data: dict[str, Any], timeout: float = 10.0) -> dict[str, Any]:
         self.last_request = data
         return {"status": "ok", "retcode": 0, "data": None}
+
+
+class CancelLoginClient(NapCatClient):
+    @property
+    def context_refs(self) -> int:
+        return self._context_refs
+
+    @property
+    def connection(self) -> Connection | None:
+        return self._conn
+
+    @property
+    def ws_context(self) -> Any | None:
+        return self._ws_ctx
+
+    async def cleanup_after_failed_enter(self) -> None:
+        if self._conn is not None:
+            await self._conn.close()
+        if self._ws_ctx is not None:
+            await self._ws_ctx.__aexit__(None, None, None)
+
+    async def call_action(
+        self,
+        action: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> Mapping[str, Any] | None:
+        _ = action, params
+        raise asyncio.CancelledError
+
+
+class StateErrorLoginClient(CancelLoginClient):
+    async def call_action(
+        self,
+        action: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> Mapping[str, Any] | None:
+        _ = action, params
+        raise NapCatStateError("connection became invalid")
+
+
+class MalformedLoginInfoClient(CancelLoginClient):
+    def __init__(self, login_info: Mapping[str, Any] | None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._login_info = login_info
+
+    async def call_action(
+        self,
+        action: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> Mapping[str, Any] | None:
+        _ = action, params
+        return self._login_info
 
 
 class FailingExitConnection:
@@ -274,6 +326,23 @@ def test_send_is_not_public_dynamic_api() -> None:
     assert hasattr(client, "send") is False
 
 
+def test_dynamic_api_call_emits_warning() -> None:
+    async def _run() -> None:
+        client = RecordingClient()
+        action_name = "some_new_action"
+        dynamic_call = getattr(client, action_name)
+
+        with pytest.warns(RuntimeWarning, match="动态调用未封装的 API"):
+            await dynamic_call(foo=1)
+
+        assert client.last_request == {
+            "action": "some_new_action",
+            "params": {"foo": 1},
+        }
+
+    asyncio.run(_run())
+
+
 def test_dot_handle_quick_operation_normalizes_segment_reply() -> None:
     async def _run() -> None:
         client = RecordingClient()
@@ -354,6 +423,113 @@ def test_client_aexit_raises_cleanup_error_without_original_error() -> None:
         with pytest.raises(RuntimeError, match="cleanup failed"):
             async with client:
                 pass
+
+    asyncio.run(_run())
+
+
+def test_client_aenter_rolls_back_when_cancelled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _run() -> None:
+        ws = ClientModeWS()
+        ws_ctx = FakeConnectContext(ws)
+
+        def fake_ws_connect(*args: object, **kwargs: object) -> FakeConnectContext:
+            _ = args, kwargs
+            return ws_ctx
+
+        InspectableConnection.last_instance = None
+        monkeypatch.setattr(client_module, "ws_connect", cast(Any, fake_ws_connect))
+        monkeypatch.setattr(client_module, "Connection", InspectableConnection)
+
+        client = CancelLoginClient(ws_url="ws://example.invalid")
+        try:
+            with pytest.raises(asyncio.CancelledError):
+                await client.__aenter__()
+
+            assert client.context_refs == 0
+            assert client.connection is None
+            assert client.ws_context is None
+            assert ws.closed is True
+            assert ws_ctx.exit_calls == 1
+        finally:
+            await client.cleanup_after_failed_enter()
+
+    asyncio.run(_run())
+
+
+def test_client_aenter_does_not_swallow_state_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _run() -> None:
+        ws = ClientModeWS()
+        ws_ctx = FakeConnectContext(ws)
+
+        def fake_ws_connect(*args: object, **kwargs: object) -> FakeConnectContext:
+            _ = args, kwargs
+            return ws_ctx
+
+        InspectableConnection.last_instance = None
+        monkeypatch.setattr(client_module, "ws_connect", cast(Any, fake_ws_connect))
+        monkeypatch.setattr(client_module, "Connection", InspectableConnection)
+
+        client = StateErrorLoginClient(ws_url="ws://example.invalid")
+        try:
+            with pytest.raises(NapCatStateError, match="connection became invalid"):
+                await client.__aenter__()
+
+            assert client.context_refs == 0
+            assert client.connection is None
+            assert client.ws_context is None
+            assert ws.closed is True
+            assert ws_ctx.exit_calls == 1
+        finally:
+            await client.cleanup_after_failed_enter()
+
+    asyncio.run(_run())
+
+
+@pytest.mark.parametrize(
+    "login_info",
+    [
+        None,
+        {},
+        {"user_id": None},
+        {"user_id": "10001"},
+        {"user_id": True},
+    ],
+)
+def test_client_aenter_raises_protocol_error_for_malformed_login_info(
+    monkeypatch: pytest.MonkeyPatch,
+    login_info: Mapping[str, Any] | None,
+) -> None:
+    async def _run() -> None:
+        ws = ClientModeWS()
+        ws_ctx = FakeConnectContext(ws)
+
+        def fake_ws_connect(*args: object, **kwargs: object) -> FakeConnectContext:
+            _ = args, kwargs
+            return ws_ctx
+
+        InspectableConnection.last_instance = None
+        monkeypatch.setattr(client_module, "ws_connect", cast(Any, fake_ws_connect))
+        monkeypatch.setattr(client_module, "Connection", InspectableConnection)
+
+        client = MalformedLoginInfoClient(
+            login_info,
+            ws_url="ws://example.invalid",
+        )
+        try:
+            with pytest.raises(NapCatProtocolError, match="get_login_info response"):
+                await client.__aenter__()
+
+            assert client.context_refs == 0
+            assert client.connection is None
+            assert client.ws_context is None
+            assert ws.closed is True
+            assert ws_ctx.exit_calls == 1
+        finally:
+            await client.cleanup_after_failed_enter()
 
     asyncio.run(_run())
 
